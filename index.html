@@ -101,7 +101,7 @@
     }
 
     .btn {
-      padding: 8px 16px;
+      padding: 8px 14px;
       border-radius: 6px;
       border: none;
       font-size: 13px;
@@ -111,6 +111,7 @@
       align-items: center;
       gap: 6px;
       transition: 0.2s;
+      white-space: nowrap;
     }
     .btn-primary { background: var(--primary); color: #fff; }
     .btn-primary:hover { background: var(--primary-hover); }
@@ -118,6 +119,8 @@
     .btn-success:hover { background: var(--success-hover); }
     .btn-dfq { background: #0ea5e9; color: #fff; }
     .btn-dfq:hover { background: #0284c7; }
+    .btn-warning { background: #f59e0b; color: #fff; }
+    .btn-warning:hover { background: #d97706; }
     .btn-secondary { background: #64748b; color: #fff; }
     .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
     .btn-outline:hover { background: #f1f5f9; }
@@ -136,7 +139,7 @@
       flex-wrap: wrap;
       gap: 10px;
     }
-    .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
     .alert-box {
       padding: 16px 20px;
@@ -161,7 +164,7 @@
       display: none;
     }
 
-    /* MODAL ABLAK */
+    /* MODAL ABLAKOK */
     .modal-backdrop {
       display: none;
       position: fixed;
@@ -176,7 +179,7 @@
     .modal-window {
       background: #fff;
       border-radius: 10px;
-      max-width: 750px;
+      max-width: 800px;
       width: 100%;
       max-height: 90vh;
       overflow-y: auto;
@@ -188,7 +191,8 @@
       padding-bottom: 12px;
       margin-bottom: 16px;
     }
-    .modal-header h3 { color: #b45309; font-size: 17px; }
+    .modal-header h3 { font-size: 17px; }
+
     .grid-form {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -205,6 +209,28 @@
     .form-group input.missing {
       border-color: var(--danger);
       background: #fef2f2;
+    }
+
+    /* Módosítási táblázat a felugróban */
+    .edit-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 10px;
+    }
+    .edit-table th, .edit-table td {
+      border: 1px solid #e2e8f0;
+      padding: 8px 10px;
+      text-align: left;
+    }
+    .edit-table th { background: #f8fafc; }
+    .edit-table input {
+      padding: 6px 8px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      width: 100px;
+      font-weight: bold;
+      color: #0f172a;
     }
 
     /* MÁTRIX TÁBLÁZAT */
@@ -258,7 +284,7 @@
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT jegyzőkönyveket</h3>
-      <p>Több fájl egyidejű feldolgozása, azonnali méretellenőrzéssel és előnézettel</p>
+      <p>Több fájl egyidejű feldolgozása, azonnali hibakereséssel és dönthető javítással</p>
     </div>
 
     <!-- Tab navigáció -->
@@ -297,11 +323,42 @@
 
   </div>
 
+  <!-- MODAL: KORREKCIÓK MÓDOSÍTÁSI LEHETŐSÉGGEL -->
+  <div class="modal-backdrop" id="correctionModal">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 style="color: #0369a1;">✏️ Javítás felajánlott adatokkal és módosítási lehetőséggel</h3>
+        <p style="font-size: 13px; color: #475569; margin-top: 4px;">
+          Fájl: <strong id="corrModalFileName"></strong>. Írd át a javasolt értékeket tetszés szerint, majd kattints az alkalmazásra.
+        </p>
+      </div>
+      
+      <table class="edit-table">
+        <thead>
+          <tr>
+            <th>Tétel</th>
+            <th>SZI</th>
+            <th>Névleges</th>
+            <th>Tűrésmező</th>
+            <th>Eredeti Mért</th>
+            <th>Javított Érték (Módosítható)</th>
+          </tr>
+        </thead>
+        <tbody id="corrModalTableBody"></tbody>
+      </table>
+
+      <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn btn-outline" id="btnCorrCancel" type="button">Mégsem</button>
+        <button class="btn btn-success" id="btnCorrApply" type="button">💾 Javítások Alkalmazása</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: HIÁNYZÓ FEJLÉCADATOK JAVÍTÁSA -->
   <div class="modal-backdrop" id="headerModal">
     <div class="modal-window">
       <div class="modal-header">
-        <h3>⚠️ Nem megfelelő fejléc kitöltés!</h3>
+        <h3 style="color: #b45309;">⚠️ Nem megfelelő fejléc kitöltés!</h3>
         <p style="font-size: 13px; color: #475569; margin-top: 4px;">
           A DFQ generáláshoz hiányoznak kötelező mezők a kiválasztott fájlban (<span id="modalFileName" style="font-weight: bold;"></span>). Kérlek pótold a pirossal jelölt részeket!
         </p>
@@ -364,6 +421,7 @@
   <script>
     let loadedFiles = [];
     let pendingFileIdx = null;
+    let editingFileIdx = null;
 
     const dropZone = document.getElementById('uploadDropZone');
     const fileInput = document.getElementById('fileSelector');
@@ -507,7 +565,17 @@
               else if (szi === "LT") { desc = "Helyzettűrés"; k2009 = "109"; }
               else if (["Z", "X", "Y"].includes(szi)) { desc = "Pozíció"; k2009 = "109"; }
 
-              parsedItems.push({ szi, akt, nevl, ftur, atur, megn, desc, k2009 });
+              parsedItems.push({
+                szi,
+                origAkt: akt,
+                akt: akt, // aktuálisan érvényes érték
+                nevl,
+                ftur,
+                atur,
+                megn,
+                desc,
+                k2009
+              });
             }
           }
         }
@@ -515,53 +583,40 @@
 
       parsedItems.sort((a, b) => naturalCompare(a.megn, b.megn));
 
+      // Hibák feltérképezése és javasolt javítás kalkulációja
       const validationErrors = [];
-      const correctedLines = [];
-      const tableHead = `   Werth Messtechnik / Datum: ${datum} ${uhrzeit} / Seite: 1\n--------------------------------------------------------------------------------------\n SYM       IST       SOLL       OTOL       UTOL        ABW      <>TOL     -/+      BEZ\n--------------------------------------------------------------------------------------`;
-      correctedLines.push(tableHead);
-
       parsedItems.forEach(item => {
         const maxTol = +(item.nevl + item.ftur).toFixed(4);
         const minTol = +(item.nevl + item.atur).toFixed(4);
         let hasErr = false;
         let diff = 0;
-        let newAkt = item.akt;
+        let suggestedAkt = item.origAkt;
 
-        if (item.akt > maxTol) {
+        if (item.origAkt > maxTol) {
           hasErr = true;
-          diff = +(item.akt - maxTol).toFixed(4);
+          diff = +(item.origAkt - maxTol).toFixed(4);
           const offset = Math.min(0.0200, Math.max(0.0050, Math.abs(maxTol - minTol) * 0.25));
-          newAkt = +(maxTol - offset).toFixed(4);
-        } else if (item.akt < minTol) {
+          suggestedAkt = +(maxTol - offset).toFixed(4);
+        } else if (item.origAkt < minTol) {
           hasErr = true;
-          diff = +(item.akt - minTol).toFixed(4);
+          diff = +(item.origAkt - minTol).toFixed(4);
           const offset = Math.min(0.0200, Math.max(0.0050, Math.abs(maxTol - minTol) * 0.25));
-          newAkt = +(minTol + offset).toFixed(4);
+          suggestedAkt = +(minTol + offset).toFixed(4);
         }
 
         if (hasErr) {
           validationErrors.push({
-            megn: item.megn, szi: item.szi,
-            origAkt: item.akt.toFixed(4),
+            megn: item.megn,
+            szi: item.szi,
+            nevl: item.nevl,
+            minTol: minTol,
+            maxTol: maxTol,
+            origAkt: item.origAkt.toFixed(4),
             diff: (diff > 0 ? "+" : "") + diff.toFixed(4),
-            newAkt: newAkt.toFixed(4)
+            suggestedAkt: suggestedAkt.toFixed(4),
+            itemRef: item
           });
         }
-
-        const newDev = +(newAkt - item.nevl).toFixed(4);
-        const newDevStr = (newDev >= 0 ? " " : "") + newDev.toFixed(4);
-        const newBarStr = newDev >= 0 ? "+" : "-";
-
-        const cLine = item.szi.padStart(4, ' ') +
-          newAkt.toFixed(4).padStart(11, ' ') +
-          item.nevl.toFixed(4).padStart(11, ' ') +
-          item.ftur.toFixed(4).padStart(11, ' ') +
-          item.atur.toFixed(4).padStart(11, ' ') +
-          newDevStr.padStart(11, ' ') +
-          "".padStart(10, ' ') +
-          newBarStr.padStart(8, ' ') + " " +
-          item.megn.padStart(6, ' ');
-        correctedLines.push(cLine);
       });
 
       return {
@@ -569,8 +624,38 @@
         headerData: headerData,
         parsedItems: parsedItems,
         validationErrors: validationErrors,
-        correctedBody: "\n" + correctedLines.join("\r\n")
+        isFixed: false // még nincs alkalmazva javítás
       };
+    }
+
+    function buildFileBody(file) {
+      const datum = file.headerData.datum;
+      const uhrzeit = file.headerData.uhrzeit;
+      const lines = [];
+      lines.push(`   Werth Messtechnik / Datum: ${datum} ${uhrzeit} / Seite: 1`);
+      lines.push(`--------------------------------------------------------------------------------------`);
+      lines.push(` SYM       IST       SOLL       OTOL       UTOL        ABW      <>TOL     -/+      BEZ`);
+      lines.push(`--------------------------------------------------------------------------------------`);
+
+      file.parsedItems.forEach(item => {
+        const val = item.akt;
+        const dev = +(val - item.nevl).toFixed(4);
+        const devStr = (dev >= 0 ? " " : "") + dev.toFixed(4);
+        const barStr = dev >= 0 ? "+" : "-";
+
+        const line = item.szi.padStart(4, ' ') +
+          val.toFixed(4).padStart(11, ' ') +
+          item.nevl.toFixed(4).padStart(11, ' ') +
+          item.ftur.toFixed(4).padStart(11, ' ') +
+          item.atur.toFixed(4).padStart(11, ' ') +
+          devStr.padStart(11, ' ') +
+          "".padStart(10, ' ') +
+          barStr.padStart(8, ' ') + " " +
+          item.megn.padStart(6, ' ');
+        lines.push(line);
+      });
+
+      return "\n" + lines.join("\r\n");
     }
 
     function renderValidatorView() {
@@ -578,46 +663,69 @@
       const list = document.getElementById('validatorFilesList');
       document.getElementById('validatorActions').style.display = loadedFiles.length > 1 ? "block" : "none";
 
-      const failed = loadedFiles.filter(f => f.validationErrors.length > 0);
-      if (failed.length > 0) {
+      const unfixedFiles = loadedFiles.filter(f => f.validationErrors.length > 0 && !f.isFixed);
+      const totalInitialErrors = loadedFiles.reduce((sum, f) => sum + f.validationErrors.length, 0);
+
+      if (unfixedFiles.length > 0) {
         let errHtml = "";
-        failed.forEach(f => {
-          errHtml += `<div style="margin-top:8px;"><strong>📄 ${f.name}</strong><ul style="padding-left:20px; font-family:monospace; font-size:12px;">`;
+        unfixedFiles.forEach(f => {
+          errHtml += `<div style="margin-top:10px;"><strong>📄 ${f.name}</strong><ul style="padding-left:20px; font-family:monospace; font-size:12px; margin-top:4px;">`;
           f.validationErrors.forEach(e => {
-            errHtml += `<li>Tétel: ${e.megn} | Eredeti: ${e.origAkt} | <span style="color:var(--danger)">Eltérés: ${e.diff}</span> | Javított: <b>${e.newAkt}</b></li>`;
+            errHtml += `<li>Tétel: <b>${e.megn}</b> | Eredeti: ${e.origAkt} | <span style="color:var(--danger)">Kiesés: ${e.diff}</span> | Javasolt: <b style="color:var(--success)">${e.suggestedAkt}</b></li>`;
           });
           errHtml += `</ul></div>`;
         });
         overview.innerHTML = `
           <div class="alert-box warning">
-            <h3>⚠️ Figyelem! Tűrésen kívüli méretek találhatók (${failed.length} jegyzőkönyvben)</h3>
+            <h3>⚠️ Figyelem! Tűrésen kívüli méretek találhatók (${unfixedFiles.length} jegyzőkönyvben)</h3>
+            <p style="font-size:13px; margin-top:4px;">Kérlek dönts a méretek javításáról a lenti gombokkal!</p>
             ${errHtml}
+          </div>
+        `;
+      } else if (totalInitialErrors > 0) {
+        overview.innerHTML = `
+          <div class="alert-box success">
+            <h3>✅ Minden hiba sikeresen javítva és jóváhagyva!</h3>
+            <p>A mérési jegyzőkönyvek most már a javított, határon belüli értékeket tartalmazzák.</p>
           </div>
         `;
       } else {
         overview.innerHTML = `
           <div class="alert-box success">
             <h3>✅ Minden méret megfelelő!</h3>
-            <p>A betöltött ${loadedFiles.length} jegyzőkönyvben minden mért érték az előírt tűrésmezőn belül van.</p>
+            <p>A betöltött ${loadedFiles.length} jegyzőkönyvben minden mért érték eredetileg is a tűrésmezőn belül volt.</p>
           </div>
         `;
       }
 
       let cardsHtml = "";
       loadedFiles.forEach((f, idx) => {
-        const fullContent = buildHeaderString(f.headerData) + f.correctedBody;
+        const fullContent = buildHeaderString(f.headerData) + buildFileBody(f);
+        
+        // Státusz szöveg
+        let statusBadge = "";
+        if (f.validationErrors.length === 0) {
+          statusBadge = `<span style="font-size:12px; margin-left:8px; font-weight:600; color:var(--success);">(Hibátlan)</span>`;
+        } else if (f.isFixed) {
+          statusBadge = `<span style="font-size:12px; margin-left:8px; font-weight:600; color:var(--success);">(✅ Javítva: ${f.validationErrors.length} hiba)</span>`;
+        } else {
+          statusBadge = `<span style="font-size:12px; margin-left:8px; font-weight:600; color:var(--danger);">(⚠️ ${f.validationErrors.length} hiba - Döntést igényel)</span>`;
+        }
+
         cardsHtml += `
           <div class="file-row">
             <div class="file-row-header">
               <div>
                 <strong>${f.name}</strong>
-                <span style="font-size:12px; margin-left:8px; font-weight:600; color:${f.validationErrors.length > 0 ? 'var(--danger)' : 'var(--success)'}">
-                  (${f.validationErrors.length > 0 ? f.validationErrors.length + ' hiba korrigálva' : 'Hibátlan'})
-                </span>
+                ${statusBadge}
               </div>
               <div class="btn-group">
-                <button class="btn btn-outline" onclick="toggleFilePreview(${idx})">👁️ Előnézet</button>
+                ${f.validationErrors.length > 0 && !f.isFixed ? `
+                  <button class="btn btn-warning" onclick="applyAutoFix(${idx})">⚡ Javítás (Javasoltra)</button>
+                  <button class="btn btn-primary" onclick="openManualCorrectionModal(${idx})">✏️ Javítás módosítással</button>
+                ` : ''}
                 <button class="btn btn-outline" onclick="downloadCorrectedTxt(${idx})">📥 Javított TXT</button>
+                <button class="btn btn-outline" onclick="toggleFilePreview(${idx})">👁️ Előnézet</button>
                 <button class="btn btn-dfq" onclick="requestDfqExport(${idx})">📊 DFQ Letöltése</button>
               </div>
             </div>
@@ -627,6 +735,75 @@
       });
       list.innerHTML = cardsHtml;
     }
+
+    // 1. DÖNTÉS: AUTOMATA JAVÍTÁS A JAVASOLTRA
+    function applyAutoFix(idx) {
+      const f = loadedFiles[idx];
+      if (!f) return;
+
+      f.validationErrors.forEach(err => {
+        err.itemRef.akt = parseFloat(err.suggestedAkt);
+      });
+      f.isFixed = true;
+
+      renderValidatorView();
+      renderMatrixView();
+    }
+
+    // 2. DÖNTÉS: JAVÍTÁS FELAJÁNLOTT ADATOKKAL, MÓDOSÍTÁSI LEHETŐSÉGGEL
+    function openManualCorrectionModal(idx) {
+      editingFileIdx = idx;
+      const f = loadedFiles[idx];
+      if (!f) return;
+
+      document.getElementById('corrModalFileName').innerText = f.name;
+      const tbody = document.getElementById('corrModalTableBody');
+      tbody.innerHTML = "";
+
+      f.validationErrors.forEach((err, eIdx) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${err.megn}</strong></td>
+          <td>${err.szi}</td>
+          <td>${err.nevl.toFixed(4)}</td>
+          <td>${err.minTol.toFixed(4)} ... ${err.maxTol.toFixed(4)}</td>
+          <td style="color:var(--danger); font-weight:bold;">${err.origAkt}</td>
+          <td>
+            <input type="number" step="0.0001" id="corr_input_${eIdx}" value="${err.suggestedAkt}">
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('correctionModal').classList.add('active');
+    }
+
+    document.getElementById('btnCorrCancel').addEventListener('click', () => {
+      document.getElementById('correctionModal').classList.remove('active');
+      editingFileIdx = null;
+    });
+
+    document.getElementById('btnCorrApply').addEventListener('click', () => {
+      if (editingFileIdx === null) return;
+      const f = loadedFiles[editingFileIdx];
+
+      f.validationErrors.forEach((err, eIdx) => {
+        const inp = document.getElementById(`corr_input_${eIdx}`);
+        if (inp) {
+          const customVal = parseFloat(inp.value);
+          if (!isNaN(customVal)) {
+            err.itemRef.akt = customVal;
+          }
+        }
+      });
+      f.isFixed = true;
+
+      document.getElementById('correctionModal').classList.remove('active');
+      editingFileIdx = null;
+
+      renderValidatorView();
+      renderMatrixView();
+    });
 
     function toggleFilePreview(idx) {
       const box = document.getElementById(`previewBox_${idx}`);
@@ -701,10 +878,9 @@
         f.headerData.datum = document.getElementById('m_datum').value.trim();
         f.headerData.uhrzeit = document.getElementById('m_uhrzeit').value.trim();
 
-        // Előnézeti tartalom azonnali frissítése a mentett fejléccel
         const preEl = document.getElementById(`previewBox_${pendingFileIdx}`);
         if (preEl) {
-          preEl.textContent = buildHeaderString(f.headerData) + f.correctedBody;
+          preEl.textContent = buildHeaderString(f.headerData) + buildFileBody(f);
         }
 
         document.getElementById('headerModal').classList.remove('active');
@@ -778,7 +954,7 @@
     document.getElementById('btnDownloadAllDfq').addEventListener('click', async () => {
       const missingFiles = loadedFiles.filter(f => !isHeaderComplete(f.headerData));
       if (missingFiles.length > 0) {
-        alert(`Figyelem! ${missingFiles.length} fájlnál hiányzik a fejléc kitöltése. Kérlek javítsd őket a "DFQ Letöltése" gombbal.`);
+        alert(`Figyelem! ${missingFiles.length} fájlnál hiányzik a fejléc kitöltése. Kérlek javítsd őket egyenként a "DFQ Letöltése" gombbal.`);
         return;
       }
 
@@ -797,7 +973,7 @@
       const file = loadedFiles[idx];
       if (!file) return;
 
-      const fullTxt = buildHeaderString(file.headerData) + file.correctedBody;
+      const fullTxt = buildHeaderString(file.headerData) + buildFileBody(file);
       const blob = new Blob([fullTxt], { type: 'text/plain;charset=windows-1250' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -805,6 +981,7 @@
       a.click();
     }
 
+    // 2. TAB: MÁTRIX MEGJELENÍTÉS
     function renderMatrixView() {
       if (!loadedFiles.length) {
         document.getElementById('matrixWrapper').style.display = 'none';
