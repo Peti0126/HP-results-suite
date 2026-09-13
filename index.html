@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HP Results Suite 2026</title>
+  <title>HP Metrology Suite 2026</title>
   
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -33,7 +33,7 @@
       padding: 20px;
     }
 
-    .container { max-width: 1350px; margin: 0 auto; }
+    .container { max-width: 1400px; margin: 0 auto; }
 
     header {
       background: var(--surface);
@@ -101,7 +101,7 @@
     }
 
     .btn {
-      padding: 8px 14px;
+      padding: 8px 13px;
       border-radius: 6px;
       border: none;
       font-size: 13px;
@@ -119,11 +119,22 @@
     .btn-success:hover { background: var(--success-hover); }
     .btn-dfq { background: #0ea5e9; color: #fff; }
     .btn-dfq:hover { background: #0284c7; }
+    .btn-txt { background: #475569; color: #fff; }
+    .btn-txt:hover { background: #334155; }
+    .btn-edit-hdr { background: #6366f1; color: #fff; }
+    .btn-edit-hdr:hover { background: #4f46e5; }
     .btn-warning { background: #f59e0b; color: #fff; }
     .btn-warning:hover { background: #d97706; }
     .btn-secondary { background: #64748b; color: #fff; }
     .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
     .btn-outline:hover { background: #f1f5f9; }
+
+    .action-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
 
     .file-row {
       background: #f8fafc;
@@ -272,7 +283,7 @@
     
     <header class="no-print">
       <div class="app-title">
-        <h1>HP Results Suite 2026</h1>
+        <h1>HP Metrology Suite 2026</h1>
         <p>1. Ellenőrzés & Korrekció &bull; 2. Intelligens DFQ Export &bull; 3. Vonalkód Mátrix</p>
       </div>
       <div style="font-size: 12px; color: var(--text-muted); text-align: right;">
@@ -284,7 +295,7 @@
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT jegyzőkönyveket</h3>
-      <p>Több fájl egyidejű feldolgozása, valósághű szórásképzéssel (0.0050–0.0200 mm)</p>
+      <p>Több fájl egyidejű feldolgozása, peremre húzott szórásképzéssel (0.0050–0.0200 mm)</p>
     </div>
 
     <!-- Tab navigáció -->
@@ -293,15 +304,18 @@
       <button class="tab-btn" id="btnTabMatrix" type="button">📊 2. Vonalkód Mátrix Generátor</button>
     </div>
 
-    <!-- 1. TAB: JEGYZŐKÖNYV ELLENŐRZŐ (ELSŐDLEGES) -->
+    <!-- 1. TAB: JEGYZŐKÖNYV ELLENŐRZŐ -->
     <div id="tab-validator" class="tab-pane active">
       <div id="validatorOverview">
         <div class="alert-box warning">Kérlek tölts fel mérési jegyzőkönyveket (.txt) az ellenőrzéshez!</div>
       </div>
-      <div id="validatorActions" style="margin-bottom: 15px; display: none; display: flex; gap: 10px; flex-wrap: wrap;">
+      
+      <!-- Felső csoportos letöltési sáv -->
+      <div id="validatorActions" class="action-bar" style="display: none;">
         <button class="btn btn-dfq" id="btnDownloadAllDfq" type="button">📊 Összes DFQ Letöltése (.ZIP)</button>
         <button class="btn btn-primary" id="btnDownloadAllTxt" type="button">📦 Összes TXT Letöltése (.ZIP)</button>
       </div>
+      
       <div id="validatorFilesList"></div>
     </div>
 
@@ -355,13 +369,13 @@
     </div>
   </div>
 
-  <!-- MODAL: HIÁNYZÓ FEJLÉCADATOK JAVÍTÁSA -->
+  <!-- MODAL: FEJLÉCADATOK MÓDOSÍTÁSA (MANUÁLIS VAGY HIÁNYPÓTLÁS) -->
   <div class="modal-backdrop" id="headerModal">
     <div class="modal-window">
       <div class="modal-header">
-        <h3 style="color: #b45309;">⚠️ Nem megfelelő fejléc kitöltés!</h3>
+        <h3 id="modalTitleText" style="color: #4338ca;">⚙️ Fejléc és DFQ Paraméterek Módosítása</h3>
         <p style="font-size: 13px; color: #475569; margin-top: 4px;">
-          A DFQ generáláshoz hiányoznak kötelező mezők a kiválasztott fájlban (<span id="modalFileName" style="font-weight: bold;"></span>). Kérlek pótold a pirossal jelölt részeket!
+          Fájl: <strong id="modalFileName"></strong>. Módosítsd a kívánt adatokat a jegyzőkönyv és a DFQ fejléchez.
         </p>
       </div>
       
@@ -414,6 +428,7 @@
 
       <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
         <button class="btn btn-outline" id="btnModalCancel" type="button">Mégsem</button>
+        <button class="btn btn-primary" id="btnModalSaveOnly" type="button">💾 Csak Mentés</button>
         <button class="btn btn-success" id="btnModalSaveAndDownload" type="button">💾 Mentés & DFQ Letöltése</button>
       </div>
     </div>
@@ -448,6 +463,7 @@
     });
 
     document.getElementById('btnTabMatrix').addEventListener('click', () => {
+      document.getElementById('btnTabMatrix').classList.add('active');
       document.getElementById('btnTabMatrix').classList.add('active');
       document.getElementById('btnTabValidator').classList.remove('active');
       document.getElementById('tab-matrix').classList.add('active');
@@ -675,7 +691,12 @@
       const overview = document.getElementById('validatorOverview');
       const list = document.getElementById('validatorFilesList');
       const actions = document.getElementById('validatorActions');
-      actions.style.display = loadedFiles.length > 0 ? "flex" : "none";
+      
+      if (loadedFiles.length > 0) {
+        actions.style.display = "flex";
+      } else {
+        actions.style.display = "none";
+      }
 
       const unfixedFiles = loadedFiles.filter(f => f.validationErrors.length > 0 && !f.isFixed);
       const totalInitialErrors = loadedFiles.reduce((sum, f) => sum + f.validationErrors.length, 0);
@@ -692,7 +713,7 @@
         overview.innerHTML = `
           <div class="alert-box warning">
             <h3>⚠️ Figyelem! Tűrésen kívüli méretek találhatók (${unfixedFiles.length} jegyzőkönyvben)</h3>
-            <p style="font-size:13px; margin-top:4px;">Az előnézetben és a javításban a felajánlott (peremen belüli, 4 tizedesjegyes) értékek szerepelnek. Kérlek válassz a javítási módok közül!</p>
+            <p style="font-size:13px; margin-top:4px;">Az előnézetben és a letöltésekben a javasolt (peremen belüli, 4 tizedesjegyes) értékek szerepelnek. Kérlek válassz a javítási módok közül!</p>
             ${errHtml}
           </div>
         `;
@@ -735,8 +756,9 @@
                   <button class="btn btn-warning" onclick="applyAutoFix(${idx})">⚡ Javítás (Javasoltra)</button>
                   <button class="btn btn-primary" onclick="openManualCorrectionModal(${idx})">✏️ Javítás módosítással</button>
                 ` : ''}
+                <button class="btn btn-edit-hdr" onclick="openManualHeaderModal(${idx})">⚙️ Fejléc módosítása</button>
                 <button class="btn btn-outline" onclick="toggleFilePreview(${idx})">👁️ Előnézet</button>
-                <button class="btn btn-outline" onclick="downloadSingleTxt(${idx})">💾 TXT Letöltése</button>
+                <button class="btn btn-txt" onclick="downloadSingleTxt(${idx})">💾 TXT Letöltése</button>
                 <button class="btn btn-dfq" onclick="requestDfqExport(${idx})">📊 DFQ Letöltése</button>
               </div>
             </div>
@@ -775,9 +797,8 @@
       renderMatrixView();
 
       const box = document.getElementById(`previewBox_${idx}`);
-      if (box) {
+      if (box && box.style.display === 'block') {
         box.textContent = buildHeaderString(f.headerData) + buildFileBody(f);
-        box.style.display = 'block';
       }
     }
 
@@ -835,9 +856,8 @@
       renderMatrixView();
 
       const box = document.getElementById(`previewBox_${editingFileIdx}`);
-      if (box) {
+      if (box && box.style.display === 'block') {
         box.textContent = buildHeaderString(f.headerData) + buildFileBody(f);
-        box.style.display = 'block';
       }
       editingFileIdx = null;
     });
@@ -846,12 +866,25 @@
       return !!(h.teileNr && h.teileNr.trim() && h.kunde && h.kunde.trim());
     }
 
+    // Kifejezetten manuális fejléc-megnyitás
+    function openManualHeaderModal(idx) {
+      pendingFileIdx = idx;
+      const file = loadedFiles[idx];
+      if (!file) return;
+
+      document.getElementById('modalTitleText').innerText = "⚙️ Fejléc és DFQ Paraméterek Módosítása";
+      document.getElementById('modalTitleText').style.color = "#4338ca";
+      openHeaderModal(file);
+    }
+
     function requestDfqExport(idx) {
       const file = loadedFiles[idx];
       if (!file) return;
 
       if (!isHeaderComplete(file.headerData)) {
         pendingFileIdx = idx;
+        document.getElementById('modalTitleText').innerText = "⚠️ Nem megfelelő fejléc kitöltés!";
+        document.getElementById('modalTitleText').style.color = "#b45309";
         openHeaderModal(file);
       } else {
         triggerDfqDownload(file);
@@ -885,37 +918,52 @@
       pendingFileIdx = null;
     });
 
+    function saveHeaderFromModal() {
+      if (pendingFileIdx === null) return false;
+      const f = loadedFiles[pendingFileIdx];
+      const teileNr = document.getElementById('m_teileNr').value.trim();
+
+      f.headerData.teileNr = teileNr;
+      f.headerData.teileBez = document.getElementById('m_teileBez').value.trim();
+      f.headerData.kunde = document.getElementById('m_kunde').value.trim();
+      f.headerData.auftrag = document.getElementById('m_auftrag').value.trim();
+      f.headerData.charge = document.getElementById('m_charge').value.trim();
+      f.headerData.maschine = document.getElementById('m_maschine').value.trim();
+      f.headerData.pruefer = document.getElementById('m_pruefer').value.trim();
+      f.headerData.bemerkung = document.getElementById('m_bemerkung').value.trim();
+      f.headerData.k1053 = document.getElementById('m_k1053').value.trim();
+      f.headerData.datum = document.getElementById('m_datum').value.trim();
+      f.headerData.uhrzeit = document.getElementById('m_uhrzeit').value.trim();
+
+      const preEl = document.getElementById(`previewBox_${pendingFileIdx}`);
+      if (preEl && preEl.style.display === 'block') {
+        preEl.textContent = buildHeaderString(f.headerData) + buildFileBody(f);
+      }
+      return true;
+    }
+
+    // Csak Mentés gomb eseménykezelője
+    document.getElementById('btnModalSaveOnly').addEventListener('click', () => {
+      if (saveHeaderFromModal()) {
+        document.getElementById('headerModal').classList.remove('active');
+        pendingFileIdx = null;
+      }
+    });
+
+    // Mentés & DFQ Letöltése gomb
     document.getElementById('btnModalSaveAndDownload').addEventListener('click', () => {
       const teileNr = document.getElementById('m_teileNr').value.trim();
-      const kunde = document.getElementById('m_kunde').value.trim();
-
       if (!teileNr) {
-        alert("A Teile-Nummer (Cikkszám) megadása kötelező!");
+        alert("A Teile-Nummer (Cikkszám) megadása kötelező a DFQ letöltéshez!");
         document.getElementById('m_teileNr').focus();
         return;
       }
 
-      if (pendingFileIdx !== null) {
-        const f = loadedFiles[pendingFileIdx];
-        f.headerData.teileNr = teileNr;
-        f.headerData.teileBez = document.getElementById('m_teileBez').value.trim();
-        f.headerData.kunde = kunde;
-        f.headerData.auftrag = document.getElementById('m_auftrag').value.trim();
-        f.headerData.charge = document.getElementById('m_charge').value.trim();
-        f.headerData.maschine = document.getElementById('m_maschine').value.trim();
-        f.headerData.pruefer = document.getElementById('m_pruefer').value.trim();
-        f.headerData.bemerkung = document.getElementById('m_bemerkung').value.trim();
-        f.headerData.k1053 = document.getElementById('m_k1053').value.trim();
-        f.headerData.datum = document.getElementById('m_datum').value.trim();
-        f.headerData.uhrzeit = document.getElementById('m_uhrzeit').value.trim();
-
-        const preEl = document.getElementById(`previewBox_${pendingFileIdx}`);
-        if (preEl) {
-          preEl.textContent = buildHeaderString(f.headerData) + buildFileBody(f);
-        }
-
+      if (saveHeaderFromModal()) {
+        const fileToDownload = loadedFiles[pendingFileIdx];
         document.getElementById('headerModal').classList.remove('active');
-        triggerDfqDownload(f);
+        pendingFileIdx = null;
+        triggerDfqDownload(fileToDownload);
       }
     });
 
@@ -982,7 +1030,6 @@
       a.click();
     }
 
-    // Egyedi TXT letöltése
     function downloadSingleTxt(idx) {
       const file = loadedFiles[idx];
       if (!file) return;
@@ -995,7 +1042,6 @@
       a.click();
     }
 
-    // Összes TXT letöltése ZIP-ben
     document.getElementById('btnDownloadAllTxt').addEventListener('click', async () => {
       if (!loadedFiles.length) {
         alert("Nincsenek betöltött fájlok!");
@@ -1015,7 +1061,6 @@
       a.click();
     });
 
-    // Összes DFQ letöltése ZIP-ben
     document.getElementById('btnDownloadAllDfq').addEventListener('click', async () => {
       const missingFiles = loadedFiles.filter(f => !isHeaderComplete(f.headerData));
       if (missingFiles.length > 0) {
@@ -1034,7 +1079,6 @@
       a.click();
     });
 
-    // 2. TAB: MÁTRIX MEGJELENÍTÉS
     function renderMatrixView() {
       if (!loadedFiles.length) {
         document.getElementById('matrixWrapper').style.display = 'none';
