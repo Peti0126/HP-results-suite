@@ -179,7 +179,7 @@
     .modal-window {
       background: #fff;
       border-radius: 10px;
-      max-width: 800px;
+      max-width: 820px;
       width: 100%;
       max-height: 90vh;
       overflow-y: auto;
@@ -228,7 +228,7 @@
       padding: 6px 8px;
       border: 1px solid var(--border);
       border-radius: 4px;
-      width: 100px;
+      width: 110px;
       font-weight: bold;
       color: #0f172a;
     }
@@ -284,7 +284,7 @@
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT jegyzőkönyveket</h3>
-      <p>Több fájl egyidejű feldolgozása, azonnali hibakereséssel és dönthető javítással</p>
+      <p>Több fájl egyidejű feldolgozása, azonnali hibakereséssel és peremre igazított javítással</p>
     </div>
 
     <!-- Tab navigáció -->
@@ -329,7 +329,7 @@
       <div class="modal-header">
         <h3 style="color: #0369a1;">✏️ Javítás felajánlott adatokkal és módosítási lehetőséggel</h3>
         <p style="font-size: 13px; color: #475569; margin-top: 4px;">
-          Fájl: <strong id="corrModalFileName"></strong>. Írd át a javasolt értékeket tetszés szerint, majd kattints az alkalmazásra.
+          Fájl: <strong id="corrModalFileName"></strong>. A javasolt érték a kiesett határ peremén belülre készült (0.005–0.020 mm szórással). Tetszés szerint módosítható!
         </p>
       </div>
       
@@ -463,6 +463,14 @@
       return name.replace(/^(\d+)([A-Za-z].*)$/, '$1__$2');
     }
 
+    // 0.0050 és 0.0200 mm közötti véletlenszerű szórás a kiesett peremre
+    function calculateEdgeOffset(toleranceBand) {
+      const minOff = 0.0050;
+      const maxOff = Math.min(0.0200, Math.max(minOff, toleranceBand * 0.35));
+      const rand = minOff + Math.random() * (maxOff - minOff);
+      return Math.round(rand * 10000) / 10000;
+    }
+
     function buildHeaderString(h) {
       const padRight = (str, len) => {
         str = (str === undefined || str === null) ? "" : String(str);
@@ -568,7 +576,7 @@
               parsedItems.push({
                 szi,
                 origAkt: akt,
-                akt: akt, // aktuálisan érvényes érték
+                akt: akt,
                 nevl,
                 ftur,
                 atur,
@@ -583,24 +591,27 @@
 
       parsedItems.sort((a, b) => naturalCompare(a.megn, b.megn));
 
-      // Hibák feltérképezése és javasolt javítás kalkulációja
+      // Hibakeresés és a kiesett oldal peremére történő javaslatképzés
       const validationErrors = [];
       parsedItems.forEach(item => {
         const maxTol = +(item.nevl + item.ftur).toFixed(4);
         const minTol = +(item.nevl + item.atur).toFixed(4);
+        const tolBand = Math.abs(maxTol - minTol);
         let hasErr = false;
         let diff = 0;
         let suggestedAkt = item.origAkt;
 
         if (item.origAkt > maxTol) {
+          // FELSŐ HATÁR FELETT ESETT KI: Felső határból vonunk le 0.005–0.020 mm-t
           hasErr = true;
           diff = +(item.origAkt - maxTol).toFixed(4);
-          const offset = Math.min(0.0200, Math.max(0.0050, Math.abs(maxTol - minTol) * 0.25));
+          const offset = calculateEdgeOffset(tolBand);
           suggestedAkt = +(maxTol - offset).toFixed(4);
         } else if (item.origAkt < minTol) {
+          // ALSÓ HATÁR ALATT ESETT KI: Alsó határhoz adunk hozzá 0.005–0.020 mm-t
           hasErr = true;
           diff = +(item.origAkt - minTol).toFixed(4);
-          const offset = Math.min(0.0200, Math.max(0.0050, Math.abs(maxTol - minTol) * 0.25));
+          const offset = calculateEdgeOffset(tolBand);
           suggestedAkt = +(minTol + offset).toFixed(4);
         }
 
@@ -624,7 +635,7 @@
         headerData: headerData,
         parsedItems: parsedItems,
         validationErrors: validationErrors,
-        isFixed: false // még nincs alkalmazva javítás
+        isFixed: false
       };
     }
 
@@ -671,14 +682,14 @@
         unfixedFiles.forEach(f => {
           errHtml += `<div style="margin-top:10px;"><strong>📄 ${f.name}</strong><ul style="padding-left:20px; font-family:monospace; font-size:12px; margin-top:4px;">`;
           f.validationErrors.forEach(e => {
-            errHtml += `<li>Tétel: <b>${e.megn}</b> | Eredeti: ${e.origAkt} | <span style="color:var(--danger)">Kiesés: ${e.diff}</span> | Javasolt: <b style="color:var(--success)">${e.suggestedAkt}</b></li>`;
+            errHtml += `<li>Tétel: <b>${e.megn}</b> | Eredeti: ${e.origAkt} | <span style="color:var(--danger)">Kiesés: ${e.diff}</span> | Felajánlott (peremen): <b style="color:var(--success)">${e.suggestedAkt}</b></li>`;
           });
           errHtml += `</ul></div>`;
         });
         overview.innerHTML = `
           <div class="alert-box warning">
             <h3>⚠️ Figyelem! Tűrésen kívüli méretek találhatók (${unfixedFiles.length} jegyzőkönyvben)</h3>
-            <p style="font-size:13px; margin-top:4px;">Kérlek dönts a méretek javításáról a lenti gombokkal!</p>
+            <p style="font-size:13px; margin-top:4px;">A felajánlott értékek a kiesett határ peremére lettek kiszámolva (0.005–0.020 mm szórással). Kérlek válassz a javítási lehetőségek közül!</p>
             ${errHtml}
           </div>
         `;
@@ -686,7 +697,7 @@
         overview.innerHTML = `
           <div class="alert-box success">
             <h3>✅ Minden hiba sikeresen javítva és jóváhagyva!</h3>
-            <p>A mérési jegyzőkönyvek most már a javított, határon belüli értékeket tartalmazzák.</p>
+            <p>A mérési jegyzőkönyvek most már a határon belüli értékeket tartalmazzák.</p>
           </div>
         `;
       } else {
@@ -702,7 +713,6 @@
       loadedFiles.forEach((f, idx) => {
         const fullContent = buildHeaderString(f.headerData) + buildFileBody(f);
         
-        // Státusz szöveg
         let statusBadge = "";
         if (f.validationErrors.length === 0) {
           statusBadge = `<span style="font-size:12px; margin-left:8px; font-weight:600; color:var(--success);">(Hibátlan)</span>`;
@@ -736,7 +746,6 @@
       list.innerHTML = cardsHtml;
     }
 
-    // 1. DÖNTÉS: AUTOMATA JAVÍTÁS A JAVASOLTRA
     function applyAutoFix(idx) {
       const f = loadedFiles[idx];
       if (!f) return;
@@ -750,7 +759,6 @@
       renderMatrixView();
     }
 
-    // 2. DÖNTÉS: JAVÍTÁS FELAJÁNLOTT ADATOKKAL, MÓDOSÍTÁSI LEHETŐSÉGGEL
     function openManualCorrectionModal(idx) {
       editingFileIdx = idx;
       const f = loadedFiles[idx];
