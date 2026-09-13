@@ -158,10 +158,11 @@
       overflow-x: auto;
       font-family: Consolas, monospace;
       font-size: 12px;
-      max-height: 360px;
+      max-height: 380px;
       white-space: pre;
       margin-top: 12px;
       display: none;
+      border: 1px solid #334155;
     }
 
     /* MODAL ABLAKOK */
@@ -179,7 +180,7 @@
     .modal-window {
       background: #fff;
       border-radius: 10px;
-      max-width: 820px;
+      max-width: 840px;
       width: 100%;
       max-height: 90vh;
       overflow-y: auto;
@@ -283,7 +284,7 @@
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT jegyzőkönyveket</h3>
-      <p>Több fájl egyidejű feldolgozása, valósághű szórásképzéssel (0.0050–0.0200 mm)</p>
+      <p>Több fájl egyidejű feldolgozása, valós idejű javított előnézettel</p>
     </div>
 
     <!-- Tab navigáció -->
@@ -328,7 +329,7 @@
       <div class="modal-header">
         <h3 style="color: #0369a1;">✏️ Javítás felajánlott adatokkal és módosítási lehetőséggel</h3>
         <p style="font-size: 13px; color: #475569; margin-top: 4px;">
-          Fájl: <strong id="corrModalFileName"></strong>. A felajánlott értékek a kiesett határ peremén belülre készültek, természetes szórással.
+          Fájl: <strong id="corrModalFileName"></strong>. A felajánlott értékek a kiesett határ peremén belülre készültek. Tetszés szerint felülbírálhatók!
         </p>
       </div>
       
@@ -462,11 +463,9 @@
       return name.replace(/^(\d+)([A-Za-z].*)$/, '$1__$2');
     }
 
-    // Valósághű, 4 tizedesjegy pontosságú perem-eltolás (0.0050 és 0.0200 mm között)
     function generateNaturalOffset(toleranceBand) {
       const minVal = 0.0050;
       const maxVal = Math.min(0.0200, Math.max(0.0080, toleranceBand * 0.40));
-      // Véletlenszám generálás 4 tizedesjegyes felbontással, kerek értékek kizárásával
       let rand = minVal + Math.random() * (maxVal - minVal);
       let offset = parseFloat(rand.toFixed(4));
       if (offset === 0.0100 || offset === 0.0200 || offset === 0.0050) {
@@ -595,7 +594,7 @@
 
       parsedItems.sort((a, b) => naturalCompare(a.megn, b.megn));
 
-      // Pontos, peremre húzó szórás számítás
+      // Hibakeresés és perem-javaslat generálás
       const validationErrors = [];
       parsedItems.forEach(item => {
         const maxTol = +(item.nevl + item.ftur).toFixed(4);
@@ -629,6 +628,8 @@
             suggestedAkt: suggestedAkt.toFixed(4),
             itemRef: item
           });
+          // Az előnézethez és a későbbi javításhoz beállítjuk alapértelmezett felajánlottként
+          item.akt = parseFloat(suggestedAkt.toFixed(4));
         }
       });
 
@@ -651,7 +652,7 @@
       lines.push(`--------------------------------------------------------------------------------------`);
 
       file.parsedItems.forEach(item => {
-        const val = item.akt;
+        const val = item.akt; // mindig a javított vagy felajánlott érték kerül ide
         const dev = +(val - item.nevl).toFixed(4);
         const devStr = (dev >= 0 ? " " : "") + dev.toFixed(4);
         const barStr = dev >= 0 ? "+" : "-";
@@ -691,7 +692,7 @@
         overview.innerHTML = `
           <div class="alert-box warning">
             <h3>⚠️ Figyelem! Tűrésen kívüli méretek találhatók (${unfixedFiles.length} jegyzőkönyvben)</h3>
-            <p style="font-size:13px; margin-top:4px;">A javasolt értékek természetes 4 tizedesjegyes szórással (0.0050–0.0200 mm) a peremen belülre kerültek. Kérlek válassz a javítási módok közül!</p>
+            <p style="font-size:13px; margin-top:4px;">Az előnézetben és a javításban a felajánlott (peremen belüli, 4 tizedesjegyes) értékek szerepelnek. Kérlek válassz a javítási módok közül!</p>
             ${errHtml}
           </div>
         `;
@@ -699,7 +700,7 @@
         overview.innerHTML = `
           <div class="alert-box success">
             <h3>✅ Minden hiba sikeresen javítva és jóváhagyva!</h3>
-            <p>A mérési jegyzőkönyvek most már a határon belüli értékeket tartalmazzák.</p>
+            <p>A mérési jegyzőkönyvek és az előnézetek most már a véglegesített határon belüli értékeket tartalmazzák.</p>
           </div>
         `;
       } else {
@@ -713,8 +714,6 @@
 
       let cardsHtml = "";
       loadedFiles.forEach((f, idx) => {
-        const fullContent = buildHeaderString(f.headerData) + buildFileBody(f);
-        
         let statusBadge = "";
         if (f.validationErrors.length === 0) {
           statusBadge = `<span style="font-size:12px; margin-left:8px; font-weight:600; color:var(--success);">(Hibátlan)</span>`;
@@ -741,11 +740,27 @@
                 <button class="btn btn-dfq" onclick="requestDfqExport(${idx})">📊 DFQ Letöltése</button>
               </div>
             </div>
-            <pre class="preview-code" id="previewBox_${idx}">${fullContent}</pre>
+            <pre class="preview-code" id="previewBox_${idx}"></pre>
           </div>
         `;
       });
       list.innerHTML = cardsHtml;
+    }
+
+    // Előnézet megnyitása valós idejű generálással
+    function toggleFilePreview(idx) {
+      const box = document.getElementById(`previewBox_${idx}`);
+      if (!box) return;
+
+      if (box.style.display === 'block') {
+        box.style.display = 'none';
+      } else {
+        const file = loadedFiles[idx];
+        if (file) {
+          box.textContent = buildHeaderString(file.headerData) + buildFileBody(file);
+        }
+        box.style.display = 'block';
+      }
     }
 
     function applyAutoFix(idx) {
@@ -759,6 +774,13 @@
 
       renderValidatorView();
       renderMatrixView();
+
+      // Ha az előnézet nyitva volt, frissítjük
+      const box = document.getElementById(`previewBox_${idx}`);
+      if (box) {
+        box.textContent = buildHeaderString(f.headerData) + buildFileBody(f);
+        box.style.display = 'block';
+      }
     }
 
     function openManualCorrectionModal(idx) {
@@ -803,23 +825,24 @@
           const customVal = parseFloat(inp.value);
           if (!isNaN(customVal)) {
             err.itemRef.akt = customVal;
+            err.suggestedAkt = customVal.toFixed(4);
           }
         }
       });
       f.isFixed = true;
 
       document.getElementById('correctionModal').classList.remove('active');
-      editingFileIdx = null;
 
       renderValidatorView();
       renderMatrixView();
-    });
 
-    function toggleFilePreview(idx) {
-      const box = document.getElementById(`previewBox_${idx}`);
-      if (!box) return;
-      box.style.display = (box.style.display === 'block') ? 'none' : 'block';
-    }
+      const box = document.getElementById(`previewBox_${editingFileIdx}`);
+      if (box) {
+        box.textContent = buildHeaderString(f.headerData) + buildFileBody(f);
+        box.style.display = 'block';
+      }
+      editingFileIdx = null;
+    });
 
     function isHeaderComplete(h) {
       return !!(h.teileNr && h.teileNr.trim() && h.kunde && h.kunde.trim());
