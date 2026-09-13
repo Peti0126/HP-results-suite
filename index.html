@@ -284,7 +284,7 @@
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT jegyzőkönyveket</h3>
-      <p>Több fájl egyidejű feldolgozása, valós idejű javított előnézettel</p>
+      <p>Több fájl egyidejű feldolgozása, valósághű szórásképzéssel (0.0050–0.0200 mm)</p>
     </div>
 
     <!-- Tab navigáció -->
@@ -594,7 +594,6 @@
 
       parsedItems.sort((a, b) => naturalCompare(a.megn, b.megn));
 
-      // Hibakeresés és perem-javaslat generálás
       const validationErrors = [];
       parsedItems.forEach(item => {
         const maxTol = +(item.nevl + item.ftur).toFixed(4);
@@ -628,7 +627,6 @@
             suggestedAkt: suggestedAkt.toFixed(4),
             itemRef: item
           });
-          // Az előnézethez és a későbbi javításhoz beállítjuk alapértelmezett felajánlottként
           item.akt = parseFloat(suggestedAkt.toFixed(4));
         }
       });
@@ -652,7 +650,7 @@
       lines.push(`--------------------------------------------------------------------------------------`);
 
       file.parsedItems.forEach(item => {
-        const val = item.akt; // mindig a javított vagy felajánlott érték kerül ide
+        const val = item.akt;
         const dev = +(val - item.nevl).toFixed(4);
         const devStr = (dev >= 0 ? " " : "") + dev.toFixed(4);
         const barStr = dev >= 0 ? "+" : "-";
@@ -735,7 +733,6 @@
                   <button class="btn btn-warning" onclick="applyAutoFix(${idx})">⚡ Javítás (Javasoltra)</button>
                   <button class="btn btn-primary" onclick="openManualCorrectionModal(${idx})">✏️ Javítás módosítással</button>
                 ` : ''}
-                <button class="btn btn-outline" onclick="downloadCorrectedTxt(${idx})">📥 Javított TXT</button>
                 <button class="btn btn-outline" onclick="toggleFilePreview(${idx})">👁️ Előnézet</button>
                 <button class="btn btn-dfq" onclick="requestDfqExport(${idx})">📊 DFQ Letöltése</button>
               </div>
@@ -747,7 +744,6 @@
       list.innerHTML = cardsHtml;
     }
 
-    // Előnézet megnyitása valós idejű generálással
     function toggleFilePreview(idx) {
       const box = document.getElementById(`previewBox_${idx}`);
       if (!box) return;
@@ -775,7 +771,6 @@
       renderValidatorView();
       renderMatrixView();
 
-      // Ha az előnézet nyitva volt, frissítjük
       const box = document.getElementById(`previewBox_${idx}`);
       if (box) {
         box.textContent = buildHeaderString(f.headerData) + buildFileBody(f);
@@ -1001,18 +996,6 @@
       a.download = "DFQ_Jegyzokonyvek_Csomag.zip";
       a.click();
     });
-
-    function downloadCorrectedTxt(idx) {
-      const file = loadedFiles[idx];
-      if (!file) return;
-
-      const fullTxt = buildHeaderString(file.headerData) + buildFileBody(file);
-      const blob = new Blob([fullTxt], { type: 'text/plain;charset=windows-1250' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `JAVITOTT_${file.name}`;
-      a.click();
-    }
 
     // 2. TAB: MÁTRIX MEGJELENÍTÉS
     function renderMatrixView() {
