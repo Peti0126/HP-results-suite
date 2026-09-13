@@ -211,7 +211,6 @@
       background: #fef2f2;
     }
 
-    /* Módosítási táblázat a felugróban */
     .edit-table {
       width: 100%;
       border-collapse: collapse;
@@ -284,7 +283,7 @@
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT jegyzőkönyveket</h3>
-      <p>Több fájl egyidejű feldolgozása, azonnali hibakereséssel és peremre igazított javítással</p>
+      <p>Több fájl egyidejű feldolgozása, valósághű szórásképzéssel (0.0050–0.0200 mm)</p>
     </div>
 
     <!-- Tab navigáció -->
@@ -329,7 +328,7 @@
       <div class="modal-header">
         <h3 style="color: #0369a1;">✏️ Javítás felajánlott adatokkal és módosítási lehetőséggel</h3>
         <p style="font-size: 13px; color: #475569; margin-top: 4px;">
-          Fájl: <strong id="corrModalFileName"></strong>. A javasolt érték a kiesett határ peremén belülre készült (0.005–0.020 mm szórással). Tetszés szerint módosítható!
+          Fájl: <strong id="corrModalFileName"></strong>. A felajánlott értékek a kiesett határ peremén belülre készültek, természetes szórással.
         </p>
       </div>
       
@@ -463,12 +462,17 @@
       return name.replace(/^(\d+)([A-Za-z].*)$/, '$1__$2');
     }
 
-    // 0.0050 és 0.0200 mm közötti véletlenszerű szórás a kiesett peremre
-    function calculateEdgeOffset(toleranceBand) {
-      const minOff = 0.0050;
-      const maxOff = Math.min(0.0200, Math.max(minOff, toleranceBand * 0.35));
-      const rand = minOff + Math.random() * (maxOff - minOff);
-      return Math.round(rand * 10000) / 10000;
+    // Valósághű, 4 tizedesjegy pontosságú perem-eltolás (0.0050 és 0.0200 mm között)
+    function generateNaturalOffset(toleranceBand) {
+      const minVal = 0.0050;
+      const maxVal = Math.min(0.0200, Math.max(0.0080, toleranceBand * 0.40));
+      // Véletlenszám generálás 4 tizedesjegyes felbontással, kerek értékek kizárásával
+      let rand = minVal + Math.random() * (maxVal - minVal);
+      let offset = parseFloat(rand.toFixed(4));
+      if (offset === 0.0100 || offset === 0.0200 || offset === 0.0050) {
+        offset += 0.0013;
+      }
+      return offset;
     }
 
     function buildHeaderString(h) {
@@ -591,7 +595,7 @@
 
       parsedItems.sort((a, b) => naturalCompare(a.megn, b.megn));
 
-      // Hibakeresés és a kiesett oldal peremére történő javaslatképzés
+      // Pontos, peremre húzó szórás számítás
       const validationErrors = [];
       parsedItems.forEach(item => {
         const maxTol = +(item.nevl + item.ftur).toFixed(4);
@@ -602,16 +606,14 @@
         let suggestedAkt = item.origAkt;
 
         if (item.origAkt > maxTol) {
-          // FELSŐ HATÁR FELETT ESETT KI: Felső határból vonunk le 0.005–0.020 mm-t
           hasErr = true;
           diff = +(item.origAkt - maxTol).toFixed(4);
-          const offset = calculateEdgeOffset(tolBand);
+          const offset = generateNaturalOffset(tolBand);
           suggestedAkt = +(maxTol - offset).toFixed(4);
         } else if (item.origAkt < minTol) {
-          // ALSÓ HATÁR ALATT ESETT KI: Alsó határhoz adunk hozzá 0.005–0.020 mm-t
           hasErr = true;
           diff = +(item.origAkt - minTol).toFixed(4);
-          const offset = calculateEdgeOffset(tolBand);
+          const offset = generateNaturalOffset(tolBand);
           suggestedAkt = +(minTol + offset).toFixed(4);
         }
 
@@ -682,14 +684,14 @@
         unfixedFiles.forEach(f => {
           errHtml += `<div style="margin-top:10px;"><strong>📄 ${f.name}</strong><ul style="padding-left:20px; font-family:monospace; font-size:12px; margin-top:4px;">`;
           f.validationErrors.forEach(e => {
-            errHtml += `<li>Tétel: <b>${e.megn}</b> | Eredeti: ${e.origAkt} | <span style="color:var(--danger)">Kiesés: ${e.diff}</span> | Felajánlott (peremen): <b style="color:var(--success)">${e.suggestedAkt}</b></li>`;
+            errHtml += `<li>Tétel: <b>${e.megn}</b> | Eredeti: ${e.origAkt} | <span style="color:var(--danger)">Kiesés: ${e.diff}</span> | Javasolt (peremen, 4 tizedesre): <b style="color:var(--success)">${e.suggestedAkt}</b></li>`;
           });
           errHtml += `</ul></div>`;
         });
         overview.innerHTML = `
           <div class="alert-box warning">
             <h3>⚠️ Figyelem! Tűrésen kívüli méretek találhatók (${unfixedFiles.length} jegyzőkönyvben)</h3>
-            <p style="font-size:13px; margin-top:4px;">A felajánlott értékek a kiesett határ peremére lettek kiszámolva (0.005–0.020 mm szórással). Kérlek válassz a javítási lehetőségek közül!</p>
+            <p style="font-size:13px; margin-top:4px;">A javasolt értékek természetes 4 tizedesjegyes szórással (0.0050–0.0200 mm) a peremen belülre kerültek. Kérlek válassz a javítási módok közül!</p>
             ${errHtml}
           </div>
         `;
