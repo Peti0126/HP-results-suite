@@ -298,8 +298,9 @@
       <div id="validatorOverview">
         <div class="alert-box warning">Kérlek tölts fel mérési jegyzőkönyveket (.txt) az ellenőrzéshez!</div>
       </div>
-      <div id="validatorActions" style="margin-bottom: 15px; display: none;">
+      <div id="validatorActions" style="margin-bottom: 15px; display: none; display: flex; gap: 10px; flex-wrap: wrap;">
         <button class="btn btn-dfq" id="btnDownloadAllDfq" type="button">📊 Összes DFQ Letöltése (.ZIP)</button>
+        <button class="btn btn-primary" id="btnDownloadAllTxt" type="button">📦 Összes TXT Letöltése (.ZIP)</button>
       </div>
       <div id="validatorFilesList"></div>
     </div>
@@ -673,7 +674,8 @@
     function renderValidatorView() {
       const overview = document.getElementById('validatorOverview');
       const list = document.getElementById('validatorFilesList');
-      document.getElementById('validatorActions').style.display = loadedFiles.length > 1 ? "block" : "none";
+      const actions = document.getElementById('validatorActions');
+      actions.style.display = loadedFiles.length > 0 ? "flex" : "none";
 
       const unfixedFiles = loadedFiles.filter(f => f.validationErrors.length > 0 && !f.isFixed);
       const totalInitialErrors = loadedFiles.reduce((sum, f) => sum + f.validationErrors.length, 0);
@@ -734,6 +736,7 @@
                   <button class="btn btn-primary" onclick="openManualCorrectionModal(${idx})">✏️ Javítás módosítással</button>
                 ` : ''}
                 <button class="btn btn-outline" onclick="toggleFilePreview(${idx})">👁️ Előnézet</button>
+                <button class="btn btn-outline" onclick="downloadSingleTxt(${idx})">💾 TXT Letöltése</button>
                 <button class="btn btn-dfq" onclick="requestDfqExport(${idx})">📊 DFQ Letöltése</button>
               </div>
             </div>
@@ -979,6 +982,40 @@
       a.click();
     }
 
+    // Egyedi TXT letöltése
+    function downloadSingleTxt(idx) {
+      const file = loadedFiles[idx];
+      if (!file) return;
+
+      const fullTxt = buildHeaderString(file.headerData) + buildFileBody(file);
+      const blob = new Blob([fullTxt], { type: 'text/plain;charset=windows-1250' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `JAVITOTT_${file.name}`;
+      a.click();
+    }
+
+    // Összes TXT letöltése ZIP-ben
+    document.getElementById('btnDownloadAllTxt').addEventListener('click', async () => {
+      if (!loadedFiles.length) {
+        alert("Nincsenek betöltött fájlok!");
+        return;
+      }
+
+      const zip = new JSZip();
+      loadedFiles.forEach(file => {
+        const fullTxt = buildHeaderString(file.headerData) + buildFileBody(file);
+        zip.file(`JAVITOTT_${file.name}`, fullTxt);
+      });
+
+      const content = await zip.generateAsync({ type: "blob" });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(content);
+      a.download = "JAVITOTT_TXT_Jegyzokonyvek.zip";
+      a.click();
+    });
+
+    // Összes DFQ letöltése ZIP-ben
     document.getElementById('btnDownloadAllDfq').addEventListener('click', async () => {
       const missingFiles = loadedFiles.filter(f => !isHeaderComplete(f.headerData));
       if (missingFiles.length > 0) {
