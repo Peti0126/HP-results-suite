@@ -147,7 +147,21 @@
     .alert-box.warning { background: #fffbeb; border-left: 5px solid var(--warning); color: #92400e; }
     .alert-box.success { background: #ecfdf5; border-left: 5px solid var(--success); color: #065f46; }
 
-    /* MODAL ABLAK A HIÁNYZÓ FEJLÉCHEZ */
+    pre.preview-code {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 14px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      max-height: 360px;
+      white-space: pre;
+      margin-top: 12px;
+      display: none;
+    }
+
+    /* MODAL ABLAK */
     .modal-backdrop {
       display: none;
       position: fixed;
@@ -244,7 +258,7 @@
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT jegyzőkönyveket</h3>
-      <p>Több fájl egyidejű feldolgozása, azonnali méretellenőrzéssel és DFQ előkészítéssel</p>
+      <p>Több fájl egyidejű feldolgozása, azonnali méretellenőrzéssel és előnézettel</p>
     </div>
 
     <!-- Tab navigáció -->
@@ -351,7 +365,6 @@
     let loadedFiles = [];
     let pendingFileIdx = null;
 
-    // Eseménykezelők regisztrálása hiba nélkül
     const dropZone = document.getElementById('uploadDropZone');
     const fileInput = document.getElementById('fileSelector');
 
@@ -368,7 +381,6 @@
       if (e.target.files.length) handleIncomingFiles(Array.from(e.target.files));
     });
 
-    // Tab váltás biztos eseménykezelőkkel
     document.getElementById('btnTabValidator').addEventListener('click', () => {
       document.getElementById('btnTabValidator').classList.add('active');
       document.getElementById('btnTabMatrix').classList.remove('active');
@@ -391,6 +403,31 @@
       if (!name) return "";
       if (/^\d+_[A-Za-z]/.test(name)) return name.replace(/^(\d+)_([A-Za-z].*)$/, '$1__$2');
       return name.replace(/^(\d+)([A-Za-z].*)$/, '$1__$2');
+    }
+
+    function buildHeaderString(h) {
+      const padRight = (str, len) => {
+        str = (str === undefined || str === null) ? "" : String(str);
+        if (str.length >= len) return str.slice(0, len);
+        return str + " ".repeat(len - str.length);
+      };
+
+      return `+==========================================================================================+
+|                                                                                          |
+|   Kunde           :  ${padRight(h.kunde, 42)}Datum  :${h.datum}          |
+|   Teilebezeichnung:  ${padRight(h.teileBez, 42)}Uhrzeit:${h.uhrzeit}          |
+|   Teile-Nummer    :  ${padRight(h.teileNr, 68)}|
+|   Auftragsnummer  :  ${padRight(h.auftrag, 68)}|
+|   Chargennummer   :  ${padRight(h.charge, 68)}|
+|   Masch.Nummer    :  ${padRight(h.maschine, 68)}|
+|   Pruefer         :  ${padRight(h.pruefer, 68)}|  
+|   Bemerkungen     :  ${padRight(h.bemerkung, 68)}|
+|   Pruefungsinfo   :  ${padRight(h.pInfo1, 68)}|
+|   Pruefungsinfo 2 :  ${padRight(h.pInfo2, 68)}|
+|   Pruefungsinfo 3 :  ${padRight(h.pInfo3, 68)}|
+|                                                                                          |
++==========================================================================================+
+`;
     }
 
     async function handleIncomingFiles(fileList) {
@@ -434,7 +471,6 @@
         pInfo3: ""
       };
 
-      // Törzs feldolgozása
       const lines = rawText.split(/\r?\n/);
       let isTable = false;
       const parsedItems = [];
@@ -479,7 +515,6 @@
 
       parsedItems.sort((a, b) => naturalCompare(a.megn, b.megn));
 
-      // Validáció és korrekció
       const validationErrors = [];
       const correctedLines = [];
       const tableHead = `   Werth Messtechnik / Datum: ${datum} ${uhrzeit} / Seite: 1\n--------------------------------------------------------------------------------------\n SYM       IST       SOLL       OTOL       UTOL        ABW      <>TOL     -/+      BEZ\n--------------------------------------------------------------------------------------`;
@@ -570,6 +605,7 @@
 
       let cardsHtml = "";
       loadedFiles.forEach((f, idx) => {
+        const fullContent = buildHeaderString(f.headerData) + f.correctedBody;
         cardsHtml += `
           <div class="file-row">
             <div class="file-row-header">
@@ -580,17 +616,24 @@
                 </span>
               </div>
               <div class="btn-group">
+                <button class="btn btn-outline" onclick="toggleFilePreview(${idx})">👁️ Előnézet</button>
                 <button class="btn btn-outline" onclick="downloadCorrectedTxt(${idx})">📥 Javított TXT</button>
                 <button class="btn btn-dfq" onclick="requestDfqExport(${idx})">📊 DFQ Letöltése</button>
               </div>
             </div>
+            <pre class="preview-code" id="previewBox_${idx}">${fullContent}</pre>
           </div>
         `;
       });
       list.innerHTML = cardsHtml;
     }
 
-    // DFQ LETÖLTÉS INDÍTÁSA INTELLIGENS ELLENŐRZÉSSEL
+    function toggleFilePreview(idx) {
+      const box = document.getElementById(`previewBox_${idx}`);
+      if (!box) return;
+      box.style.display = (box.style.display === 'block') ? 'none' : 'block';
+    }
+
     function isHeaderComplete(h) {
       return !!(h.teileNr && h.teileNr.trim() && h.kunde && h.kunde.trim());
     }
@@ -600,11 +643,9 @@
       if (!file) return;
 
       if (!isHeaderComplete(file.headerData)) {
-        // Hiányos fejléc -> Felugró ablak megnyitása
         pendingFileIdx = idx;
         openHeaderModal(file);
       } else {
-        // Minden rendben -> Azonnali letöltés
         triggerDfqDownload(file);
       }
     }
@@ -625,7 +666,6 @@
       document.getElementById('m_datum').value = h.datum || "";
       document.getElementById('m_uhrzeit').value = h.uhrzeit || "";
 
-      // Hiányzó mezők kiemelése
       document.getElementById('m_teileNr').classList.toggle('missing', !h.teileNr);
       document.getElementById('m_kunde').classList.toggle('missing', !h.kunde);
 
@@ -660,6 +700,12 @@
         f.headerData.k1053 = document.getElementById('m_k1053').value.trim();
         f.headerData.datum = document.getElementById('m_datum').value.trim();
         f.headerData.uhrzeit = document.getElementById('m_uhrzeit').value.trim();
+
+        // Előnézeti tartalom azonnali frissítése a mentett fejléccel
+        const preEl = document.getElementById(`previewBox_${pendingFileIdx}`);
+        if (preEl) {
+          preEl.textContent = buildHeaderString(f.headerData) + f.correctedBody;
+        }
 
         document.getElementById('headerModal').classList.remove('active');
         triggerDfqDownload(f);
@@ -732,7 +778,7 @@
     document.getElementById('btnDownloadAllDfq').addEventListener('click', async () => {
       const missingFiles = loadedFiles.filter(f => !isHeaderComplete(f.headerData));
       if (missingFiles.length > 0) {
-        alert(`Figyelem! ${missingFiles.length} fájlnál hiányzik a fejléc kitöltése. Kérlek javítsd őket egyenként a "DFQ Letöltése" gombbal.`);
+        alert(`Figyelem! ${missingFiles.length} fájlnál hiányzik a fejléc kitöltése. Kérlek javítsd őket a "DFQ Letöltése" gombbal.`);
         return;
       }
 
@@ -751,30 +797,7 @@
       const file = loadedFiles[idx];
       if (!file) return;
 
-      const padRight = (str, len) => {
-        str = (str === undefined || str === null) ? "" : String(str);
-        if (str.length >= len) return str.slice(0, len);
-        return str + " ".repeat(len - str.length);
-      };
-
-      const h = file.headerData;
-      const headerBox = `+==========================================================================================+
-|                                                                                          |
-|   Kunde           :  ${padRight(h.kunde, 42)}Datum  :${h.datum}          |
-|   Teilebezeichnung:  ${padRight(h.teileBez, 42)}Uhrzeit:${h.uhrzeit}          |
-|   Teile-Nummer    :  ${padRight(h.teileNr, 68)}|
-|   Auftragsnummer  :  ${padRight(h.auftrag, 68)}|
-|   Chargennummer   :  ${padRight(h.charge, 68)}|
-|   Masch.Nummer    :  ${padRight(h.maschine, 68)}|
-|   Pruefer         :  ${padRight(h.pruefer, 68)}|  
-|   Bemerkungen     :  ${padRight(h.bemerkung, 68)}|
-|   Pruefungsinfo   :  ${padRight(h.pInfo1, 68)}|
-|   Pruefungsinfo 2 :  ${padRight(h.pInfo2, 68)}|
-|   Pruefungsinfo 3 :  ${padRight(h.pInfo3, 68)}|
-|                                                                                          |
-+==========================================================================================+
-`;
-      const fullTxt = headerBox + file.correctedBody;
+      const fullTxt = buildHeaderString(file.headerData) + file.correctedBody;
       const blob = new Blob([fullTxt], { type: 'text/plain;charset=windows-1250' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -782,7 +805,6 @@
       a.click();
     }
 
-    // 2. TAB: MÁTRIX MEGJELENÍTÉS
     function renderMatrixView() {
       if (!loadedFiles.length) {
         document.getElementById('matrixWrapper').style.display = 'none';
