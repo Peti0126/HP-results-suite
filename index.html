@@ -1,1 +1,1284 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HP Metrology Suite 2026</title>
+  
+  <!-- JsBarcode és JSZip könyvtárak -->
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
+  <style>
+    :root {
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --success: #10b981;
+      --success-hover: #059669;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --radius: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* Fejléc stílusok */
+    header {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 24px 30px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .app-title h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.5px;
+    }
+
+    .app-title p {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .meta-badge {
+      font-size: 12px;
+      color: var(--text-muted);
+      background: #f1f5f9;
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      text-align: right;
+    }
+
+    /* Statisztikai Kártyasor */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 16px 20px;
+      border-radius: var(--radius);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-card .label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat-card .value {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text);
+      margin-top: 4px;
+    }
+
+    /* Fájl Drop Zone */
+    .upload-area {
+      background: var(--surface);
+      border: 2px dashed #93c5fd;
+      border-radius: var(--radius);
+      padding: 30px;
+      text-align: center;
+      cursor: pointer;
+      margin-bottom: 24px;
+      transition: all 0.2s ease;
+      background: #eff6ff;
+    }
+
+    .upload-area:hover {
+      background: #dbeafe;
+      border-color: var(--primary);
+    }
+
+    .upload-area h3 {
+      font-size: 16px;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+
+    .upload-area p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Tab Navigáció */
+    .tabs-nav {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab-btn:hover {
+      background: #e2e8f0;
+      color: var(--text);
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .tab-pane {
+      display: none;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+
+    /* Általános Kártyák és Gombok */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+
+    .card h3 {
+      font-size: 16px;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+
+    .grid-form {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .form-group input {
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .form-group input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+    }
+
+    .btn {
+      padding: 9px 18px;
+      border-radius: 6px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: 0.2s;
+    }
+
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-success:hover { background: var(--success-hover); }
+    .btn-secondary { background: #64748b; color: #fff; }
+    .btn-secondary:hover { background: #475569; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-outline:hover { background: #f1f5f9; }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    /* Előnézeti kód blokk */
+    pre {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      max-height: 400px;
+      white-space: pre;
+    }
+
+    /* Validátor Elemek */
+    .alert-card {
+      padding: 18px 22px;
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+
+    .alert-card.warning {
+      background: #fffbeb;
+      border-left: 5px solid var(--warning);
+      color: #92400e;
+    }
+
+    .alert-card.success {
+      background: #ecfdf5;
+      border-left: 5px solid var(--success);
+      color: #065f46;
+    }
+
+    .file-row {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 12px;
+    }
+
+    .file-row-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .err-list {
+      margin-top: 12px;
+      padding-left: 20px;
+      font-size: 13px;
+      font-family: monospace;
+    }
+
+    .err-list li {
+      margin-bottom: 4px;
+    }
+
+    /* Vonalkód Mátrix Táblázat */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      background: #fff;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      margin-top: 16px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      border: 1px solid #e2e8f0;
+      padding: 8px 6px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    th {
+      background: #f1f5f9;
+      color: var(--text);
+      font-weight: 700;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    .megn-col {
+      background: #f8fafc;
+      font-weight: bold;
+      font-size: 13px;
+      min-width: 120px;
+      text-align: left;
+      padding-left: 12px;
+      position: sticky;
+      left: 0;
+      z-index: 3;
+    }
+
+    th.megn-col {
+      z-index: 4;
+    }
+
+    .cell-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 100px;
+    }
+
+    .barcode-svg {
+      max-height: 38px;
+      width: 100%;
+    }
+
+    .compact-view .barcode-svg {
+      max-height: 30px;
+    }
+
+    .compact-view .meta-text {
+      display: none;
+    }
+
+    .meta-text {
+      font-size: 11px;
+      color: #555;
+      margin-top: 2px;
+    }
+
+    /* Nyomtatási stílusok (A4 Fekvő) */
+    @page {
+      size: A4 landscape;
+      margin: 8mm;
+    }
+
+    @media print {
+      .no-print, header, .stats-bar, .upload-area, .tabs-nav, .btn-group {
+        display: none !important;
+      }
+      body {
+        background: #fff;
+        padding: 0;
+        margin: 0;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .card {
+        border: none;
+        box-shadow: none;
+        padding: 0;
+      }
+      .table-container {
+        border: none;
+      }
+      table {
+        page-break-after: auto;
+        font-size: 10px;
+      }
+      tr {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      th, td {
+        border: 1px solid #333 !important;
+        padding: 3px 2px !important;
+      }
+      th {
+        background: #eee !important;
+      }
+      .megn-col {
+        background: #f9f9f9 !important;
+      }
+      .barcode-svg {
+        max-height: 26px !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- Fejléc -->
+    <header class="no-print">
+      <div class="app-title">
+        <h1>HP Metrology Suite 2026</h1>
+        <p>Integrált Minőségbiztosítási & Mérési Jegyzőkönyv Munkaállomás</p>
+      </div>
+      <div class="meta-badge">
+        <strong>Fejlesztő & Rendszergazda:</strong> Horváth Péter<br>
+        <span>Verzió: 4.1 Sorted Pro (2026)</span>
+      </div>
+    </header>
+
+    <!-- Statisztikai sáv -->
+    <div class="stats-bar no-print">
+      <div class="stat-card">
+        <span class="label">Betöltött Jegyzőkönyvek</span>
+        <span class="value" id="statFileCount">0 db</span>
+      </div>
+      <div class="stat-card">
+        <span class="label">Azonosított Méretek / Fő</span>
+        <span class="value" id="statCharCount">0 db</span>
+      </div>
+      <div class="stat-card">
+        <span class="label">Tűrésen Kívüli Méretek</span>
+        <span class="value" id="statErrorCount" style="color: var(--success);">0 db</span>
+      </div>
+      <div class="stat-card">
+        <span class="label">Mátrix Fészkek</span>
+        <span class="value" id="statNestCount">0 fészek</span>
+      </div>
+    </div>
+
+    <!-- Közös Fájlfeltöltő Doboz -->
+    <div class="upload-area no-print" id="dropZone">
+      <input type="file" id="multiFileInput" multiple accept=".txt" style="display: none;">
+      <h3>Húzd ide vagy kattints a mérési TXT jegyzőkönyvek betallózásához</h3>
+      <p>Több fájl egyidejű feldolgozása (Windows-1250, előjel-szanálás, numerikusan növekvő tételrendezés)</p>
+    </div>
+
+    <!-- Fő Tabok Navigációja -->
+    <div class="tabs-nav no-print">
+      <button class="tab-btn active" onclick="switchTab('tab-converter')">📄 Fejlécjavító & DFQ Konverter</button>
+      <button class="tab-btn" onclick="switchTab('tab-validator')">🔍 Jegyzőkönyv Validátor & Korrektor</button>
+      <button class="tab-btn" onclick="switchTab('tab-matrix')">📊 Több Fészek Vonalkód Mátrix</button>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- 1. TAB: FEJLÉCJAVÍTÓ ÉS DFQ KONVERTER                   -->
+    <!-- ======================================================= -->
+    <div id="tab-converter" class="tab-pane active">
+      <div class="card" id="headerEditorCard">
+        <h3>Jegyzőkönyv Fejléc és DFQ Paraméterek (Aktív fájl)</h3>
+        
+        <div style="margin-bottom: 16px; display: flex; gap: 10px; align-items: center;">
+          <label style="font-size: 13px; font-weight: 600;">Szerkesztett jegyzőkönyv kiválasztása:</label>
+          <select id="activeFileSelect" onchange="loadActiveFileToHeader(this.value)" style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); font-size: 13px;"></select>
+        </div>
+
+        <div class="grid-form">
+          <div class="form-group">
+            <label for="inpTeileNr">Teile-Nummer (K1001 Cikkszám)*:</label>
+            <input type="text" id="inpTeileNr" placeholder="pl. 107937">
+          </div>
+          <div class="form-group">
+            <label for="inpTeileBez">Teilebezeichnung (Cikk leírása):</label>
+            <input type="text" id="inpTeileBez" placeholder="pl. Steckerplatte Montie">
+          </div>
+          <div class="form-group">
+            <label for="inpKunde">Kunde (Vevő):</label>
+            <input type="text" id="inpKunde" placeholder="pl. ETO / Nass Magnet">
+          </div>
+          <div class="form-group">
+            <label for="inpAuftrag">Auftragsnummer (K1004 Rendelésszám):</label>
+            <input type="text" id="inpAuftrag" placeholder="pl. 6">
+          </div>
+          <div class="form-group">
+            <label for="inpCharge">Chargennummer (K1007 Sarzs):</label>
+            <input type="text" id="inpCharge" placeholder="pl. 00138">
+          </div>
+          <div class="form-group">
+            <label for="inpMaschine">Masch.Nummer (Gép):</label>
+            <input type="text" id="inpMaschine" placeholder="pl. KS026">
+          </div>
+          <div class="form-group">
+            <label for="inpPruefer">Pruefer (K1081 Mérő kódja):</label>
+            <input type="text" id="inpPruefer" placeholder="pl. KS004">
+          </div>
+          <div class="form-group">
+            <label for="inpBemerkung">Bemerkungen (K1002 Fészekazonosító):</label>
+            <input type="text" id="inpBemerkung">
+          </div>
+          <div class="form-group">
+            <label for="inpK1053">K1053 (Munkaazonosító):</label>
+            <input type="text" id="inpK1053" value="1118161">
+          </div>
+          <div class="form-group">
+            <label for="inpDatum">Datum (Dátum):</label>
+            <input type="text" id="inpDatum">
+          </div>
+          <div class="form-group">
+            <label for="inpUhrzeit">Uhrzeit (Időpont):</label>
+            <input type="text" id="inpUhrzeit">
+          </div>
+          <div class="form-group">
+            <label for="inpPruefInfo1">Pruefungsinfo 1:</label>
+            <input type="text" id="inpPruefInfo1">
+          </div>
+          <div class="form-group">
+            <label for="inpPruefInfo2">Pruefungsinfo 2:</label>
+            <input type="text" id="inpPruefInfo2" value="Prod.: 00.000">
+          </div>
+          <div class="form-group">
+            <label for="inpPruefInfo3">Pruefungsinfo 3:</label>
+            <input type="text" id="inpPruefInfo3">
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-outline" onclick="previewTxtOutput()">👁️ Fejléc Előnézet</button>
+          <button class="btn btn-primary" onclick="downloadCurrentFixedTxt()">💾 Aktuális TXT Letöltése</button>
+          <button class="btn btn-success" onclick="downloadCurrentDfq()">📊 Aktuális DFQ Letöltése</button>
+          <button class="btn btn-secondary" onclick="downloadAllDfqZip()">📦 Összes DFQ Letöltése (.ZIP)</button>
+        </div>
+      </div>
+
+      <div class="card" id="previewBoxCard" style="display: none;">
+        <h3>Kimeneti Tartalom Előnézete</h3>
+        <pre id="previewContentArea"></pre>
+      </div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- 2. TAB: JEGYZŐKÖNYV VALIDÁTOR & KORREKTOR               -->
+    <!-- ======================================================= -->
+    <div id="tab-validator" class="tab-pane">
+      <div id="validatorOverview"></div>
+      <div id="validatorList"></div>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- 3. TAB: TÖBB FÉSZEK VONALKÓD MÁTRIX                     -->
+    <!-- ======================================================= -->
+    <div id="tab-matrix" class="tab-pane">
+      <div class="card no-print">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h3>Több Fészek Mátrix Táblázat</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin: 0;">A megnevezések szigorúan numerikusan növekvő sorrendben (35, 36, 46... 480__Y) jelennek meg.</p>
+          </div>
+          <div class="btn-group" style="margin-top: 0;">
+            <button class="btn btn-primary" id="btnMatrixNormal" onclick="setMatrixView('normal')">Normál Nézet</button>
+            <button class="btn btn-outline" id="btnMatrixCompact" onclick="setMatrixView('compact')">Kompakt (Csak kódok)</button>
+            <button class="btn btn-secondary" onclick="window.print()">🖨️ Nyomtatás (A4 Fekvő)</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-container" id="matrixContainer" style="display: none;">
+        <table id="matrixTable">
+          <thead id="matrixHead"></thead>
+          <tbody id="matrixBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <footer class="no-print" style="margin-top: 40px; text-align: center; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 15px;">
+      Fejlesztő & Szellemi Tulajdonos: Horváth Péter &copy; 2026. Minden jog fenntartva.
+    </footer>
+
+  </div>
+
+  <script>
+    /* ==========================================================================
+       GLOBÁLIS ADATTÁROLÓK ÉS SEGÉDFÜGGVÉNYEK
+       ========================================================================== */
+    let loadedFiles = [];
+    let matrixViewMode = 'normal';
+
+    const dropZone = document.getElementById('dropZone');
+    const multiFileInput = document.getElementById('multiFileInput');
+
+    dropZone.addEventListener('click', () => multiFileInput.click());
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = "var(--primary)"; });
+    dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = "#93c5fd"; });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = "#93c5fd";
+      if (e.dataTransfer.files.length) handleFiles(Array.from(e.dataTransfer.files));
+    });
+
+    multiFileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) handleFiles(Array.from(e.target.files));
+    });
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
+
+      event.currentTarget.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    // Dupla aláhúzás a számmal kezdődő és betűvel folytatódó megnevezések elé
+    function formatMegnevezes(name) {
+      if (!name) return "";
+      if (/^\d+_[A-Za-z]/.test(name)) {
+        return name.replace(/^(\d+)_([A-Za-z].*)$/, '$1__$2');
+      }
+      return name.replace(/^(\d+)([A-Za-z].*)$/, '$1__$2');
+    }
+
+    // Természetes numerikus összehasonlító függvény (pl. 35 < 36 < 46 < 175 < 235__X)
+    function naturalCompare(a, b) {
+      return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+    }
+
+    /* ==========================================================================
+       FÁJLFELDOLGOZÁS ÉS NÖVEKVŐ SORRENDEZÉS
+       ========================================================================== */
+    async function handleFiles(fileList) {
+      loadedFiles = [];
+      fileList.sort((a, b) => naturalCompare(a.name, b.name));
+
+      for (const file of fileList) {
+        const buffer = await file.arrayBuffer();
+        const decoder = new TextDecoder('windows-1250');
+        const text = decoder.decode(buffer);
+
+        const parsed = processSingleFile(file.name, text);
+        loadedFiles.push(parsed);
+      }
+
+      updateActiveFileDropdown();
+      updateDashboardStats();
+      renderValidatorTab();
+      renderMatrixTab();
+
+      if (loadedFiles.length > 0) {
+        loadActiveFileToHeader(0);
+      }
+    }
+
+    function processSingleFile(fileName, rawText) {
+      const getVal = (regex) => {
+        const m = rawText.match(regex);
+        return m ? m[1].trim() : "";
+      };
+
+      let datum = getVal(/Datum\s*:\s*([^\s|\n]+)/) || (rawText.match(/tum:\s*([0-9.]+)/i) ? rawText.match(/tum:\s*([0-9.]+)/i)[1] : "09.09.2026");
+      let uhrzeit = getVal(/Uhrzeit\s*:\s*([^\s|\n]+)/) || (rawText.match(/tum:\s*[0-9.]+\s+([0-9:]+)/i) ? rawText.match(/tum:\s*[0-9.]+\s+([0-9:]+)/i)[1] : "09:41:39");
+
+      const headerData = {
+        kunde: getVal(/Kunde\s*:\s*([^\n|]+)/) || "ETO",
+        teileNr: getVal(/Teile-Nummer\s*:\s*([^\n|]+)/),
+        teileBez: getVal(/Teilebezeichnung\s*:\s*([^\n|]+)/) || "Steckerplatte",
+        auftrag: getVal(/Auftragsnummer\s*:\s*([^\n|]+)/) || "FA138",
+        charge: getVal(/Chargennummer\s*:\s*([^\n|]+)/) || "00138",
+        maschine: getVal(/Masch\.Nummer\s*:\s*([^\n|]+)/) || "KS026",
+        pruefer: getVal(/Pruefer\s*:\s*([^\n|]+)/) || "KS004",
+        bemerkung: getVal(/Bemerkungen\s*:\s*([^\n|]+)/),
+        k1053: "1118161",
+        datum: datum,
+        uhrzeit: uhrzeit,
+        pInfo1: `${datum} ${uhrzeit}Uhr`,
+        pInfo2: "Prod.: 00.000",
+        pInfo3: ""
+      };
+
+      const lines = rawText.split(/\r?\n/);
+      let splitIndex = -1;
+      let tableHeaderTopLine = "";
+      let tableHeaderColsLine = "";
+
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].includes("--------------------------------------------------------------------------------------")) {
+          splitIndex = (i > 0 && (lines[i - 1].includes("Oldal:") || lines[i - 1].includes("Seite:") || lines[i - 1].includes("tum:"))) ? i - 1 : i;
+          break;
+        }
+      }
+
+      const rawBodyLines = splitIndex !== -1 ? lines.slice(splitIndex) : lines;
+
+      let parsedItems = [];
+      let isTable = false;
+
+      // Adatsorok kinyerése
+      for (let line of rawBodyLines) {
+        if (line.includes("------")) {
+          isTable = true;
+          continue;
+        }
+
+        if (isTable && line.trim()) {
+          if (line.match(/Oldal:|Seite:|SZI|SYM|AKT|IST/i)) continue;
+
+          // Megnevezés dupla aláhúzásos javítása a kinyeréskor
+          let sanitizedLine = line.replace(/(\s+)(\d+_?[A-Za-z][^\s]*)$/, (m, sp, name) => {
+            const formatted = formatMegnevezes(name);
+            const diff = formatted.length - name.length;
+            const newSp = sp.length > diff ? sp.slice(0, sp.length - diff) : sp;
+            return newSp + formatted;
+          });
+
+          // Negatív előjel pozitívvá alakítása
+          const negMatch = sanitizedLine.match(/^(\s*\S+\s+)-([0-9.]+)(.*)$/);
+          if (negMatch) {
+            sanitizedLine = `${negMatch[1]} ${negMatch[2]}${negMatch[3]}`;
+          }
+
+          const tokens = sanitizedLine.trim().split(/\s+/);
+          if (tokens.length >= 6) {
+            const szi = tokens[0];
+            const akt = Math.abs(parseFloat(tokens[1]));
+            const nevl = parseFloat(tokens[2]);
+            const ftur = parseFloat(tokens[3]);
+            const atur = parseFloat(tokens[4]);
+            const megn = formatMegnevezes(tokens[tokens.length - 1]);
+
+            if (!isNaN(akt) && !isNaN(nevl)) {
+              let desc = "Távolság";
+              let k2009 = "200";
+              if (szi === "FT") { desc = "2D polár helyzet"; k2009 = "109"; }
+              else if (szi === "D") { desc = "Átmérő"; k2009 = "101"; }
+              else if (szi === "LT") { desc = "Helyzettűrés"; k2009 = "109"; }
+              else if (["Z", "X", "Y"].includes(szi)) { desc = "Pozíció"; k2009 = "109"; }
+
+              parsedItems.push({ szi, akt, nevl, ftur, atur, megn, desc, k2009 });
+            }
+          }
+        }
+      }
+
+      // SZIGORÚ NUMERIKUS NÖVEKVŐ RENDEZÉS A MEGNEVEZÉSEK ALAPJÁN (35, 36, 46...)
+      parsedItems.sort((a, b) => naturalCompare(a.megn, b.megn));
+
+      // Törzssorok újraépítése a növekvő sorrendnek megfelelően (Sanitized és Korrigált)
+      const sanitizedLines = [];
+      const correctedLines = [];
+      const validationErrors = [];
+
+      // Szabványos fejléc beillesztése a táblázathoz
+      const tableHead = `   Werth Messtechnik / Datum: ${datum} ${uhrzeit} / Seite: 1\n--------------------------------------------------------------------------------------\n SYM       IST       SOLL       OTOL       UTOL        ABW      <>TOL     -/+      BEZ\n--------------------------------------------------------------------------------------`;
+      sanitizedLines.push(tableHead);
+      correctedLines.push(tableHead);
+
+      parsedItems.forEach(item => {
+        const dev = +(item.akt - item.nevl).toFixed(4);
+        const devStr = (dev >= 0 ? " " : "") + dev.toFixed(4);
+        const barStr = dev >= 0 ? "+" : "-";
+
+        const standardLine = item.szi.padStart(4, ' ') +
+          item.akt.toFixed(4).padStart(11, ' ') +
+          item.nevl.toFixed(4).padStart(11, ' ') +
+          item.ftur.toFixed(4).padStart(11, ' ') +
+          item.atur.toFixed(4).padStart(11, ' ') +
+          devStr.padStart(11, ' ') +
+          "".padStart(10, ' ') +
+          barStr.padStart(8, ' ') + " " +
+          item.megn.padStart(6, ' ');
+
+        sanitizedLines.push(standardLine);
+
+        // Validáció & Korrekció
+        const maxTol = +(item.nevl + item.ftur).toFixed(4);
+        const minTol = +(item.nevl + item.atur).toFixed(4);
+        let hasErr = false;
+        let diff = 0;
+        let newAkt = item.akt;
+
+        if (item.akt > maxTol) {
+          hasErr = true;
+          diff = +(item.akt - maxTol).toFixed(4);
+          const offset = Math.min(0.0200, Math.max(0.0050, Math.abs(maxTol - minTol) * 0.25));
+          newAkt = +(maxTol - offset).toFixed(4);
+        } else if (item.akt < minTol) {
+          hasErr = true;
+          diff = +(item.akt - minTol).toFixed(4);
+          const offset = Math.min(0.0200, Math.max(0.0050, Math.abs(maxTol - minTol) * 0.25));
+          newAkt = +(minTol + offset).toFixed(4);
+        }
+
+        if (hasErr) {
+          validationErrors.push({
+            megn: item.megn,
+            szi: item.szi,
+            origAkt: item.akt.toFixed(4),
+            diff: (diff > 0 ? "+" : "") + diff.toFixed(4),
+            newAkt: newAkt.toFixed(4)
+          });
+        }
+
+        const newDev = +(newAkt - item.nevl).toFixed(4);
+        const newDevStr = (newDev >= 0 ? " " : "") + newDev.toFixed(4);
+        const newBarStr = newDev >= 0 ? "+" : "-";
+
+        const corrLine = item.szi.padStart(4, ' ') +
+          newAkt.toFixed(4).padStart(11, ' ') +
+          item.nevl.toFixed(4).padStart(11, ' ') +
+          item.ftur.toFixed(4).padStart(11, ' ') +
+          item.atur.toFixed(4).padStart(11, ' ') +
+          newDevStr.padStart(11, ' ') +
+          "".padStart(10, ' ') +
+          newBarStr.padStart(8, ' ') + " " +
+          item.megn.padStart(6, ' ');
+
+        correctedLines.push(corrLine);
+      });
+
+      return {
+        name: fileName,
+        rawText: rawText,
+        headerData: headerData,
+        sanitizedBody: "\n" + sanitizedLines.join("\n"),
+        correctedBody: "\n" + correctedLines.join("\r\n"),
+        parsedItems: parsedItems,
+        validationErrors: validationErrors
+      };
+    }
+
+    function updateDashboardStats() {
+      document.getElementById('statFileCount').innerText = `${loadedFiles.length} db`;
+      const firstFileItems = loadedFiles.length ? loadedFiles[0].parsedItems.length : 0;
+      document.getElementById('statCharCount').innerText = `${firstFileItems} db`;
+
+      const totalErrors = loadedFiles.reduce((acc, f) => acc + f.validationErrors.length, 0);
+      const errEl = document.getElementById('statErrorCount');
+      errEl.innerText = `${totalErrors} db`;
+      errEl.style.color = totalErrors > 0 ? "var(--danger)" : "var(--success)";
+
+      document.getElementById('statNestCount').innerText = `${loadedFiles.length} fészek`;
+    }
+
+    function updateActiveFileDropdown() {
+      const sel = document.getElementById('activeFileSelect');
+      sel.innerHTML = "";
+      loadedFiles.forEach((f, idx) => {
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.innerText = f.name;
+        sel.appendChild(opt);
+      });
+    }
+
+    function loadActiveFileToHeader(fileIdx) {
+      const f = loadedFiles[fileIdx];
+      if (!f) return;
+
+      const h = f.headerData;
+      document.getElementById('inpTeileNr').value = h.teileNr || "";
+      document.getElementById('inpTeileBez').value = h.teileBez || "";
+      document.getElementById('inpKunde').value = h.kunde || "";
+      document.getElementById('inpAuftrag').value = h.auftrag || "";
+      document.getElementById('inpCharge').value = h.charge || "";
+      document.getElementById('inpMaschine').value = h.maschine || "";
+      document.getElementById('inpPruefer').value = h.pruefer || "";
+      document.getElementById('inpBemerkung').value = h.bemerkung || f.name.replace(/\.[^/.]+$/, "");
+      document.getElementById('inpK1053').value = h.k1053 || "1118161";
+      document.getElementById('inpDatum').value = h.datum || "";
+      document.getElementById('inpUhrzeit').value = h.uhrzeit || "";
+      document.getElementById('inpPruefInfo1').value = h.pInfo1 || "";
+      document.getElementById('inpPruefInfo2').value = h.pInfo2 || "Prod.: 00.000";
+      document.getElementById('inpPruefInfo3').value = h.pInfo3 || "";
+    }
+
+    /* ==========================================================================
+       FEJLÉCJAVÍTÓ & DFQ EXPORT LOGIKA
+       ========================================================================== */
+    function generateTargetHeader(h) {
+      const padRight = (str, len) => {
+        str = (str === undefined || str === null) ? "" : String(str);
+        if (str.length >= len) return str.slice(0, len);
+        return str + " ".repeat(len - str.length);
+      };
+
+      return `+==========================================================================================+
+|                                                                                          |
+|   Kunde           :  ${padRight(h.kunde, 42)}Datum  :${h.datum}          |
+|   Teilebezeichnung:  ${padRight(h.teileBez, 42)}Uhrzeit:${h.uhrzeit}          |
+|   Teile-Nummer    :  ${padRight(h.teileNr, 68)}|
+|   Auftragsnummer  :  ${padRight(h.auftrag, 68)}|
+|   Chargennummer   :  ${padRight(h.charge, 68)}|
+|   Masch.Nummer    :  ${padRight(h.maschine, 68)}|
+|   Pruefer         :  ${padRight(h.pruefer, 68)}|  
+|   Bemerkungen     :  ${padRight(h.bemerkung, 68)}|
+|   Pruefungsinfo   :  ${padRight(h.pInfo1, 68)}|
+|   Pruefungsinfo 2 :  ${padRight(h.pInfo2, 68)}|
+|   Pruefungsinfo 3 :  ${padRight(h.pInfo3, 68)}|
+|                                                                                          |
++==========================================================================================+
+`;
+    }
+
+    function getCurrentFormData() {
+      return {
+        teileNr: document.getElementById('inpTeileNr').value.trim(),
+        teileBez: document.getElementById('inpTeileBez').value.trim(),
+        kunde: document.getElementById('inpKunde').value.trim(),
+        auftrag: document.getElementById('inpAuftrag').value.trim(),
+        charge: document.getElementById('inpCharge').value.trim(),
+        maschine: document.getElementById('inpMaschine').value.trim(),
+        pruefer: document.getElementById('inpPruefer').value.trim(),
+        bemerkung: document.getElementById('inpBemerkung').value.trim(),
+        k1053: document.getElementById('inpK1053').value.trim(),
+        datum: document.getElementById('inpDatum').value.trim(),
+        uhrzeit: document.getElementById('inpUhrzeit').value.trim(),
+        pInfo1: document.getElementById('inpPruefInfo1').value.trim(),
+        pInfo2: document.getElementById('inpPruefInfo2').value.trim(),
+        pInfo3: document.getElementById('inpPruefInfo3').value.trim()
+      };
+    }
+
+    function previewTxtOutput() {
+      const idx = document.getElementById('activeFileSelect').value;
+      const file = loadedFiles[idx];
+      if (!file) return;
+
+      const h = getCurrentFormData();
+      const txt = generateTargetHeader(h) + file.sanitizedBody;
+
+      document.getElementById('previewContentArea').textContent = txt;
+      document.getElementById('previewBoxCard').style.display = 'block';
+    }
+
+    function downloadCurrentFixedTxt() {
+      const idx = document.getElementById('activeFileSelect').value;
+      const file = loadedFiles[idx];
+      if (!file) return;
+
+      const h = getCurrentFormData();
+      if (!h.teileNr) {
+        alert("Kérlek add meg a Teile-Nummer (Cikkszám) mezőt!");
+        return;
+      }
+
+      const txt = generateTargetHeader(h) + file.sanitizedBody;
+      const blob = new Blob([txt], { type: 'text/plain;charset=windows-1250' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `JAVITOTT_${file.name}`;
+      a.click();
+    }
+
+    function buildDfqContent(file, h) {
+      let dfq = "";
+      dfq += `K0100 ${file.parsedItems.length}\n`;[cite: 3]
+      dfq += `K1001 ${h.teileNr}\n`;[cite: 3]
+      dfq += `K1002 ${h.bemerkung || h.teileBez}\n`;[cite: 3]
+      dfq += `K1003 ${h.teileBez}\n`;[cite: 3]
+      dfq += `K1004 ${h.auftrag}\n`;[cite: 3]
+      dfq += `K1007 ${h.charge}\n`;[cite: 3]
+      dfq += `K1041 1\n`;[cite: 3]
+      dfq += `K1053 ${h.k1053}\n`;[cite: 3]
+      dfq += `K1081 ${h.pruefer}\n`;[cite: 3]
+      dfq += `K1086 \nK1101 \nK1201 143122070061\nK1202 OI543\nK1301 2\nK1900 \n`;[cite: 3]
+
+      dfq += `K2001/0 \nK2004/0 0\nK2005/0 3\nK2007/0 \nK2011/0 \nK2013/0 0.0001\nK2022/0 4\nK2142/0 mm\n`;[cite: 3]
+      dfq += `K2301/0 \nK2302/0 \nK2303/0 \nK2306/0 \n`;[cite: 3]
+      dfq += `K2342/0 ${h.teileNr}_Program_1_szeriaprogram\n`;[cite: 3]
+      dfq += `K2343/0 ${h.datum}   ${h.uhrzeit}\n`;[cite: 3]
+      dfq += `K2344/0 Master\nK2415/0 143122070061\nK2402/0 OI543\nK2406/0 Carl Zeiss Oberkochen\nK8500/0 \n`;[cite: 3]
+
+      // A jellemzők itt is szigorúan növekvő numerikus sorrendben kerülnek be
+      file.parsedItems.forEach((item, idx) => {
+        const i = idx + 1;
+        const utolAbs = Math.abs(item.atur);
+        const otolAbs = Math.abs(item.ftur);
+        const tolRange = (otolAbs + utolAbs).toFixed(6);
+
+        dfq += `K2001/${i} ${i}\n`;[cite: 3]
+        dfq += `K2002/${i} ${item.megn}\n`;[cite: 3]
+        dfq += `K2003/${i} ${item.desc}\n`;[cite: 3]
+        dfq += `K2008/${i} \n`;[cite: 3]
+        dfq += `K2009/${i} ${item.k2009}\n`;[cite: 3]
+        dfq += `K2030/${i} \nK2031/${i} \n`;[cite: 3]
+        dfq += `K2100/${i} ${item.nevl.toFixed(6)}\n`;[cite: 3]
+        dfq += `K2101/${i} ${item.nevl.toFixed(3)}\n`;[cite: 3]
+        dfq += `K2110/${i} ${(item.nevl + item.atur).toFixed(6)}\n`;[cite: 3]
+        dfq += `K2111/${i} ${(item.nevl + item.ftur).toFixed(6)}\n`;[cite: 3]
+        dfq += `K2112/${i} ${item.atur.toFixed(3)}\n`;[cite: 3]
+        dfq += `K2113/${i} ${item.ftur.toFixed(3)}\n`;[cite: 3]
+        dfq += `K2120/${i} 1\n`;[cite: 3]
+        dfq += `K2121/${i} 1\n`;[cite: 3]
+        dfq += `K2130/${i} \nK2131/${i} \nK2141/${i} \n`;[cite: 3]
+        dfq += `K2151/${i} ${tolRange}\n`;[cite: 3]
+        dfq += `K2213/${i} ${item.akt.toFixed(3)}\n`;[cite: 3]
+      });
+
+      const ts = `${h.datum}/${h.uhrzeit}`;
+      let dataRow = "";
+      file.parsedItems.forEach(item => {
+        dataRow += `${item.akt.toFixed(3)} 0 ${ts} `;[cite: 3]
+      });
+      dfq += dataRow + "\n";
+
+      return dfq;
+    }
+
+    function downloadCurrentDfq() {
+      const idx = document.getElementById('activeFileSelect').value;
+      const file = loadedFiles[idx];
+      if (!file) return;
+
+      const h = getCurrentFormData();
+      if (!h.teileNr) {
+        alert("Kérlek töltsd ki a Teile-Nummer mezőt a DFQ konverzióhoz!");
+        return;
+      }
+
+      const dfq = buildDfqContent(file, h);
+      document.getElementById('previewContentArea').textContent = dfq;
+      document.getElementById('previewBoxCard').style.display = 'block';
+
+      const blob = new Blob([dfq], { type: 'application/octet-stream;charset=windows-1250' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${file.name.replace(/\.[^/.]+$/, "")}.DFQ`;
+      a.click();
+    }
+
+    async function downloadAllDfqZip() {
+      if (!loadedFiles.length) {
+        alert("Nincsenek betöltött fájlok!");
+        return;
+      }
+
+      const h = getCurrentFormData();
+      if (!h.teileNr) {
+        alert("Kérlek töltsd ki a Teile-Nummer mezőt!");
+        return;
+      }
+
+      const zip = new JSZip();
+      loadedFiles.forEach(file => {
+        const fileHeader = { ...h, bemerkung: file.name.replace(/\.[^/.]+$/, "") };
+        const dfqText = buildDfqContent(file, fileHeader);
+        zip.file(`${file.name.replace(/\.[^/.]+$/, "")}.DFQ`, dfqText);
+      });
+
+      const zipContent = await zip.generateAsync({ type: "blob" });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(zipContent);
+      a.download = `DFQ_Csomag_${h.teileNr}.zip`;
+      a.click();
+    }
+
+    /* ==========================================================================
+       VALIDÁTOR TAB LOGIKA
+       ========================================================================== */
+    function renderValidatorTab() {
+      const overviewEl = document.getElementById('validatorOverview');
+      const listEl = document.getElementById('validatorList');
+
+      if (!loadedFiles.length) {
+        overviewEl.innerHTML = `<div class="alert-card warning">Nincsenek betöltött jegyzőkönyvek az ellenőrzéshez.</div>`;
+        listEl.innerHTML = "";
+        return;
+      }
+
+      const failedFiles = loadedFiles.filter(f => f.validationErrors.length > 0);
+
+      if (failedFiles.length > 0) {
+        let errDetailsHtml = "";
+        failedFiles.forEach(f => {
+          errDetailsHtml += `<h4 style="margin-top:10px; margin-bottom:4px;">📄 ${f.name}</h4><ul class="err-list">`;
+          f.validationErrors.forEach(err => {
+            errDetailsHtml += `<li><strong>Tétel:</strong> ${err.megn} | <strong>SZI:</strong> ${err.szi} | Eredeti: ${err.origAkt} | <span style="color:var(--danger);">Kiesés: ${err.diff}</span> | Korrigált: <b>${err.newAkt}</b></li>`;
+          });
+          errDetailsHtml += `</ul>`;
+        });
+
+        overviewEl.innerHTML = `
+          <div class="alert-card warning">
+            <h3 style="color:#92400e; margin-bottom:6px;">⚠️ Figyelem! Tűrésen kívüli méretek találhatók</h3>
+            <p>A betöltött <strong>${loadedFiles.length}</strong> fájlból <strong>${failedFiles.length}</strong> jegyzőkönyvnél méreteltérés található.</p>
+            <div style="margin-top:12px;">${errDetailsHtml}</div>
+          </div>
+        `;
+      } else {
+        overviewEl.innerHTML = `
+          <div class="alert-card success">
+            <h3 style="color:#065f46; margin-bottom:6px;">✅ Minden méret tűrésen belül!</h3>
+            <p>A betöltött <strong>${loadedFiles.length}</strong> jegyzőkönyvből egyetlen méret sem esik kívül az előírt határokon.</p>
+          </div>
+        `;
+      }
+
+      let fileCardsHtml = "";
+      loadedFiles.forEach((f, idx) => {
+        fileCardsHtml += `
+          <div class="file-row">
+            <div class="file-row-header">
+              <div>
+                <strong>${f.name}</strong> 
+                <span style="font-size:12px; margin-left:8px; color:${f.validationErrors.length > 0 ? 'var(--danger)' : 'var(--success)'}; font-weight:600;">
+                  (${f.validationErrors.length > 0 ? f.validationErrors.length + ' hiba korrigálva' : 'Hibátlan'})
+                </span>
+              </div>
+              <div class="btn-group" style="margin-top:0;">
+                <button class="btn btn-outline" onclick="downloadCorrectedValidatorFile(${idx})">📥 Javított TXT</button>
+                <button class="btn btn-outline" onclick="toggleValidatorPreview(${idx})">👁️ Előnézet</button>
+              </div>
+            </div>
+            <pre id="valPreview_${idx}" style="display:none; margin-top:12px;">${generateTargetHeader(f.headerData) + f.correctedBody}</pre>
+          </div>
+        `;
+      });
+
+      listEl.innerHTML = fileCardsHtml;
+    }
+
+    function toggleValidatorPreview(idx) {
+      const p = document.getElementById(`valPreview_${idx}`);
+      p.style.display = p.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function downloadCorrectedValidatorFile(idx) {
+      const f = loadedFiles[idx];
+      if (!f) return;
+
+      const txt = generateTargetHeader(f.headerData) + f.correctedBody;
+      const blob = new Blob([txt], { type: 'text/plain;charset=windows-1250' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `KORRIGALT_${f.name}`;
+      a.click();
+    }
+
+    /* ==========================================================================
+       VONALKÓD MÁTRIX GENERÁLÁS (NÖVEKVŐ SORRENDBEN)
+       ========================================================================== */
+    function setMatrixView(mode) {
+      matrixViewMode = mode;
+      document.getElementById('btnMatrixNormal').className = `btn ${mode === 'normal' ? 'btn-primary' : 'btn-outline'}`;
+      document.getElementById('btnMatrixCompact').className = `btn ${mode === 'compact' ? 'btn-primary' : 'btn-outline'}`;
+
+      const cont = document.getElementById('matrixContainer');
+      if (mode === 'compact') cont.classList.add('compact-view');
+      else cont.classList.remove('compact-view');
+    }
+
+    function renderMatrixTab() {
+      if (!loadedFiles.length) {
+        document.getElementById('matrixContainer').style.display = 'none';
+        return;
+      }
+
+      const thead = document.getElementById('matrixHead');
+      const tbody = document.getElementById('matrixBody');
+
+      const matrixData = {};
+      const feszekNevek = [];
+      const megnSet = new Set();
+
+      loadedFiles.forEach(file => {
+        const fAzon = file.name.replace(/\.[^/.]+$/, "");
+        feszekNevek.push(fAzon);
+
+        file.parsedItems.forEach(t => {
+          megnSet.add(t.megn);
+          if (!matrixData[t.megn]) matrixData[t.megn] = {};
+          matrixData[t.megn][fAzon] = t.akt.toFixed(3);
+        });
+      });
+
+      // MEGNEVEZÉSEK TERMÉSZETES NÖVEKVŐ RENDEZÉSE (35, 36, 46, 56, 175, 235__X...)
+      const megnLista = Array.from(megnSet).sort((a, b) => naturalCompare(a, b));
+
+      // Fejléc (F1, F2...)
+      let headHtml = `<tr><th class="megn-col">Megn.</th>`;
+      feszekNevek.forEach((fNev, i) => {
+        headHtml += `<th title="${fNev}">F${i + 1}</th>`;
+      });
+      headHtml += `</tr>`;
+      thead.innerHTML = headHtml;
+
+      // Sorok felépítése
+      tbody.innerHTML = "";
+      megnLista.forEach(megn => {
+        const tr = document.createElement('tr');
+
+        const tdMegn = document.createElement('td');
+        tdMegn.className = 'megn-col';
+        tdMegn.textContent = megn;
+        tr.appendChild(tdMegn);
+
+        feszekNevek.forEach(fNev => {
+          const td = document.createElement('td');
+          const val = matrixData[megn]?.[fNev];
+
+          if (val && val !== "-") {
+            const card = document.createElement('div');
+            card.className = 'cell-card';
+
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.className = 'barcode-svg';
+            card.appendChild(svg);
+
+            const meta = document.createElement('div');
+            meta.className = 'meta-text';
+            meta.innerHTML = `${megn} | <b>${val}</b>`;
+            card.appendChild(meta);
+
+            td.appendChild(card);
+
+            try {
+              JsBarcode(svg, val, {
+                format: "CODE128",
+                width: 1.1,
+                height: 30,
+                displayValue: true,
+                fontSize: 10,
+                textMargin: 2,
+                margin: 2
+              });
+            } catch (err) {
+              console.error(`Vonalkód hiba (${megn} / ${fNev}):`, err);
+            }
+          } else {
+            td.textContent = "-";
+          }
+          tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('matrixContainer').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
