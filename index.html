@@ -167,7 +167,6 @@
       border: 1px solid #334155;
     }
 
-    /* MODAL */
     .modal-backdrop {
       display: none;
       position: fixed;
@@ -182,7 +181,7 @@
     .modal-window {
       background: #fff;
       border-radius: 10px;
-      max-width: 800px;
+      max-width: 820px;
       width: 100%;
       max-height: 90vh;
       overflow-y: auto;
@@ -198,7 +197,7 @@
 
     .calypso-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
       gap: 14px;
     }
     .form-group { display: flex; flex-direction: column; gap: 4px; }
@@ -282,7 +281,7 @@
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT jegyzőkönyveket</h3>
-      <p>Több fájl egyidejű feldolgozása, Prüfplan-konform tételkezeléssel és peremre húzással</p>
+      <p>Több fájl egyidejű feldolgozása, Prüfplan-konform tételkezeléssel és hardveres Zeiss fejléccel</p>
     </div>
 
     <div class="tabs-nav no-print">
@@ -290,6 +289,7 @@
       <button class="tab-btn" id="btnTabMatrix" type="button">📊 2. Vonalkód Mátrix Generátor</button>
     </div>
 
+    <!-- 1. TAB: JEGYZŐKÖNYV ELLENŐRZŐ -->
     <div id="tab-validator" class="tab-pane active">
       <div id="validatorOverview">
         <div class="alert-box warning">Kérlek tölts fel mérési jegyzőkönyveket (.txt) az ellenőrzéshez!</div>
@@ -303,6 +303,7 @@
       <div id="validatorFilesList"></div>
     </div>
 
+    <!-- 2. TAB: MÁTRIX -->
     <div id="tab-matrix" class="tab-pane">
       <div class="card no-print" style="display: flex; justify-content: space-between; align-items: center;">
         <div>
@@ -327,7 +328,7 @@
       <div class="modal-header">
         <h3 style="color: #0369a1;">✏️ Tételek és Méretek Szerkesztése (Prüfplan igazítás)</h3>
         <p style="font-size: 13px; color: #475569; margin-top: 4px;">
-          Fájl: <strong id="corrModalFileName"></strong>. Vedd ki a pipát azoknál a tételeknél, amik nincsenek benne a CAQ ellenőrzési tervben!
+          Fájl: <strong id="corrModalFileName"></strong>. Vedd ki a pipát azoknál a tételeknél, amik nincsenek benne a CAQ ellenőrzési tervben (pl. 110-es tétel)!
         </p>
       </div>
       
@@ -353,14 +354,14 @@
     </div>
   </div>
 
-  <!-- MODAL: ZEISS PARAMÉTERBEVITEL (KIZÁRÓLAG A KÖTELEZŐ MEZŐK A MINTA ALAPJÁN) -->
+  <!-- MODAL: ZEISS PARAMÉTERBEVITEL -->
   <div class="modal-backdrop" id="headerModal">
     <div class="modal-window">
       <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
         <div>
           <h3 id="modalTitleText" style="color: #b45309;">⚙️ Paraméterbevitel (Zeiss Calypso / CAQ)</h3>
           <p style="font-size: 13px; color: #475569; margin-top: 4px;">
-            Fájl: <strong id="modalFileName"></strong>. A működő mintának megfelelő fejlécadatok:
+            Fájl: <strong id="modalFileName"></strong>. Csak a gép által szigorúan megkövetelt adatok:
           </p>
         </div>
         <div style="font-size: 12px; font-weight: bold; color: #334155;">
@@ -374,7 +375,7 @@
           <input type="text" id="m_teileNr" placeholder="pl. 106760">
         </div>
         <div class="form-group">
-          <label>Megjegyzés / Fészek kód (K1002) *:</label>
+          <label>Megjegyzés / Fészek (K1002) *:</label>
           <input type="text" id="m_bemerkung" placeholder="pl. N1-T1-M9621">
         </div>
         <div class="form-group">
@@ -863,6 +864,7 @@
       editingFileIdx = null;
     });
 
+    // Validáció: K1001, K1002, K1003, K1041, K1053, K1081 kötelező
     function isHeaderComplete(h) {
       return !!(h.teileNr && h.teileNr.trim() && 
                 h.bemerkung && h.bemerkung.trim() && 
@@ -983,9 +985,9 @@
       lines.push(`K1003 ${h.teileBez}`);
       lines.push(`K1004 `);
       lines.push(`K1007 `);
-      lines.push(`K1041 ${h.rajzszam}`); // Szóköz nélkül a sor végén!
-      lines.push(`K1053 ${h.megrendelo}`);
-      lines.push(`K1081 ${h.maschine}`);
+      lines.push(`K1041 ${h.rajzszam.trim()}`); // Garantáltan szóköz nélkül a sor végén!
+      lines.push(`K1053 ${h.megrendelo.trim()}`);
+      lines.push(`K1081 ${h.maschine.trim()}`);
       lines.push(`K1086 `);
       lines.push(`K1101 `);
       lines.push(`K1201 143122070061`);
@@ -1051,6 +1053,7 @@
       return lines.join("\r\n") + "\r\n";
     }
 
+    // Fájlnév pontos formázása a működő minta szerint: 106760_2026-09-14_73203.DFQ
     function getStandardDfqFileName(file) {
       const h = file.headerData;
       const cleanPart = (h.teileNr || "106760").replace(/[^a-zA-Z0-9_-]/g, "");
