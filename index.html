@@ -378,15 +378,19 @@
         </div>
         <div class="form-group">
           <label class="required">Munkadarab neve (K1003) *:</label>
-          <input type="text" id="m_teileBez" placeholder="pl. Steckerplatte montiert Prägung 123-013-0001">
+          <input type="text" id="m_teileBez" placeholder="pl. Steckerplatte montiert...">
         </div>
         <div class="form-group">
           <label class="required">Rajzszám (K1041) *:</label>
           <input type="text" id="m_rajzszam" placeholder="pl. 123-013-0003 vagy 0 130 S00 400">
         </div>
         <div class="form-group">
+          <label class="required">Mérőgép neve (K1202) *:</label>
+          <input type="text" id="m_k1202" placeholder="pl. M9578 vagy MO093">
+        </div>
+        <div class="form-group">
           <label>Megrendelő (K1053):</label>
-          <input type="text" id="m_megrendelo" placeholder="pl. 1118161 vagy 1118159">
+          <input type="text" id="m_megrendelo" placeholder="pl. 1118161">
         </div>
         <div class="form-group">
           <label>Gép száma (K1081):</label>
@@ -488,7 +492,7 @@
 |   Teile-Nummer    :  ${padRight(h.teileNr, 68)}|
 |   Auftragsnummer  :  ${padRight(h.megrendelo, 68)}|
 |   Chargennummer   :  ${padRight(h.rajzszam, 68)}|
-|   Masch.Nummer    :  ${padRight(h.maschine, 68)}|
+|   Masch.Nummer    :  ${padRight(h.k1202 || h.maschine, 68)}|
 |   Pruefer         :  ${padRight(h.pruefer, 68)}|  
 |   Bemerkungen     :  ${padRight(h.bemerkung, 68)}|
 |   Pruefungsinfo   :  ${padRight(h.datum + ' ' + h.uhrzeit + 'Uhr', 68)}|
@@ -523,17 +527,26 @@
       let datum = getVal(/Datum\s*:\s*([^\s|\n]+)/) || (rawText.match(/tum:\s*([0-9.]+)/i) ? rawText.match(/tum:\s*([0-9.]+)/i)[1] : "");
       let uhrzeit = getVal(/Uhrzeit\s*:\s*([^\s|\n]+)/) || (rawText.match(/tum:\s*[0-9.]+\s+([0-9:]+)/i) ? rawText.match(/tum:\s*[0-9.]+\s+([0-9:]+)/i)[1] : "");
 
-      // Nincsenek fix adatok, a hiányzó mezők üresen maradnak a szigorú ellenőrzéshez
+      const bemerkung = getVal(/Bemerkungen\s*:\s*([^\n|]+)/);
+      let detectedMachine = getVal(/Masch\.Nummer\s*:\s*([^\n|]+)/);
+      
+      // Ha a Megjegyzés tartalmaz gépszámot (pl. N1-T1-M9578 -> M9578), azt automatikusan felismerjük a K1202-höz
+      if (bemerkung && bemerkung.includes("-M")) {
+        const mMatch = bemerkung.match(/M\d+/);
+        if (mMatch) detectedMachine = mMatch[0];
+      }
+
       const headerData = {
         kunde: getVal(/Kunde\s*:\s*([^\n|]+)/),
         teileNr: getVal(/Teile-Nummer\s*:\s*([^\n|]+)/),
         teileBez: getVal(/Teilebezeichnung\s*:\s*([^\n|]+)/),
-        bemerkung: getVal(/Bemerkungen\s*:\s*([^\n|]+)/),
+        bemerkung: bemerkung,
         rajzszam: getVal(/Chargennummer\s*:\s*([^\n|]+)/),
         megrendelo: getVal(/Auftragsnummer\s*:\s*([^\n|]+)/),
-        maschine: getVal(/Masch\.Nummer\s*:\s*([^\n|]+)/),
+        k1202: detectedMachine || "OI543", // K1202 Mérőgép neve
+        maschine: detectedMachine || "KS026",
         ugyfelszam: "2",
-        pruefer: getVal(/Pruefer\s*:\s*([^\n|]+)/),
+        pruefer: getVal(/Pruefer\s*:\s*([^\n|]+)/) || "KS026",
         datum: datum,
         uhrzeit: uhrzeit
       };
@@ -853,12 +866,13 @@
       editingFileIdx = null;
     });
 
-    // Szigorú érvényesség-vizsgálat: K1001, K1002, K1003, K1041 kötelező!
+    // Szigorú érvényesség-vizsgálat: K1001, K1002, K1003, K1041, K1202 kötelező!
     function isHeaderComplete(h) {
       return !!(h.teileNr && h.teileNr.trim() && 
                 h.bemerkung && h.bemerkung.trim() && 
                 h.teileBez && h.teileBez.trim() &&
-                h.rajzszam && h.rajzszam.trim());
+                h.rajzszam && h.rajzszam.trim() &&
+                h.k1202 && h.k1202.trim());
     }
 
     function openManualHeaderModal(idx) {
@@ -871,7 +885,6 @@
       openHeaderModal(file);
     }
 
-    // DFQ letöltési kérésnél azonnali ellenőrzés
     function requestDfqExport(idx) {
       const file = loadedFiles[idx];
       if (!file) return;
@@ -894,8 +907,9 @@
       document.getElementById('m_bemerkung').value = h.bemerkung || "";
       document.getElementById('m_teileBez').value = h.teileBez || "";
       document.getElementById('m_rajzszam').value = h.rajzszam || "";
+      document.getElementById('m_k1202').value = h.k1202 || "M9578";
       document.getElementById('m_megrendelo').value = h.megrendelo || "";
-      document.getElementById('m_maschine').value = h.maschine || "";
+      document.getElementById('m_maschine').value = h.maschine || "KS026";
       document.getElementById('m_kunde').value = h.kunde || "";
       document.getElementById('m_ugyfelszam').value = h.ugyfelszam || "2";
       document.getElementById('m_datum').value = h.datum || "";
@@ -906,6 +920,7 @@
       document.getElementById('m_bemerkung').classList.toggle('missing', !h.bemerkung || !h.bemerkung.trim());
       document.getElementById('m_teileBez').classList.toggle('missing', !h.teileBez || !h.teileBez.trim());
       document.getElementById('m_rajzszam').classList.toggle('missing', !h.rajzszam || !h.rajzszam.trim());
+      document.getElementById('m_k1202').classList.toggle('missing', !h.k1202 || !h.k1202.trim());
 
       document.getElementById('headerModal').classList.add('active');
     }
@@ -923,6 +938,7 @@
       f.headerData.bemerkung = document.getElementById('m_bemerkung').value.trim();
       f.headerData.teileBez = document.getElementById('m_teileBez').value.trim();
       f.headerData.rajzszam = document.getElementById('m_rajzszam').value.trim();
+      f.headerData.k1202 = document.getElementById('m_k1202').value.trim();
       f.headerData.megrendelo = document.getElementById('m_megrendelo').value.trim();
       f.headerData.maschine = document.getElementById('m_maschine').value.trim();
       f.headerData.kunde = document.getElementById('m_kunde').value.trim();
@@ -949,13 +965,15 @@
       const bemerkung = document.getElementById('m_bemerkung').value.trim();
       const teileBez = document.getElementById('m_teileBez').value.trim();
       const rajzszam = document.getElementById('m_rajzszam').value.trim();
+      const k1202 = document.getElementById('m_k1202').value.trim();
 
-      if (!teileNr || !bemerkung || !teileBez || !rajzszam) {
-        alert("A Cikkszám, a Megjegyzés (Fészek), a Munkadarab neve és a Rajzszám kitöltése kötelező a DFQ generáláshoz!");
+      if (!teileNr || !bemerkung || !teileBez || !rajzszam || !k1202) {
+        alert("A Cikkszám, a Megjegyzés (Fészek), a Munkadarab neve, a Rajzszám és a Mérőgép neve kitöltése kötelező a DFQ generáláshoz!");
         if (!teileNr) { document.getElementById('m_teileNr').classList.add('missing'); document.getElementById('m_teileNr').focus(); }
         else if (!bemerkung) { document.getElementById('m_bemerkung').classList.add('missing'); document.getElementById('m_bemerkung').focus(); }
         else if (!teileBez) { document.getElementById('m_teileBez').classList.add('missing'); document.getElementById('m_teileBez').focus(); }
-        else { document.getElementById('m_rajzszam').classList.add('missing'); document.getElementById('m_rajzszam').focus(); }
+        else if (!rajzszam) { document.getElementById('m_rajzszam').classList.add('missing'); document.getElementById('m_rajzszam').focus(); }
+        else { document.getElementById('m_k1202').classList.add('missing'); document.getElementById('m_k1202').focus(); }
         return;
       }
 
@@ -1008,7 +1026,7 @@
       lines.push(`K1086 `);
       lines.push(`K1101 `);
       lines.push(`K1201 143122070061`);
-      lines.push(`K1202 OI543`);
+      lines.push(`K1202 ${h.k1202 || 'OI543'}`); // K1202 Mérőgép neve
       lines.push(`K1301 ${h.ugyfelszam || 2}`);
       lines.push(`K1900 `);
 
@@ -1028,7 +1046,7 @@
       lines.push(`K2343/0 ${formatK2343(h.datum, h.uhrzeit)}`);
       lines.push(`K2344/0 Master`);
       lines.push(`K2415/0 143122070061`);
-      lines.push(`K2402/0 OI543`);
+      lines.push(`K2402/0 ${h.k1202 || 'OI543'}`);
       lines.push(`K2406/0 Carl Zeiss Oberkochen`);
       lines.push(`K8500/0 `);
 
@@ -1060,7 +1078,6 @@
         lines.push(`K2213/${i} ${item.akt.toFixed(7)}`);
       });
 
-      // Utolsó adatsor felépítése (7 tizedesjegy + szóköz a végén)
       const ts = `${d}/${u}`;
       let dataRow = "";
       file.parsedItems.forEach(item => {
@@ -1076,7 +1093,6 @@
       const h = file.headerData;
       const cleanPart = (h.teileNr || "106779").replace(/[^a-zA-Z0-9_-]/g, "");
 
-      // Dátum formázása: 09.09.2026 -> 2026-9-9 (vezető nulla nélkül)
       let dateStr = "2026-9-9";
       if (h.datum && h.datum.includes(".")) {
         const parts = h.datum.split(".").map(p => parseInt(p, 10));
@@ -1085,7 +1101,6 @@
         }
       }
 
-      // Időpont formázása: 09:31:33 -> 093133 vagy 08:43:20 -> 84320
       let timeStr = "093133";
       if (h.uhrzeit) {
         const rawT = h.uhrzeit.replace(/[^0-9]/g, "");
@@ -1100,7 +1115,7 @@
       return `${cleanPart}_${dateStr}_${timeStr}.DFQ`;
     }
 
-    // Mentés BOM-mentes ANSI (Windows-1250 kompatibilis) bájttömbbel
+    // Mentés BOM-mentes ANSI (Windows-1250) bájttömbbel
     function triggerDfqDownload(file) {
       const dfqText = buildDfqString(file);
       const bytes = new Uint8Array(dfqText.length);
@@ -1148,7 +1163,7 @@
     document.getElementById('btnDownloadAllDfq').addEventListener('click', async () => {
       const missingFiles = loadedFiles.filter(f => !isHeaderComplete(f.headerData));
       if (missingFiles.length > 0) {
-        alert(`Figyelem! ${missingFiles.length} fájlnál hiányoznak a kötelező adatok (Cikkszám, Fészek, Munkadarab vagy Rajzszám). Kérlek pótold őket a sorok mellett lévő "DFQ Letöltése" gombbal!`);
+        alert(`Figyelem! ${missingFiles.length} fájlnál hiányoznak a kötelező adatok (Cikkszám, Fészek, Munkadarab, Rajzszám vagy Mérőgép név). Kérlek pótold őket a sorok mellett lévő "DFQ Letöltése" gombbal!`);
         return;
       }
 
