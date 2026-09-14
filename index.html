@@ -167,7 +167,7 @@
       border: 1px solid #334155;
     }
 
-    /* MODAL ABLAK */
+    /* MODAL */
     .modal-backdrop {
       display: none;
       position: fixed;
@@ -182,7 +182,7 @@
     .modal-window {
       background: #fff;
       border-radius: 10px;
-      max-width: 880px;
+      max-width: 800px;
       width: 100%;
       max-height: 90vh;
       overflow-y: auto;
@@ -196,21 +196,29 @@
     }
     .modal-header h3 { font-size: 17px; }
 
-    .grid-form {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 14px;
+    .calypso-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
     }
-    .form-group { display: flex; flex-direction: column; gap: 4px; }
-    .form-group label { font-size: 12px; font-weight: 700; color: #475569; }
-    .form-group label.required { color: var(--danger); }
-    .form-group input {
-      padding: 8px 10px;
-      border: 1px solid var(--border);
+    .calypso-table th, .calypso-table td {
+      border: 1px solid #cbd5e1;
+      padding: 7px 10px;
+      font-size: 13px;
+    }
+    .calypso-table th {
+      background: #f1f5f9;
+      text-align: left;
+      color: #334155;
+    }
+    .calypso-table td input {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid #cbd5e1;
       border-radius: 4px;
       font-size: 13px;
     }
-    .form-group input.missing {
+    .calypso-table td input.missing {
       border: 2px solid var(--danger) !important;
       background: #fef2f2 !important;
     }
@@ -357,62 +365,63 @@
     </div>
   </div>
 
-  <!-- MODAL: ZEISS PARAMÉTERBEVITEL (A GÉP KÉPERNYŐJÉHEZ IGAZÍTVA) -->
+  <!-- MODAL: PONTOS ZEISS PARAMÉTERBEVITEL -->
   <div class="modal-backdrop" id="headerModal">
     <div class="modal-window">
-      <div class="modal-header">
-        <h3 id="modalTitleText" style="color: #b45309;">⚠️ Fejléc kitöltése (Zeiss Calypso / CAQ Paraméterbevitel)</h3>
-        <p style="font-size: 13px; color: #475569; margin-top: 4px;">
-          Fájl: <strong id="modalFileName"></strong>. Kérlek töltsd ki az alábbi mezőket a mérőgép beállításai szerint:
-        </p>
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h3 id="modalTitleText" style="color: #b45309;">⚙️ Paraméterbevitel (Zeiss Calypso)</h3>
+          <p style="font-size: 13px; color: #475569; margin-top: 4px;">
+            Fájl: <strong id="modalFileName"></strong>. A pirossal jelölt mezők kötelezőek a CAQ beolvasáshoz:
+          </p>
+        </div>
+        <div style="font-size: 12px; font-weight: bold; color: #334155;">
+          Felhasználók: <span style="background: #e2e8f0; padding: 3px 8px; border-radius: 4px;">Master</span>
+        </div>
       </div>
       
-      <div class="grid-form" id="modalForm">
-        <div class="form-group">
-          <label>Ügyfél (Kunde):</label>
-          <input type="text" id="m_kunde" placeholder="pl. Bosch vagy Nass Magnet">
-        </div>
-        <div class="form-group">
-          <label class="required">Ügyfélszám (K1301) *:</label>
-          <input type="text" id="m_ugyfelszam" value="2">
-        </div>
-        <div class="form-group">
-          <label class="required">Rajzszám (K1041) *:</label>
-          <input type="text" id="m_rajzszam" placeholder="pl. 0 130 S00 400 vagy 123-013-0003">
-        </div>
-        <div class="form-group">
-          <label class="required">Gép száma (K1081) *:</label>
-          <input type="text" id="m_maschine" placeholder="pl. MO093 vagy KS026">
-        </div>
-        <div class="form-group">
-          <label class="required">Megrendelő (K1053) *:</label>
-          <input type="text" id="m_megrendelo" placeholder="pl. 1118159 vagy 1118161">
-        </div>
-        <div class="form-group">
-          <label class="required">Munkadarab neve (K1003) *:</label>
-          <input type="text" id="m_teileBez" placeholder="pl. Connecting Plate vagy Steckerplatte...">
-        </div>
-        <div class="form-group">
-          <label class="required">Mérőgép neve (K1202 / K2402) *:</label>
-          <input type="text" id="m_k1202" placeholder="pl. M9578 vagy MO093">
-        </div>
-        <div class="form-group">
-          <label class="required">Megjegyzés / Fészek (K1002) *:</label>
-          <input type="text" id="m_bemerkung" placeholder="pl. N4-T1-M9621 vagy N1-T1-M9578">
-        </div>
-        <div class="form-group">
-          <label class="required">Cikkszám (K1001) *:</label>
-          <input type="text" id="m_teileNr" placeholder="pl. 107930 vagy 106779">
-        </div>
-        <div class="form-group">
-          <label>Dátum (DD.MM.YYYY):</label>
-          <input type="text" id="m_datum" placeholder="pl. 09.09.2026">
-        </div>
-        <div class="form-group">
-          <label>Időpont (HH:MM:SS):</label>
-          <input type="text" id="m_uhrzeit" placeholder="pl. 09:31:33">
-        </div>
-      </div>
+      <table class="calypso-table">
+        <thead>
+          <tr>
+            <th style="width: 40%;">Megnevezés</th>
+            <th>Érték</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Ügyfélszám (K1301) *</strong></td>
+            <td><input type="text" id="m_ugyfelszam" value="2"></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--danger);">Rajzszám (K1041) *</strong></td>
+            <td><input type="text" id="m_rajzszam" placeholder="pl. 0 130 S00 400"></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--danger);">Gép száma (K1081) *</strong></td>
+            <td><input type="text" id="m_maschine" placeholder="pl. MO093"></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--danger);">Megrendelő (K1053) *</strong></td>
+            <td><input type="text" id="m_megrendelo" placeholder="pl. 1118159"></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--danger);">Munkadarab neve (K1003) *</strong></td>
+            <td><input type="text" id="m_teileBez" placeholder="pl. Connecting Plate"></td>
+          </tr>
+          <tr>
+            <td><strong>Növekményes azonosítószám (K1008)</strong></td>
+            <td><input type="text" id="m_novekmenyes" placeholder="pl. N4-T1-M9623"></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--danger);">Megjegyzés / Fészek (K1002) *</strong></td>
+            <td><input type="text" id="m_bemerkung" placeholder="pl. N4-T1-M9621"></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--danger);">Cikkszám (K1001) *</strong></td>
+            <td><input type="text" id="m_teileNr" placeholder="pl. 107930"></td>
+          </tr>
+        </tbody>
+      </table>
 
       <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
         <button class="btn btn-outline" id="btnModalCancel" type="button">Mégsem</button>
@@ -492,7 +501,7 @@
 |   Teile-Nummer    :  ${padRight(h.teileNr, 68)}|
 |   Auftragsnummer  :  ${padRight(h.megrendelo, 68)}|
 |   Chargennummer   :  ${padRight(h.rajzszam, 68)}|
-|   Masch.Nummer    :  ${padRight(h.k1202 || h.maschine, 68)}|
+|   Masch.Nummer    :  ${padRight(h.maschine, 68)}|
 |   Pruefer         :  ${padRight(h.maschine, 68)}|  
 |   Bemerkungen     :  ${padRight(h.bemerkung, 68)}|
 |   Pruefungsinfo   :  ${padRight(h.datum + ' ' + h.uhrzeit + 'Uhr', 68)}|
@@ -528,7 +537,7 @@
       let uhrzeit = getVal(/Uhrzeit\s*:\s*([^\s|\n]+)/) || (rawText.match(/tum:\s*[0-9.]+\s+([0-9:]+)/i) ? rawText.match(/tum:\s*[0-9.]+\s+([0-9:]+)/i)[1] : "");
 
       const bemerkung = getVal(/Bemerkungen\s*:\s*([^\n|]+)/);
-      let detectedMachine = getVal(/Masch\.Nummer\s*:\s*([^\n|]+)/);
+      let detectedMachine = getVal(/Masch\.Nummer\s*:\s*([^\n|]+)/) || getVal(/Pruefer\s*:\s*([^\n|]+)/);
       
       if (bemerkung && bemerkung.includes("-M")) {
         const mMatch = bemerkung.match(/M\d+/);
@@ -536,13 +545,13 @@
       }
 
       const headerData = {
-        kunde: getVal(/Kunde\s*:\s*([^\n|]+)/),
+        kunde: getVal(/Kunde\s*:\s*([^\n|]+)/) || "Bosch",
         ugyfelszam: "2",
         rajzszam: getVal(/Chargennummer\s*:\s*([^\n|]+)/),
-        maschine: getVal(/Pruefer\s*:\s*([^\n|]+)/) || "KS026",
+        maschine: detectedMachine || "MO093",
         megrendelo: getVal(/Auftragsnummer\s*:\s*([^\n|]+)/),
         teileBez: getVal(/Teilebezeichnung\s*:\s*([^\n|]+)/),
-        k1202: detectedMachine || "OI543",
+        novekmenyes: bemerkung || "",
         bemerkung: bemerkung,
         teileNr: getVal(/Teile-Nummer\s*:\s*([^\n|]+)/),
         datum: datum,
@@ -578,7 +587,7 @@
             const megn = formatMegnevezes(tokens[tokens.length - 1]);
 
             if (!isNaN(akt) && !isNaN(nevl)) {
-              let desc = "Távolság";
+              let desc = "Tolóm.táv.";
               let k2009 = "200";
               let k2120 = "1";
 
@@ -664,8 +673,8 @@
     }
 
     function buildFileBody(file) {
-      const datum = file.headerData.datum || "09.09.2026";
-      const uhrzeit = file.headerData.uhrzeit || "09:31:33";
+      const datum = file.headerData.datum || "10.09.2026";
+      const uhrzeit = file.headerData.uhrzeit || "16:54:03";
       const lines = [];
       lines.push(`   Werth Messtechnik / Datum: ${datum} ${uhrzeit} / Seite: 1`);
       lines.push(`--------------------------------------------------------------------------------------`);
@@ -864,15 +873,14 @@
       editingFileIdx = null;
     });
 
-    // Szigorú érvényesség-vizsgálat: K1001, K1002, K1003, K1041, K1053, K1081, K1202 kötelező!
+    // Szigorú érvényesség-vizsgálat: K1001, K1002, K1003, K1041, K1053, K1081
     function isHeaderComplete(h) {
       return !!(h.teileNr && h.teileNr.trim() && 
                 h.bemerkung && h.bemerkung.trim() && 
-                h.teileBez && h.teileBez.trim() &&
-                h.rajzszam && h.rajzszam.trim() &&
-                h.megrendelo && h.megrendelo.trim() &&
-                h.maschine && h.maschine.trim() &&
-                h.k1202 && h.k1202.trim());
+                h.teileBez && h.teileBez.trim() && 
+                h.rajzszam && h.rajzszam.trim() && 
+                h.megrendelo && h.megrendelo.trim() && 
+                h.maschine && h.maschine.trim());
     }
 
     function openManualHeaderModal(idx) {
@@ -880,8 +888,8 @@
       const file = loadedFiles[idx];
       if (!file) return;
 
-      document.getElementById('modalTitleText').innerText = "⚙️ Paraméterbevitel (Zeiss Calypso / CAQ)";
-      document.getElementById('modalTitleText').style.color = "#4338ca";
+      document.getElementById('modalTitleText').innerText = "⚙️ Paraméterbevitel (Zeiss Calypso)";
+      document.getElementById('modalTitleText').style.color = "#0284c7";
       openHeaderModal(file);
     }
 
@@ -903,24 +911,19 @@
       const h = file.headerData;
       document.getElementById('modalFileName').innerText = file.name;
 
-      document.getElementById('m_kunde').value = h.kunde || "";
       document.getElementById('m_ugyfelszam').value = h.ugyfelszam || "2";
       document.getElementById('m_rajzszam').value = h.rajzszam || "";
-      document.getElementById('m_maschine').value = h.maschine || "KS026";
-      document.getElementById('m_megrendelo').value = h.megrendelo || "";
+      document.getElementById('m_maschine').value = h.maschine || "MO093";
+      document.getElementById('m_megrendelo').value = h.megrendelo || "1118159";
       document.getElementById('m_teileBez').value = h.teileBez || "";
-      document.getElementById('m_k1202').value = h.k1202 || "M9578";
+      document.getElementById('m_novekmenyes').value = h.novekmenyes || h.bemerkung || "";
       document.getElementById('m_bemerkung').value = h.bemerkung || "";
       document.getElementById('m_teileNr').value = h.teileNr || "";
-      document.getElementById('m_datum').value = h.datum || "";
-      document.getElementById('m_uhrzeit').value = h.uhrzeit || "";
 
-      // Kötelező hiányzó mezők pirossal jelölése
       document.getElementById('m_rajzszam').classList.toggle('missing', !h.rajzszam || !h.rajzszam.trim());
       document.getElementById('m_maschine').classList.toggle('missing', !h.maschine || !h.maschine.trim());
       document.getElementById('m_megrendelo').classList.toggle('missing', !h.megrendelo || !h.megrendelo.trim());
       document.getElementById('m_teileBez').classList.toggle('missing', !h.teileBez || !h.teileBez.trim());
-      document.getElementById('m_k1202').classList.toggle('missing', !h.k1202 || !h.k1202.trim());
       document.getElementById('m_bemerkung').classList.toggle('missing', !h.bemerkung || !h.bemerkung.trim());
       document.getElementById('m_teileNr').classList.toggle('missing', !h.teileNr || !h.teileNr.trim());
 
@@ -936,17 +939,14 @@
       if (pendingFileIdx === null) return false;
       const f = loadedFiles[pendingFileIdx];
 
-      f.headerData.kunde = document.getElementById('m_kunde').value.trim();
       f.headerData.ugyfelszam = document.getElementById('m_ugyfelszam').value.trim() || "2";
       f.headerData.rajzszam = document.getElementById('m_rajzszam').value.trim();
       f.headerData.maschine = document.getElementById('m_maschine').value.trim();
       f.headerData.megrendelo = document.getElementById('m_megrendelo').value.trim();
       f.headerData.teileBez = document.getElementById('m_teileBez').value.trim();
-      f.headerData.k1202 = document.getElementById('m_k1202').value.trim();
+      f.headerData.novekmenyes = document.getElementById('m_novekmenyes').value.trim();
       f.headerData.bemerkung = document.getElementById('m_bemerkung').value.trim();
       f.headerData.teileNr = document.getElementById('m_teileNr').value.trim();
-      f.headerData.datum = document.getElementById('m_datum').value.trim();
-      f.headerData.uhrzeit = document.getElementById('m_uhrzeit').value.trim();
 
       const preEl = document.getElementById(`previewBox_${pendingFileIdx}`);
       if (preEl && preEl.style.display === 'block') {
@@ -967,11 +967,10 @@
       const maschine = document.getElementById('m_maschine').value.trim();
       const megrendelo = document.getElementById('m_megrendelo').value.trim();
       const teileBez = document.getElementById('m_teileBez').value.trim();
-      const k1202 = document.getElementById('m_k1202').value.trim();
       const bemerkung = document.getElementById('m_bemerkung').value.trim();
       const teileNr = document.getElementById('m_teileNr').value.trim();
 
-      if (!rajzszam || !maschine || !megrendelo || !teileBez || !k1202 || !bemerkung || !teileNr) {
+      if (!rajzszam || !maschine || !megrendelo || !teileBez || !bemerkung || !teileNr) {
         alert("Kérlek töltsd ki a pirossal jelölt összes kötelező mezőt a DFQ generáláshoz!");
         return;
       }
@@ -985,8 +984,8 @@
     });
 
     function formatK2343(datum, uhrzeit) {
-      let d = (datum || "09.09.2026").trim();
-      let u = (uhrzeit || "09:31:33").trim();
+      let d = (datum || "10.09.2026").trim();
+      let u = (uhrzeit || "16:54:03").trim();
 
       if (d.includes("-")) {
         const parts = d.split("-");
@@ -1005,26 +1004,29 @@
       return `${d}   ${u}`;
     }
 
-    // DFQ kódolás pontosan a működő referencia minták alapján
+    // DFQ kódolás a Zeiss Calypso paraméterei szerint
     function buildDfqString(file) {
       const h = file.headerData;
-      const d = (h.datum || "09.09.2026").trim();
-      const u = (h.uhrzeit || "09:31:33").trim();
+      const d = (h.datum || "10.09.2026").trim();
+      const u = (h.uhrzeit || "16:54:03").trim();
       const lines = [];
 
       lines.push(`K0100 ${file.parsedItems.length}`);
       lines.push(`K1001 ${h.teileNr}`);
       lines.push(`K1002 ${h.bemerkung}`);
-      lines.push(`K1003 ${h.teileBez}`);
+      lines.push(`K1003 ${h.teileBez} `);
       lines.push(`K1004 `);
       lines.push(`K1007 `);
-      lines.push(`K1041 ${h.rajzszam}`);
-      lines.push(`K1053 ${h.megrendelo || '1118161'}`);
-      lines.push(`K1081 ${h.maschine || 'KS026'}`);
+      if (h.novekmenyes) {
+        lines.push(`K1008 ${h.novekmenyes}`);
+      }
+      lines.push(`K1041 ${h.rajzszam} `);
+      lines.push(`K1053 ${h.megrendelo || '1118159'}`);
+      lines.push(`K1081 ${h.maschine || 'MO093'}`);
       lines.push(`K1086 `);
       lines.push(`K1101 `);
       lines.push(`K1201 143122070061`);
-      lines.push(`K1202 ${h.k1202 || 'OI543'}`);
+      lines.push(`K1202 ${h.maschine || 'OI543'}`);
       lines.push(`K1301 ${h.ugyfelszam || 2}`);
       lines.push(`K1900 `);
 
@@ -1040,11 +1042,11 @@
       lines.push(`K2302/0 `);
       lines.push(`K2303/0 `);
       lines.push(`K2306/0 `);
-      lines.push(`K2342/0 ${h.teileBez} Program Szeriaprog`);
+      lines.push(`K2342/0 ${h.teileBez} Szeriaprogram`);
       lines.push(`K2343/0 ${formatK2343(h.datum, h.uhrzeit)}`);
       lines.push(`K2344/0 Master`);
       lines.push(`K2415/0 143122070061`);
-      lines.push(`K2402/0 ${h.k1202 || 'OI543'}`);
+      lines.push(`K2402/0 ${h.maschine || 'OI543'}`);
       lines.push(`K2406/0 Carl Zeiss Oberkochen`);
       lines.push(`K8500/0 `);
 
@@ -1088,9 +1090,9 @@
 
     function getStandardDfqFileName(file) {
       const h = file.headerData;
-      const cleanPart = (h.teileNr || "106779").replace(/[^a-zA-Z0-9_-]/g, "");
+      const cleanPart = (h.teileNr || "107930").replace(/[^a-zA-Z0-9_-]/g, "");
 
-      let dateStr = "2026-9-9";
+      let dateStr = "2026-9-10";
       if (h.datum && h.datum.includes(".")) {
         const parts = h.datum.split(".").map(p => parseInt(p, 10));
         if (parts.length >= 3) {
@@ -1098,7 +1100,7 @@
         }
       }
 
-      let timeStr = "093133";
+      let timeStr = "165402";
       if (h.uhrzeit) {
         const rawT = h.uhrzeit.replace(/[^0-9]/g, "");
         if (rawT.length === 6) {
