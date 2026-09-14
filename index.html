@@ -116,6 +116,7 @@
     .btn-edit-hdr:hover { background: #4f46e5; }
     .btn-warning { background: #f59e0b; color: #fff; }
     .btn-warning:hover { background: #d97706; }
+    .btn-secondary { background: #64748b; color: #fff; }
     .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
     .btn-outline:hover { background: #f1f5f9; }
 
@@ -166,7 +167,7 @@
       border: 1px solid #334155;
     }
 
-    /* ZEISS PARAMÉTERBEVITEL FORMÁZOTT MODAL */
+    /* MODAL ABLAKOK */
     .modal-backdrop {
       display: none;
       position: fixed;
@@ -235,7 +236,6 @@
       color: #0f172a;
     }
 
-    /* MÁTRIX TÁBLÁZAT */
     .table-container {
       width: 100%;
       overflow-x: auto;
@@ -282,14 +282,12 @@
       </div>
     </header>
 
-    <!-- Fájl feltöltő doboz -->
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT jegyzőkönyveket</h3>
       <p>Több fájl egyidejű feldolgozása, peremre húzott szórásképzéssel és szigorú DFQ validációval</p>
     </div>
 
-    <!-- Tab navigáció -->
     <div class="tabs-nav no-print">
       <button class="tab-btn active" id="btnTabValidator" type="button">🔍 1. Jegyzőkönyv Ellenőrző</button>
       <button class="tab-btn" id="btnTabMatrix" type="button">📊 2. Vonalkód Mátrix Generátor</button>
@@ -301,7 +299,6 @@
         <div class="alert-box warning">Kérlek tölts fel mérési jegyzőkönyveket (.txt) az ellenőrzéshez!</div>
       </div>
       
-      <!-- Felső csoportos letöltési sáv -->
       <div id="validatorActions" class="action-bar" style="display: none;">
         <button class="btn btn-dfq" id="btnDownloadAllDfq" type="button">📊 Összes DFQ Letöltése (.ZIP)</button>
         <button class="btn btn-primary" id="btnDownloadAllTxt" type="button">📦 Összes TXT Letöltése (.ZIP)</button>
@@ -310,7 +307,7 @@
       <div id="validatorFilesList"></div>
     </div>
 
-    <!-- 2. TAB: VONALKÓD MÁTRIX GENERÁTOR -->
+    <!-- 2. TAB: MÁTRIX -->
     <div id="tab-matrix" class="tab-pane">
       <div class="card no-print" style="display: flex; justify-content: space-between; align-items: center;">
         <div>
@@ -329,7 +326,7 @@
 
   </div>
 
-  <!-- MODAL: KORREKCIÓK MÓDOSÍTÁSI LEHETŐSÉGGEL -->
+  <!-- MODAL: KORREKCIÓK -->
   <div class="modal-backdrop" id="correctionModal">
     <div class="modal-window">
       <div class="modal-header">
@@ -360,7 +357,7 @@
     </div>
   </div>
 
-  <!-- MODAL: ZEISS PARAMÉTERBEVITEL -->
+  <!-- MODAL: PARAMÉTERBEVITEL (KÖTELEZŐK PIROSSAL) -->
   <div class="modal-backdrop" id="headerModal">
     <div class="modal-window">
       <div class="modal-header">
@@ -373,27 +370,27 @@
       <div class="grid-form" id="modalForm">
         <div class="form-group">
           <label class="required">Cikkszám (K1001) *:</label>
-          <input type="text" id="m_teileNr" placeholder="pl. 107930 vagy 107946">
+          <input type="text" id="m_teileNr" placeholder="pl. 106779 vagy 107946">
         </div>
         <div class="form-group">
           <label class="required">Megjegyzés / Fészek (K1002) *:</label>
-          <input type="text" id="m_bemerkung" placeholder="pl. N4-T1-M9621">
+          <input type="text" id="m_bemerkung" placeholder="pl. N1-T1-M9578">
         </div>
         <div class="form-group">
           <label class="required">Munkadarab neve (K1003) *:</label>
-          <input type="text" id="m_teileBez" placeholder="pl. Connecting Plate vagy Connection plate Rin">
+          <input type="text" id="m_teileBez" placeholder="pl. Steckerplatte montiert...">
         </div>
         <div class="form-group">
           <label class="required">Rajzszám (K1041) *:</label>
-          <input type="text" id="m_rajzszam" placeholder="pl. 0 130 S00 400">
+          <input type="text" id="m_rajzszam" placeholder="pl. 123-013-0003 vagy 0 130 S00 400">
         </div>
         <div class="form-group">
           <label>Megrendelő (K1053):</label>
-          <input type="text" id="m_megrendelo" placeholder="pl. 1118159 vagy FA13833220">
+          <input type="text" id="m_megrendelo" placeholder="pl. 1118161">
         </div>
         <div class="form-group">
           <label>Gép száma (K1081):</label>
-          <input type="text" id="m_maschine" placeholder="pl. MO093 vagy KS006">
+          <input type="text" id="m_maschine" placeholder="pl. KS026 vagy MO093">
         </div>
         <div class="form-group">
           <label>Ügyfél neve (Kunde):</label>
@@ -404,12 +401,12 @@
           <input type="text" id="m_ugyfelszam" value="2">
         </div>
         <div class="form-group">
-          <label>Dátum:</label>
-          <input type="text" id="m_datum">
+          <label>Dátum (DD.MM.YYYY):</label>
+          <input type="text" id="m_datum" placeholder="pl. 09.09.2026">
         </div>
         <div class="form-group">
-          <label>Időpont:</label>
-          <input type="text" id="m_uhrzeit">
+          <label>Időpont (HH:MM:SS):</label>
+          <input type="text" id="m_uhrzeit" placeholder="pl. 09:31:33">
         </div>
       </div>
 
@@ -526,7 +523,7 @@
       let datum = getVal(/Datum\s*:\s*([^\s|\n]+)/) || (rawText.match(/tum:\s*([0-9.]+)/i) ? rawText.match(/tum:\s*([0-9.]+)/i)[1] : "");
       let uhrzeit = getVal(/Uhrzeit\s*:\s*([^\s|\n]+)/) || (rawText.match(/tum:\s*[0-9.]+\s+([0-9:]+)/i) ? rawText.match(/tum:\s*[0-9.]+\s+([0-9:]+)/i)[1] : "");
 
-      // Valódi beolvasás (nincsenek beégetett adatok)
+      // Nincsenek fix adatok, a mezők üresek maradnak, ha a TXT-ben sincsenek
       const headerData = {
         kunde: getVal(/Kunde\s*:\s*([^\n|]+)/),
         teileNr: getVal(/Teile-Nummer\s*:\s*([^\n|]+)/),
@@ -536,7 +533,7 @@
         megrendelo: getVal(/Auftragsnummer\s*:\s*([^\n|]+)/),
         maschine: getVal(/Masch\.Nummer\s*:\s*([^\n|]+)/) || "MO093",
         ugyfelszam: "2",
-        pruefer: getVal(/Pruefer\s*:\s*([^\n|]+)/) || "KS006",
+        pruefer: getVal(/Pruefer\s*:\s*([^\n|]+)/) || "KS026",
         datum: datum,
         uhrzeit: uhrzeit
       };
@@ -657,7 +654,7 @@
 
     function buildFileBody(file) {
       const datum = file.headerData.datum || "09.09.2026";
-      const uhrzeit = file.headerData.uhrzeit || "08:43:20";
+      const uhrzeit = file.headerData.uhrzeit || "09:31:33";
       const lines = [];
       lines.push(`   Werth Messtechnik / Datum: ${datum} ${uhrzeit} / Seite: 1`);
       lines.push(`--------------------------------------------------------------------------------------`);
@@ -856,7 +853,7 @@
       editingFileIdx = null;
     });
 
-    // Szigorú kötelező mezők a működő Zeiss/CAQ sablon szerint:
+    // Szigorú érvényesség-vizsgálat: K1001, K1002, K1003, K1041 kötelező!
     function isHeaderComplete(h) {
       return !!(h.teileNr && h.teileNr.trim() && 
                 h.bemerkung && h.bemerkung.trim() && 
@@ -874,7 +871,6 @@
       openHeaderModal(file);
     }
 
-    // DFQ letöltési kérésnél azonnali ellenőrzés
     function requestDfqExport(idx) {
       const file = loadedFiles[idx];
       if (!file) return;
@@ -970,6 +966,13 @@
       }
     });
 
+    // PONTOS K2343 DÁTUMFORMÁZÁS (DD.MM.YYYY   HH:MM:SS)
+    function formatK2343(datum, uhrzeit) {
+      const d = (datum || "09.09.2026").trim();
+      const u = (uhrzeit || "09:31:33").trim();
+      return `${d}   ${u}`;
+    }
+
     // DFQ kódolás a működő Zeiss / Calypso struktúra szerint:
     function buildDfqString(file) {
       const h = file.headerData;
@@ -982,8 +985,8 @@
       lines.push(`K1004 `);
       lines.push(`K1007 `);
       lines.push(`K1041 ${h.rajzszam}`);
-      lines.push(`K1053 ${h.megrendelo || '1118159'}`);
-      lines.push(`K1081 ${h.maschine || 'KS006'}`);
+      lines.push(`K1053 ${h.megrendelo || '1118161'}`);
+      lines.push(`K1081 ${h.maschine || 'KS026'}`);
       lines.push(`K1086 `);
       lines.push(`K1101 `);
       lines.push(`K1201 143122070061`);
@@ -1004,7 +1007,7 @@
       lines.push(`K2303/0 `);
       lines.push(`K2306/0 `);
       lines.push(`K2342/0 ${h.teileBez} Program Szeriaprog`);
-      lines.push(`K2343/0 ${h.datum}   ${h.uhrzeit}`);
+      lines.push(`K2343/0 ${formatK2343(h.datum, h.uhrzeit)}`);
       lines.push(`K2344/0 Master`);
       lines.push(`K2415/0 143122070061`);
       lines.push(`K2402/0 OI543`);
@@ -1039,7 +1042,7 @@
         lines.push(`K2213/${i} ${item.akt.toFixed(7)}`);
       });
 
-      const ts = `${h.datum}/${h.uhrzeit}`;
+      const ts = `${(h.datum || "09.09.2026").trim()}/${(h.uhrzeit || "09:31:33").trim()}`;
       let dataRow = "";
       file.parsedItems.forEach(item => {
         dataRow += `${item.akt.toFixed(7)} 0 ${ts} `;
@@ -1049,13 +1052,28 @@
       return lines.join("\r\n") + "\r\n";
     }
 
-    // A működő sablon fájlnév-formátuma: [CIKKSZÁM]_[DÁTUM]_[IDŐ].DFQ
+    // PONTOS FÁJLNÉV KÉPZÉS: [CIKKSZÁM]_[ÉÉÉÉ-H-N]_[ÓÓPPMM].DFQ
     function getStandardDfqFileName(file) {
       const h = file.headerData;
-      const cleanPart = (h.teileNr || "107946").replace(/[^a-zA-Z0-9_-]/g, "");
-      const cleanDate = (h.datum || "2026-9-9").replace(/\./g, "-");
-      const cleanTime = (h.uhrzeit || "84100").replace(/[^0-9]/g, "");
-      return `${cleanPart}_${cleanDate}_${cleanTime}.DFQ`;
+      const cleanPart = (h.teileNr || "106779").replace(/[^a-zA-Z0-9_-]/g, "");
+
+      // 09.09.2026 -> 2026-9-9
+      let dateStr = "2026-9-9";
+      if (h.datum && h.datum.includes(".")) {
+        const parts = h.datum.split(".").map(p => parseInt(p, 10));
+        if (parts.length >= 3) {
+          dateStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+      }
+
+      // 09:31:33 -> 93133 vagy 08:43:20 -> 84320
+      let timeStr = "84320";
+      if (h.uhrzeit) {
+        const cleanedTime = h.uhrzeit.replace(/[^0-9]/g, "");
+        timeStr = String(parseInt(cleanedTime, 10) || "84320");
+      }
+
+      return `${cleanPart}_${dateStr}_${timeStr}.DFQ`;
     }
 
     function triggerDfqDownload(file) {
