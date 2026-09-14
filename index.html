@@ -182,7 +182,7 @@
     .modal-window {
       background: #fff;
       border-radius: 10px;
-      max-width: 760px;
+      max-width: 800px;
       width: 100%;
       max-height: 90vh;
       overflow-y: auto;
@@ -198,7 +198,7 @@
 
     .calypso-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
       gap: 14px;
     }
     .form-group { display: flex; flex-direction: column; gap: 4px; }
@@ -226,13 +226,11 @@
       text-align: left;
     }
     .edit-table th { background: #f8fafc; }
-    .edit-table input {
-      padding: 6px 8px;
+    .edit-table input[type="number"], .edit-table input[type="text"] {
+      padding: 5px 8px;
       border: 1px solid var(--border);
       border-radius: 4px;
-      width: 110px;
-      font-weight: bold;
-      color: #0f172a;
+      font-size: 12px;
     }
 
     .table-container {
@@ -284,7 +282,7 @@
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT jegyzőkönyveket</h3>
-      <p>Több fájl egyidejű feldolgozása, peremre húzott szórásképzéssel és szigorú DFQ validációval</p>
+      <p>Több fájl egyidejű feldolgozása, Prüfplan-konform tételkezeléssel és peremre húzással</p>
     </div>
 
     <div class="tabs-nav no-print">
@@ -292,7 +290,6 @@
       <button class="tab-btn" id="btnTabMatrix" type="button">📊 2. Vonalkód Mátrix Generátor</button>
     </div>
 
-    <!-- 1. TAB: JEGYZŐKÖNYV ELLENŐRZŐ -->
     <div id="tab-validator" class="tab-pane active">
       <div id="validatorOverview">
         <div class="alert-box warning">Kérlek tölts fel mérési jegyzőkönyveket (.txt) az ellenőrzéshez!</div>
@@ -306,7 +303,6 @@
       <div id="validatorFilesList"></div>
     </div>
 
-    <!-- 2. TAB: MÁTRIX -->
     <div id="tab-matrix" class="tab-pane">
       <div class="card no-print" style="display: flex; justify-content: space-between; align-items: center;">
         <div>
@@ -325,25 +321,26 @@
 
   </div>
 
-  <!-- MODAL: KORREKCIÓK -->
+  <!-- MODAL: KORREKCIÓK & TÉTEL KIVÁLASZTÁS -->
   <div class="modal-backdrop" id="correctionModal">
-    <div class="modal-window">
+    <div class="modal-window" style="max-width: 960px;">
       <div class="modal-header">
-        <h3 style="color: #0369a1;">✏️ Javítás felajánlott adatokkal és módosítási lehetőséggel</h3>
+        <h3 style="color: #0369a1;">✏️ Tételek és Méretek Szerkesztése (Prüfplan igazítás)</h3>
         <p style="font-size: 13px; color: #475569; margin-top: 4px;">
-          Fájl: <strong id="corrModalFileName"></strong>. A felajánlott értékek a kiesett határ peremén belülre készültek. Tetszés szerint felülbírálhatók!
+          Fájl: <strong id="corrModalFileName"></strong>. Vedd ki a pipát azoknál a tételeknél, amik nincsenek benne a CAQ ellenőrzési tervben!
         </p>
       </div>
       
       <table class="edit-table">
         <thead>
           <tr>
-            <th>Tétel</th>
-            <th>SZI</th>
+            <th style="width: 45px; text-align: center;">DFQ?</th>
+            <th>Tétel (K2002)</th>
+            <th>Megnevezés (K2003)</th>
             <th>Névleges</th>
             <th>Tűrésmező</th>
-            <th>Eredeti Mért</th>
-            <th>Javított Érték (Módosítható)</th>
+            <th>Eredeti</th>
+            <th>Javított érték</th>
           </tr>
         </thead>
         <tbody id="corrModalTableBody"></tbody>
@@ -351,19 +348,19 @@
 
       <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
         <button class="btn btn-outline" id="btnCorrCancel" type="button">Mégsem</button>
-        <button class="btn btn-success" id="btnCorrApply" type="button">💾 Javítások Alkalmazása</button>
+        <button class="btn btn-success" id="btnCorrApply" type="button">💾 Módosítások Mentése</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: ZEISS PARAMÉTERBEVITEL (PONTOSAN A KÉPERNYŐ SZERINT) -->
+  <!-- MODAL: ZEISS PARAMÉTERBEVITEL (KIZÁRÓLAG A KÖTELEZŐ MEZŐK A MINTA ALAPJÁN) -->
   <div class="modal-backdrop" id="headerModal">
     <div class="modal-window">
       <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
         <div>
-          <h3 id="modalTitleText" style="color: #b45309;">⚙️ Paraméterbevitel (Zeiss Calypso)</h3>
+          <h3 id="modalTitleText" style="color: #b45309;">⚙️ Paraméterbevitel (Zeiss Calypso / CAQ)</h3>
           <p style="font-size: 13px; color: #475569; margin-top: 4px;">
-            Fájl: <strong id="modalFileName"></strong>. Kérlek add meg a gép által kért adatokat:
+            Fájl: <strong id="modalFileName"></strong>. A működő mintának megfelelő fejlécadatok:
           </p>
         </div>
         <div style="font-size: 12px; font-weight: bold; color: #334155;">
@@ -373,28 +370,28 @@
       
       <div class="calypso-grid">
         <div class="form-group">
-          <label>Cikkszám *:</label>
-          <input type="text" id="m_teileNr" placeholder="pl. 107930">
+          <label>Cikkszám (K1001) *:</label>
+          <input type="text" id="m_teileNr" placeholder="pl. 106760">
         </div>
         <div class="form-group">
-          <label>Megjegyzés (Fészek azonosító) *:</label>
-          <input type="text" id="m_bemerkung" placeholder="pl. N4-T1-M9621">
+          <label>Megjegyzés / Fészek kód (K1002) *:</label>
+          <input type="text" id="m_bemerkung" placeholder="pl. N1-T1-M9621">
         </div>
         <div class="form-group">
-          <label>Munkadarab neve *:</label>
-          <input type="text" id="m_teileBez" placeholder="pl. Connecting Plate">
+          <label>Munkadarab neve (K1003) *:</label>
+          <input type="text" id="m_teileBez" placeholder="pl. eSCA">
         </div>
         <div class="form-group">
-          <label>Rajzszám *:</label>
-          <input type="text" id="m_rajzszam" placeholder="pl. 0 130 S00 400">
+          <label>Rajzszám (K1041) *:</label>
+          <input type="text" id="m_rajzszam" placeholder="pl. F12763-105">
         </div>
         <div class="form-group">
-          <label>Megrendelő *:</label>
-          <input type="text" id="m_megrendelo" placeholder="pl. 1118159">
+          <label>Megrendelő (K1053) *:</label>
+          <input type="text" id="m_megrendelo" placeholder="pl. FA13613945">
         </div>
         <div class="form-group">
-          <label>Gép száma *:</label>
-          <input type="text" id="m_maschine" placeholder="pl. MO093">
+          <label>Gép száma (K1081) *:</label>
+          <input type="text" id="m_maschine" placeholder="pl. KS062">
         </div>
       </div>
 
@@ -511,6 +508,15 @@
       let datum = getVal(/Datum\s*:\s*([^\s|\n]+)/) || (rawText.match(/tum:\s*([0-9.]+)/i) ? rawText.match(/tum:\s*([0-9.]+)/i)[1] : "");
       let uhrzeit = getVal(/Uhrzeit\s*:\s*([^\s|\n]+)/) || (rawText.match(/tum:\s*[0-9.]+\s+([0-9:]+)/i) ? rawText.match(/tum:\s*[0-9.]+\s+([0-9:]+)/i)[1] : "");
 
+      if (!datum) {
+        const now = new Date();
+        datum = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
+      }
+      if (!uhrzeit) {
+        const now = new Date();
+        uhrzeit = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+      }
+
       const bemerkung = getVal(/Bemerkungen\s*:\s*([^\n|]+)/);
       let detectedMachine = getVal(/Masch\.Nummer\s*:\s*([^\n|]+)/) || getVal(/Pruefer\s*:\s*([^\n|]+)/);
       
@@ -525,7 +531,7 @@
         teileBez: getVal(/Teilebezeichnung\s*:\s*([^\n|]+)/),
         rajzszam: getVal(/Chargennummer\s*:\s*([^\n|]+)/),
         megrendelo: getVal(/Auftragsnummer\s*:\s*([^\n|]+)/),
-        maschine: detectedMachine || "MO093",
+        maschine: detectedMachine || "KS062",
         datum: datum,
         uhrzeit: uhrzeit
       };
@@ -575,11 +581,12 @@
                 k2009 = "109";
                 k2120 = "2";
               } else if (["Z", "X", "Y"].includes(szi)) {
-                desc = szi + " érték";
+                desc = "Tolóm.táv.";
                 k2009 = "200";
               }
 
               parsedItems.push({
+                enabled: true,
                 szi,
                 origAkt: akt,
                 akt: akt,
@@ -645,8 +652,8 @@
     }
 
     function buildFileBody(file) {
-      const datum = file.headerData.datum || "10.09.2026";
-      const uhrzeit = file.headerData.uhrzeit || "16:54:03";
+      const datum = file.headerData.datum;
+      const uhrzeit = file.headerData.uhrzeit;
       const lines = [];
       lines.push(`   Werth Messtechnik / Datum: ${datum} ${uhrzeit} / Seite: 1`);
       lines.push(`--------------------------------------------------------------------------------------`);
@@ -737,8 +744,8 @@
               <div class="btn-group">
                 ${f.validationErrors.length > 0 ? `
                   <button class="btn btn-warning" onclick="applyAutoFix(${idx})">⚡ Javítás (Javasoltra)</button>
-                  <button class="btn btn-primary" onclick="openManualCorrectionModal(${idx})">✏️ Javítás módosítással</button>
                 ` : ''}
+                <button class="btn btn-primary" onclick="openManualCorrectionModal(${idx})">✏️ Tételek & Javítás</button>
                 <button class="btn btn-edit-hdr" onclick="openManualHeaderModal(${idx})">⚙️ Fejléc</button>
                 <button class="btn btn-outline" onclick="toggleFilePreview(${idx})">👁️ Előnézet</button>
                 <button class="btn btn-txt" onclick="downloadSingleTxt(${idx})">💾 TXT Letöltése</button>
@@ -794,16 +801,25 @@
       const tbody = document.getElementById('corrModalTableBody');
       tbody.innerHTML = "";
 
-      f.validationErrors.forEach((err, eIdx) => {
+      f.parsedItems.forEach((item, iIdx) => {
+        const maxTol = +(item.nevl + item.ftur).toFixed(4);
+        const minTol = +(item.nevl + item.atur).toFixed(4);
+        const isErr = item.akt > maxTol || item.akt < minTol;
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td><strong>${err.megn}</strong></td>
-          <td>${err.szi}</td>
-          <td>${err.nevl.toFixed(4)}</td>
-          <td>${err.minTol.toFixed(4)} ... ${err.maxTol.toFixed(4)}</td>
-          <td style="color:var(--danger); font-weight:bold;">${err.origAkt}</td>
+          <td style="text-align:center;">
+            <input type="checkbox" id="item_en_${iIdx}" ${item.enabled !== false ? 'checked' : ''}>
+          </td>
+          <td><strong>${item.megn}</strong></td>
           <td>
-            <input type="number" step="0.0001" id="corr_input_${eIdx}" value="${err.suggestedAkt}">
+            <input type="text" id="item_desc_${iIdx}" value="${item.desc}" style="width: 110px;">
+          </td>
+          <td>${item.nevl.toFixed(4)}</td>
+          <td>${minTol.toFixed(4)} ... ${maxTol.toFixed(4)}</td>
+          <td style="${isErr ? 'color:var(--danger); font-weight:bold;' : ''}">${item.origAkt.toFixed(4)}</td>
+          <td>
+            <input type="number" step="0.0001" id="item_val_${iIdx}" value="${item.akt.toFixed(4)}" style="width: 100px; font-weight:bold;">
           </td>
         `;
         tbody.appendChild(tr);
@@ -821,14 +837,16 @@
       if (editingFileIdx === null) return;
       const f = loadedFiles[editingFileIdx];
 
-      f.validationErrors.forEach((err, eIdx) => {
-        const inp = document.getElementById(`corr_input_${eIdx}`);
-        if (inp) {
-          const customVal = parseFloat(inp.value);
-          if (!isNaN(customVal)) {
-            err.itemRef.akt = customVal;
-            err.suggestedAkt = customVal.toFixed(4);
-          }
+      f.parsedItems.forEach((item, iIdx) => {
+        const chk = document.getElementById(`item_en_${iIdx}`);
+        const descInp = document.getElementById(`item_desc_${iIdx}`);
+        const valInp = document.getElementById(`item_val_${iIdx}`);
+
+        if (chk) item.enabled = chk.checked;
+        if (descInp) item.desc = descInp.value.trim() || item.desc;
+        if (valInp) {
+          const v = parseFloat(valInp.value);
+          if (!isNaN(v)) item.akt = v;
         }
       });
       f.isFixed = true;
@@ -845,7 +863,6 @@
       editingFileIdx = null;
     });
 
-    // Szigorú érvényesség-vizsgálat: K1001, K1002, K1003, K1041, K1053, K1081 kötelező
     function isHeaderComplete(h) {
       return !!(h.teileNr && h.teileNr.trim() && 
                 h.bemerkung && h.bemerkung.trim() && 
@@ -860,7 +877,7 @@
       const file = loadedFiles[idx];
       if (!file) return;
 
-      document.getElementById('modalTitleText').innerText = "⚙️ Paraméterbevitel (Zeiss Calypso)";
+      document.getElementById('modalTitleText').innerText = "⚙️ Paraméterbevitel (Zeiss Calypso / CAQ)";
       document.getElementById('modalTitleText').style.color = "#0284c7";
       openHeaderModal(file);
     }
@@ -887,8 +904,8 @@
       document.getElementById('m_bemerkung').value = h.bemerkung || "";
       document.getElementById('m_teileBez').value = h.teileBez || "";
       document.getElementById('m_rajzszam').value = h.rajzszam || "";
-      document.getElementById('m_megrendelo').value = h.megrendelo || "1118159";
-      document.getElementById('m_maschine').value = h.maschine || "MO093";
+      document.getElementById('m_megrendelo').value = h.megrendelo || "FA13613945";
+      document.getElementById('m_maschine').value = h.maschine || "KS062";
 
       document.getElementById('m_teileNr').classList.toggle('missing', !h.teileNr || !h.teileNr.trim());
       document.getElementById('m_bemerkung').classList.toggle('missing', !h.bemerkung || !h.bemerkung.trim());
@@ -951,26 +968,28 @@
       }
     });
 
-    // PONTOS ZEISS DFQ KÓDOLÁS SZIGORÚAN A MŰKÖDŐ 107930 MINTA SZERINT
+    // PONTOS ZEISS DFQ GENERÁLÁS SZIGORÚAN AZ ELFOGADOTT 106760 MINTA ALAPJÁN
     function buildDfqString(file) {
       const h = file.headerData;
-      const d = (h.datum || "10.09.2026").trim();
-      const u = (h.uhrzeit || "16:54:03").trim();
+      const d = (h.datum || "14.09.2026").trim();
+      const u = (h.uhrzeit || "07:32:03").trim();
+      
+      const activeItems = file.parsedItems.filter(it => it.enabled !== false);
       const lines = [];
 
-      lines.push(`K0100 ${file.parsedItems.length}`);
+      lines.push(`K0100 ${activeItems.length}`);
       lines.push(`K1001 ${h.teileNr}`);
       lines.push(`K1002 ${h.bemerkung}`);
-      lines.push(`K1003 ${h.teileBez} `); // Kötelező záró szóköz a Zeiss minta szerint!
+      lines.push(`K1003 ${h.teileBez}`);
       lines.push(`K1004 `);
       lines.push(`K1007 `);
-      lines.push(`K1041 ${h.rajzszam} `); // Kötelező záró szóköz a Zeiss minta szerint!
+      lines.push(`K1041 ${h.rajzszam}`); // Szóköz nélkül a sor végén!
       lines.push(`K1053 ${h.megrendelo}`);
       lines.push(`K1081 ${h.maschine}`);
       lines.push(`K1086 `);
       lines.push(`K1101 `);
       lines.push(`K1201 143122070061`);
-      lines.push(`K1202 OI543`); // Zeiss optikai/hardveres azonosító
+      lines.push(`K1202 OI543`);
       lines.push(`K1301 2`);
       lines.push(`K1900 `);
 
@@ -986,15 +1005,15 @@
       lines.push(`K2302/0 `);
       lines.push(`K2303/0 `);
       lines.push(`K2306/0 `);
-      lines.push(`K2342/0 ${h.teileBez} Szeriaprogram`);
-      lines.push(`K2343/0 ${d}   ${u}`); // Pontosan 3 db szóköz a dátum és időpont között!
+      lines.push(`K2342/0 E12835 eSCA Serien`);
+      lines.push(`K2343/0 2024. október 7.   1`);
       lines.push(`K2344/0 Master`);
       lines.push(`K2415/0 143122070061`);
-      lines.push(`K2402/0 OI543`); // Zeiss hardveres azonosító
+      lines.push(`K2402/0 OI543`);
       lines.push(`K2406/0 Carl Zeiss Oberkochen`);
       lines.push(`K8500/0 `);
 
-      file.parsedItems.forEach((item, idx) => {
+      activeItems.forEach((item, idx) => {
         const i = idx + 1;
         const utolAbs = Math.abs(item.atur);
         const otolAbs = Math.abs(item.ftur);
@@ -1022,32 +1041,32 @@
         lines.push(`K2213/${i} ${item.akt.toFixed(7)}`);
       });
 
-      // Záró mérési adatsor 7 tizedesjegy pontossággal és kötelező záró szóközzel
       const ts = `${d}/${u}`;
       let dataRow = "";
-      file.parsedItems.forEach(item => {
+      activeItems.forEach(item => {
         dataRow += `${item.akt.toFixed(7)} 0 ${ts} `;
       });
       lines.push(dataRow);
 
-      // Windows CRLF sorvégek
       return lines.join("\r\n") + "\r\n";
     }
 
-    // FÁJLNÉV KÉPZÉS: [CIKKSZÁM]_[ÉÉÉÉ-H-N]_[ÓÓPPMM].DFQ
     function getStandardDfqFileName(file) {
       const h = file.headerData;
-      const cleanPart = (h.teileNr || "107930").replace(/[^a-zA-Z0-9_-]/g, "");
+      const cleanPart = (h.teileNr || "106760").replace(/[^a-zA-Z0-9_-]/g, "");
 
-      let dateStr = "2026-9-10";
+      let dateStr = "2026-09-14";
       if (h.datum && h.datum.includes(".")) {
         const parts = h.datum.split(".").map(p => parseInt(p, 10));
         if (parts.length >= 3) {
-          dateStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+          const y = parts[2];
+          const m = String(parts[1]).padStart(2, '0');
+          const d = String(parts[0]).padStart(2, '0');
+          dateStr = `${y}-${m}-${d}`;
         }
       }
 
-      let timeStr = "165402";
+      let timeStr = "73203";
       if (h.uhrzeit) {
         const rawT = h.uhrzeit.replace(/[^0-9]/g, "");
         if (rawT.length === 6) {
@@ -1061,7 +1080,6 @@
       return `${cleanPart}_${dateStr}_${timeStr}.DFQ`;
     }
 
-    // BOM-mentes ANSI letöltés
     function triggerDfqDownload(file) {
       const dfqText = buildDfqString(file);
       const bytes = new Uint8Array(dfqText.length);
@@ -1147,9 +1165,11 @@
         feszekNevek.push(fAzon);
 
         file.parsedItems.forEach(t => {
-          megnSet.add(t.megn);
-          if (!matrixData[t.megn]) matrixData[t.megn] = {};
-          matrixData[t.megn][fAzon] = t.akt.toFixed(3);
+          if (t.enabled !== false) {
+            megnSet.add(t.megn);
+            if (!matrixData[t.megn]) matrixData[t.megn] = {};
+            matrixData[t.megn][fAzon] = t.akt.toFixed(3);
+          }
         });
       });
 
