@@ -167,6 +167,7 @@
       border: 1px solid #334155;
     }
 
+    /* MODAL */
     .modal-backdrop {
       display: none;
       position: fixed;
@@ -197,7 +198,7 @@
 
     .calypso-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
       gap: 14px;
     }
     .form-group { display: flex; flex-direction: column; gap: 4px; }
@@ -281,7 +282,7 @@
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT jegyzőkönyveket</h3>
-      <p>Hardver-azonosított DFQ generálás DC4 és SI vezérlőkarakteres rekordokkal</p>
+      <p>Több fájl egyidejű feldolgozása, automatikus fészekkód-növeléssel és DC4/SI bináris DFQ formátummal</p>
     </div>
 
     <div class="tabs-nav no-print">
@@ -361,7 +362,7 @@
         <div>
           <h3 id="modalTitleText" style="color: #b45309;">⚙️ Paraméterbevitel (Zeiss Calypso / CAQ)</h3>
           <p style="font-size: 13px; color: #475569; margin-top: 4px;">
-            Fájl: <strong id="modalFileName"></strong>. A működő minta szerinti adatok:
+            Fájl: <strong id="modalFileName"></strong>. Mentéskor az adatok automatikusan átmásolódnak a többi fájlra is, a fészekkód növelésével!
           </p>
         </div>
         <div style="font-size: 12px; font-weight: bold; color: #334155;">
@@ -380,7 +381,7 @@
         </div>
         <div class="form-group">
           <label>Munkadarab neve (K1003) *:</label>
-          <input type="text" id="m_teileBez" placeholder="pl. eSCA">
+          <input type="text" id="m_teileBez" placeholder="pl. Steckerplatte montiert">
         </div>
         <div class="form-group">
           <label>Rajzszám (K1041) *:</label>
@@ -392,13 +393,17 @@
         </div>
         <div class="form-group">
           <label>Gép száma (K1081) *:</label>
-          <input type="text" id="m_maschine" placeholder="pl. KS062">
+          <input type="text" id="m_maschine" placeholder="pl. KS026 vagy KS062">
         </div>
+      </div>
+
+      <div style="margin-top: 15px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 10px 14px; font-size: 12px; color: #1e40af;">
+        ℹ️ <strong>Több fájl esetén:</strong> A mentés automatikusan átörökíti ezt a fejlécet a többi betöltött jegyzőkönyvre, a Fészek kód számát pedig növekvő sorrendben kiigazítja (pl. <code>N1</code> &rarr; <code>N2</code> &rarr; <code>N3</code>...).
       </div>
 
       <div style="margin-top: 22px; display: flex; justify-content: flex-end; gap: 10px;">
         <button class="btn btn-outline" id="btnModalCancel" type="button">Mégsem</button>
-        <button class="btn btn-primary" id="btnModalSaveOnly" type="button">💾 Csak Mentés</button>
+        <button class="btn btn-primary" id="btnModalSaveOnly" type="button">💾 Mentés & Másolás a többi fájlra</button>
         <button class="btn btn-success" id="btnModalSaveAndDownload" type="button">💾 Mentés & DFQ Letöltése</button>
       </div>
     </div>
@@ -460,6 +465,27 @@
       return offset;
     }
 
+    // Növekményes fészekkód képzés (pl. N1-T1-M9621 -> N2-T1-M9621, F1 -> F2 stb.)
+    function incrementNestCode(baseCode, stepOffset) {
+      if (!baseCode) return `N${stepOffset + 1}-T1-M9621`;
+      
+      // Ha van benne pl. N1 vagy N01 vagy T1 vagy sima szám az elején
+      let replaced = false;
+      const result = baseCode.replace(/([A-Za-z]+)?(\d+)/, (match, prefix, numStr) => {
+        if (!replaced) {
+          replaced = true;
+          const currentNum = parseInt(numStr, 10);
+          const nextNum = currentNum + stepOffset;
+          const padLen = numStr.length;
+          const formattedNum = String(nextNum).padStart(padLen, '0');
+          return (prefix || '') + formattedNum;
+        }
+        return match;
+      });
+
+      return result;
+    }
+
     function buildHeaderString(h) {
       const padRight = (str, len) => {
         str = (str === undefined || str === null) ? "" : String(str);
@@ -489,18 +515,19 @@
       loadedFiles = [];
       fileList.sort((a, b) => naturalCompare(a.name, b.name));
 
-      for (const file of fileList) {
+      for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i];
         const buffer = await file.arrayBuffer();
         const decoder = new TextDecoder('windows-1250');
         const text = decoder.decode(buffer);
-        loadedFiles.push(parseAndValidateProtocol(file.name, text));
+        loadedFiles.push(parseAndValidateProtocol(file.name, text, i));
       }
 
       renderValidatorView();
       renderMatrixView();
     }
 
-    function parseAndValidateProtocol(fileName, rawText) {
+    function parseAndValidateProtocol(fileName, rawText, fileOrderIndex) {
       const getVal = (regex) => {
         const m = rawText.match(regex);
         return m ? m[1].trim() : "";
@@ -517,21 +544,27 @@
         uhrzeit = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
       }
 
-      const bemerkung = getVal(/Bemerkungen\s*:\s*([^\n|]+)/);
+      // Tisztított beolvasás: a Teilebezeichnung ne rántsa be az Uhrzeit-et!
+      let teileBezRaw = getVal(/Teilebezeichnung\s*:\s*([^\n|]+)/);
+      teileBezRaw = teileBezRaw.replace(/Uhrzeit\s*:.*$/i, '').trim();
+
+      const bemerkungRaw = getVal(/Bemerkungen\s*:\s*([^\n|]+)/);
       let detectedMachine = getVal(/Masch\.Nummer\s*:\s*([^\n|]+)/) || getVal(/Pruefer\s*:\s*([^\n|]+)/);
       
-      if (bemerkung && bemerkung.includes("-M")) {
-        const mMatch = bemerkung.match(/M\d+/);
+      if (bemerkungRaw && bemerkungRaw.includes("-M")) {
+        const mMatch = bemerkungRaw.match(/M\d+/);
         if (mMatch) detectedMachine = mMatch[0];
       }
 
+      const defaultNest = bemerkungRaw || `N${fileOrderIndex + 1}-T1-M9621`;
+
       const headerData = {
         teileNr: getVal(/Teile-Nummer\s*:\s*([^\n|]+)/) || "106760",
-        bemerkung: bemerkung || "N1-T1-M9621",
-        teileBez: getVal(/Teilebezeichnung\s*:\s*([^\n|]+)/) || "eSCA",
+        bemerkung: defaultNest,
+        teileBez: teileBezRaw || "eSCA",
         rajzszam: getVal(/Chargennummer\s*:\s*([^\n|]+)/) || "F12763-105",
         megrendelo: getVal(/Auftragsnummer\s*:\s*([^\n|]+)/) || "FA13613945",
-        maschine: detectedMachine || "KS062",
+        maschine: detectedMachine || "KS026",
         datum: datum,
         uhrzeit: uhrzeit
       };
@@ -585,7 +618,7 @@
                 k2009 = "200";
               }
 
-              // Ha 106760 a cikkszám, a 110-es méret automatikusan deaktivált a Prüfplan szerint
+              // 106760 alkatrésznél a 110-es tétel automatikusan deaktivált a Prüfplan szerint
               const isEnabled = !(headerData.teileNr === "106760" && megn === "110");
 
               parsedItems.push({
@@ -908,7 +941,7 @@
       document.getElementById('m_teileBez').value = h.teileBez || "";
       document.getElementById('m_rajzszam').value = h.rajzszam || "";
       document.getElementById('m_megrendelo').value = h.megrendelo || "FA13613945";
-      document.getElementById('m_maschine').value = h.maschine || "KS062";
+      document.getElementById('m_maschine').value = h.maschine || "KS026";
 
       document.getElementById('m_teileNr').classList.toggle('missing', !h.teileNr || !h.teileNr.trim());
       document.getElementById('m_bemerkung').classList.toggle('missing', !h.bemerkung || !h.bemerkung.trim());
@@ -925,21 +958,37 @@
       pendingFileIdx = null;
     });
 
+    // Fejléc mentése és szinkronizálása a többi fájlra növekményes fészekkóddal
     function saveHeaderFromModal() {
       if (pendingFileIdx === null) return false;
-      const f = loadedFiles[pendingFileIdx];
 
-      f.headerData.teileNr = document.getElementById('m_teileNr').value.trim();
-      f.headerData.bemerkung = document.getElementById('m_bemerkung').value.trim();
-      f.headerData.teileBez = document.getElementById('m_teileBez').value.trim();
-      f.headerData.rajzszam = document.getElementById('m_rajzszam').value.trim();
-      f.headerData.megrendelo = document.getElementById('m_megrendelo').value.trim();
-      f.headerData.maschine = document.getElementById('m_maschine').value.trim();
+      const teileNr = document.getElementById('m_teileNr').value.trim();
+      const baseBemerkung = document.getElementById('m_bemerkung').value.trim();
+      const teileBez = document.getElementById('m_teileBez').value.trim();
+      const rajzszam = document.getElementById('m_rajzszam').value.trim();
+      const megrendelo = document.getElementById('m_megrendelo').value.trim();
+      const maschine = document.getElementById('m_maschine').value.trim();
 
-      const preEl = document.getElementById(`previewBox_${pendingFileIdx}`);
-      if (preEl && preEl.style.display === 'block') {
-        preEl.textContent = buildHeaderString(f.headerData) + buildFileBody(f);
-      }
+      // Végigmegyünk az összes betöltött fájlon és beállítjuk őket
+      loadedFiles.forEach((file, index) => {
+        file.headerData.teileNr = teileNr;
+        file.headerData.teileBez = teileBez;
+        file.headerData.rajzszam = rajzszam;
+        file.headerData.megrendelo = megrendelo;
+        file.headerData.maschine = maschine;
+
+        // Az aktuálisan szerkesztett fájl megkapja a beírt kódot, a többiek a növekményeset
+        const offset = index - pendingFileIdx;
+        file.headerData.bemerkung = (offset === 0) ? baseBemerkung : incrementNestCode(baseBemerkung, offset);
+
+        const preEl = document.getElementById(`previewBox_${index}`);
+        if (preEl && preEl.style.display === 'block') {
+          preEl.textContent = buildHeaderString(file.headerData) + buildFileBody(file);
+        }
+      });
+
+      renderValidatorView();
+      renderMatrixView();
       return true;
     }
 
@@ -963,8 +1012,8 @@
         return;
       }
 
+      const fileToDownload = loadedFiles[pendingFileIdx];
       if (saveHeaderFromModal()) {
-        const fileToDownload = loadedFiles[pendingFileIdx];
         document.getElementById('headerModal').classList.remove('active');
         pendingFileIdx = null;
         triggerDfqDownload(fileToDownload);
@@ -975,7 +1024,6 @@
     function buildDfqString(file) {
       const h = file.headerData;
       
-      // Dátum és idő a mérés idejére
       let d = h.datum || "14.09.2026";
       let u = h.uhrzeit || "07:32:03";
       if (d.includes("-")) {
@@ -997,7 +1045,6 @@
       lines.push(`K1081 ${h.maschine.trim()}`);
       lines.push(`K1086 `);
       lines.push(`K1101 `);
-      // Hardveres gyári Zeiss azonosítók
       lines.push(`K1201 143122070061`);
       lines.push(`K1202 OI543`);
       lines.push(`K1301 2`);
@@ -1015,7 +1062,6 @@
       lines.push(`K2302/0 `);
       lines.push(`K2303/0 `);
       lines.push(`K2306/0 `);
-      // Regisztrált mérőprogram azonosító
       if (h.teileNr.trim() === "106760") {
         lines.push(`K2342/0 E12835 eSCA Serien`);
         lines.push(`K2343/0 2024. október 7.   1`);
@@ -1058,13 +1104,12 @@
       });
 
       // ZEISS ELVÁLASZTÓ VEZÉRLŐKARAKTEREK: DC4 (0x14) és SI (0x0F)
-      const DC4 = String.fromCharCode(20); // 0x14
-      const SI  = String.fromCharCode(15); // 0x0F
+      const DC4 = String.fromCharCode(20);
+      const SI  = String.fromCharCode(15);
       const ts  = `${d}/${u}`;
 
       let dataRow = "";
       activeItems.forEach(item => {
-        // Formátum: [ÉRTÉK][DC4]0[DC4][IDŐBÉLYEG][SI]
         dataRow += `${item.akt.toFixed(7)}${DC4}0${DC4}${ts}${SI}`;
       });
       lines.push(dataRow);
@@ -1072,7 +1117,6 @@
       return lines.join("\r\n") + "\r\n";
     }
 
-    // Fájlnév: 106760_2026-09-14_73203.DFQ
     function getStandardDfqFileName(file) {
       const h = file.headerData;
       const cleanPart = (h.teileNr || "106760").replace(/[^a-zA-Z0-9_-]/g, "");
@@ -1081,10 +1125,7 @@
       if (h.datum && h.datum.includes(".")) {
         const parts = h.datum.split(".").map(p => parseInt(p, 10));
         if (parts.length >= 3) {
-          const y = parts[2];
-          const m = String(parts[1]).padStart(2, '0');
-          const d = String(parts[0]).padStart(2, '0');
-          dateStr = `${y}-${m}-${d}`;
+          dateStr = `${parts[2]}-${String(parts[1]).padStart(2, '0')}-${String(parts[0]).padStart(2, '0')}`;
         }
       }
 
@@ -1102,7 +1143,6 @@
       return `${cleanPart}_${dateStr}_${timeStr}.DFQ`;
     }
 
-    // Közvetlen bináris mentés ANSI bájttömbbel (BOM mentesen, DC4 és SI karakterek megtartásával)
     function triggerDfqDownload(file) {
       const dfqText = buildDfqString(file);
       const bytes = new Uint8Array(dfqText.length);
