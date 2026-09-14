@@ -357,7 +357,7 @@
     </div>
   </div>
 
-  <!-- MODAL: PARAMÉTERBEVITEL (KÖTELEZŐK PIROSSAL) -->
+  <!-- MODAL: ZEISS PARAMÉTERBEVITEL -->
   <div class="modal-backdrop" id="headerModal">
     <div class="modal-window">
       <div class="modal-header">
@@ -378,7 +378,7 @@
         </div>
         <div class="form-group">
           <label class="required">Munkadarab neve (K1003) *:</label>
-          <input type="text" id="m_teileBez" placeholder="pl. Steckerplatte montiert...">
+          <input type="text" id="m_teileBez" placeholder="pl. Steckerplatte montiert Prägung 123-013-0001">
         </div>
         <div class="form-group">
           <label class="required">Rajzszám (K1041) *:</label>
@@ -386,7 +386,7 @@
         </div>
         <div class="form-group">
           <label>Megrendelő (K1053):</label>
-          <input type="text" id="m_megrendelo" placeholder="pl. 1118161">
+          <input type="text" id="m_megrendelo" placeholder="pl. 1118161 vagy 1118159">
         </div>
         <div class="form-group">
           <label>Gép száma (K1081):</label>
@@ -523,7 +523,7 @@
       let datum = getVal(/Datum\s*:\s*([^\s|\n]+)/) || (rawText.match(/tum:\s*([0-9.]+)/i) ? rawText.match(/tum:\s*([0-9.]+)/i)[1] : "");
       let uhrzeit = getVal(/Uhrzeit\s*:\s*([^\s|\n]+)/) || (rawText.match(/tum:\s*[0-9.]+\s+([0-9:]+)/i) ? rawText.match(/tum:\s*[0-9.]+\s+([0-9:]+)/i)[1] : "");
 
-      // Nincsenek fix adatok, a mezők üresek maradnak, ha a TXT-ben sincsenek
+      // Nincsenek fix adatok, a hiányzó mezők üresen maradnak a szigorú ellenőrzéshez
       const headerData = {
         kunde: getVal(/Kunde\s*:\s*([^\n|]+)/),
         teileNr: getVal(/Teile-Nummer\s*:\s*([^\n|]+)/),
@@ -531,9 +531,9 @@
         bemerkung: getVal(/Bemerkungen\s*:\s*([^\n|]+)/),
         rajzszam: getVal(/Chargennummer\s*:\s*([^\n|]+)/),
         megrendelo: getVal(/Auftragsnummer\s*:\s*([^\n|]+)/),
-        maschine: getVal(/Masch\.Nummer\s*:\s*([^\n|]+)/) || "MO093",
+        maschine: getVal(/Masch\.Nummer\s*:\s*([^\n|]+)/),
         ugyfelszam: "2",
-        pruefer: getVal(/Pruefer\s*:\s*([^\n|]+)/) || "KS026",
+        pruefer: getVal(/Pruefer\s*:\s*([^\n|]+)/),
         datum: datum,
         uhrzeit: uhrzeit
       };
@@ -871,6 +871,7 @@
       openHeaderModal(file);
     }
 
+    // DFQ letöltési kérésnél azonnali ellenőrzés
     function requestDfqExport(idx) {
       const file = loadedFiles[idx];
       if (!file) return;
@@ -894,7 +895,7 @@
       document.getElementById('m_teileBez').value = h.teileBez || "";
       document.getElementById('m_rajzszam').value = h.rajzszam || "";
       document.getElementById('m_megrendelo').value = h.megrendelo || "";
-      document.getElementById('m_maschine').value = h.maschine || "MO093";
+      document.getElementById('m_maschine').value = h.maschine || "";
       document.getElementById('m_kunde').value = h.kunde || "";
       document.getElementById('m_ugyfelszam').value = h.ugyfelszam || "2";
       document.getElementById('m_datum').value = h.datum || "";
@@ -968,14 +969,31 @@
 
     // PONTOS K2343 DÁTUMFORMÁZÁS (DD.MM.YYYY   HH:MM:SS)
     function formatK2343(datum, uhrzeit) {
-      const d = (datum || "09.09.2026").trim();
-      const u = (uhrzeit || "09:31:33").trim();
+      let d = (datum || "09.09.2026").trim();
+      let u = (uhrzeit || "09:31:33").trim();
+
+      if (d.includes("-")) {
+        const parts = d.split("-");
+        if (parts.length === 3) {
+          const y = parts[0];
+          const m = parts[1].padStart(2, '0');
+          const day = parts[2].padStart(2, '0');
+          d = `${day}.${m}.${y}`;
+        }
+      }
+
+      if (u.length === 6 && !u.includes(":")) {
+        u = `${u.slice(0, 2)}:${u.slice(2, 4)}:${u.slice(4, 6)}`;
+      }
+
       return `${d}   ${u}`;
     }
 
     // DFQ kódolás a működő Zeiss / Calypso struktúra szerint:
     function buildDfqString(file) {
       const h = file.headerData;
+      const d = (h.datum || "09.09.2026").trim();
+      const u = (h.uhrzeit || "09:31:33").trim();
       const lines = [];
 
       lines.push(`K0100 ${file.parsedItems.length}`);
@@ -1042,7 +1060,8 @@
         lines.push(`K2213/${i} ${item.akt.toFixed(7)}`);
       });
 
-      const ts = `${(h.datum || "09.09.2026").trim()}/${(h.uhrzeit || "09:31:33").trim()}`;
+      // Utolsó adatsor felépítése (7 tizedesjegy + szóköz a végén)
+      const ts = `${d}/${u}`;
       let dataRow = "";
       file.parsedItems.forEach(item => {
         dataRow += `${item.akt.toFixed(7)} 0 ${ts} `;
@@ -1057,7 +1076,7 @@
       const h = file.headerData;
       const cleanPart = (h.teileNr || "106779").replace(/[^a-zA-Z0-9_-]/g, "");
 
-      // 09.09.2026 -> 2026-9-9
+      // Dátum formázása: 09.09.2026 -> 2026-9-9 (vezető nulla nélkül)
       let dateStr = "2026-9-9";
       if (h.datum && h.datum.includes(".")) {
         const parts = h.datum.split(".").map(p => parseInt(p, 10));
@@ -1066,19 +1085,29 @@
         }
       }
 
-      // 09:31:33 -> 93133 vagy 08:43:20 -> 84320
-      let timeStr = "84320";
+      // Időpont formázása: 09:31:33 -> 093133 vagy 08:43:20 -> 84320
+      let timeStr = "093133";
       if (h.uhrzeit) {
-        const cleanedTime = h.uhrzeit.replace(/[^0-9]/g, "");
-        timeStr = String(parseInt(cleanedTime, 10) || "84320");
+        const rawT = h.uhrzeit.replace(/[^0-9]/g, "");
+        if (rawT.length === 6) {
+          timeStr = rawT.startsWith("0") ? String(parseInt(rawT, 10)) : rawT;
+          if (timeStr.length < 5) timeStr = rawT;
+        } else {
+          timeStr = rawT;
+        }
       }
 
       return `${cleanPart}_${dateStr}_${timeStr}.DFQ`;
     }
 
+    // Mentés BOM-mentes ANSI (Windows-1250 kompatibilis) bájttömbbel
     function triggerDfqDownload(file) {
-      const dfq = buildDfqString(file);
-      const blob = new Blob([dfq], { type: 'application/octet-stream;charset=windows-1250' });
+      const dfqText = buildDfqString(file);
+      const bytes = new Uint8Array(dfqText.length);
+      for (let i = 0; i < dfqText.length; i++) {
+        bytes[i] = dfqText.charCodeAt(i) & 0xFF;
+      }
+      const blob = new Blob([bytes], { type: 'application/octet-stream' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = getStandardDfqFileName(file);
@@ -1125,7 +1154,12 @@
 
       const zip = new JSZip();
       loadedFiles.forEach(file => {
-        zip.file(getStandardDfqFileName(file), buildDfqString(file));
+        const dfqText = buildDfqString(file);
+        const bytes = new Uint8Array(dfqText.length);
+        for (let i = 0; i < dfqText.length; i++) {
+          bytes[i] = dfqText.charCodeAt(i) & 0xFF;
+        }
+        zip.file(getStandardDfqFileName(file), bytes);
       });
       const content = await zip.generateAsync({ type: "blob" });
       const a = document.createElement('a');
