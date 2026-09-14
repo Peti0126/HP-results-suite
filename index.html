@@ -219,7 +219,6 @@
       border-radius: 4px;
       font-size: 13px;
     }
-    /* Kötelező hiányzó mezők piros kiemelése */
     .form-group input.missing {
       border: 2px solid var(--danger) !important;
       background: #fef2f2 !important;
@@ -297,7 +296,7 @@
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT jegyzőkönyveket</h3>
-      <p>Több fájl egyidejű feldolgozása, peremre húzott szórásképzéssel (0.0050–0.0200 mm)</p>
+      <p>Több fájl egyidejű feldolgozása, peremre húzott szórásképzéssel és szigorú DFQ validációval</p>
     </div>
 
     <!-- Tab navigáció -->
@@ -375,9 +374,9 @@
   <div class="modal-backdrop" id="headerModal">
     <div class="modal-window">
       <div class="modal-header">
-        <h3 id="modalTitleText" style="color: #4338ca;">⚙️ DFQ Paraméterbevitel (Calypso / Babtec CAQ)</h3>
+        <h3 id="modalTitleText" style="color: #b45309;">⚠️ Nem megfelelő fejléc kitöltés!</h3>
         <p style="font-size: 13px; color: #475569; margin-top: 4px;">
-          Fájl: <strong id="modalFileName"></strong>. A pirossal jelölt mezők kötelezőek a rendszer általi hibátlan elfogadáshoz.
+          Fájl: <strong id="modalFileName"></strong>. Kérlek pótold a pirossal jelölt kötelező mezőket a sikeres DFQ generáláshoz!
         </p>
       </div>
       
@@ -387,7 +386,7 @@
           <input type="text" id="m_teileNr" placeholder="pl. 107937 vagy 107930">
         </div>
         <div class="form-group">
-          <label class="required">Megjegyzés / Fészek azonosító (K1002) *:</label>
+          <label class="required">Megjegyzés / Fészek (K1002) *:</label>
           <input type="text" id="m_bemerkung" placeholder="pl. N1-T1-M9621">
         </div>
         <div class="form-group">
@@ -542,19 +541,20 @@
         return m ? m[1].trim() : "";
       };
 
-      let datum = getVal(/Datum\s*:\s*([^\s|\n]+)/) || (rawText.match(/tum:\s*([0-9.]+)/i) ? rawText.match(/tum:\s*([0-9.]+)/i)[1] : "09.09.2026");
-      let uhrzeit = getVal(/Uhrzeit\s*:\s*([^\s|\n]+)/) || (rawText.match(/tum:\s*[0-9.]+\s+([0-9:]+)/i) ? rawText.match(/tum:\s*[0-9.]+\s+([0-9:]+)/i)[1] : "08:43:20");
+      let datum = getVal(/Datum\s*:\s*([^\s|\n]+)/) || (rawText.match(/tum:\s*([0-9.]+)/i) ? rawText.match(/tum:\s*([0-9.]+)/i)[1] : "");
+      let uhrzeit = getVal(/Uhrzeit\s*:\s*([^\s|\n]+)/) || (rawText.match(/tum:\s*[0-9.]+\s+([0-9:]+)/i) ? rawText.match(/tum:\s*[0-9.]+\s+([0-9:]+)/i)[1] : "");
 
+      // Nincsenek beégetett fix adatok -> Csak amit a TXT fejléc ténylegesen tartalmaz!
       const headerData = {
-        kunde: getVal(/Kunde\s*:\s*([^\n|]+)/) || "Bosch",
-        teileNr: getVal(/Teile-Nummer\s*:\s*([^\n|]+)/) || "107937",
-        teileBez: getVal(/Teilebezeichnung\s*:\s*([^\n|]+)/) || "VUS 107938",
-        bemerkung: getVal(/Bemerkungen\s*:\s*([^\n|]+)/) || "N1-T1-M9621",
+        kunde: getVal(/Kunde\s*:\s*([^\n|]+)/),
+        teileNr: getVal(/Teile-Nummer\s*:\s*([^\n|]+)/),
+        teileBez: getVal(/Teilebezeichnung\s*:\s*([^\n|]+)/),
+        bemerkung: getVal(/Bemerkungen\s*:\s*([^\n|]+)/),
         ugyfelszam: "2",
-        rajzszam: getVal(/Chargennummer\s*:\s*([^\n|]+)/) || "",
-        maschine: getVal(/Masch\.Nummer\s*:\s*([^\n|]+)/) || "MO093",
-        megrendelo: getVal(/Auftragsnummer\s*:\s*([^\n|]+)/) || "",
-        pruefer: getVal(/Pruefer\s*:\s*([^\n|]+)/) || "KS004",
+        rajzszam: getVal(/Chargennummer\s*:\s*([^\n|]+)/),
+        maschine: getVal(/Masch\.Nummer\s*:\s*([^\n|]+)/),
+        megrendelo: getVal(/Auftragsnummer\s*:\s*([^\n|]+)/),
+        pruefer: getVal(/Pruefer\s*:\s*([^\n|]+)/),
         k1053: "1118161",
         datum: datum,
         uhrzeit: uhrzeit
@@ -591,12 +591,12 @@
             if (!isNaN(akt) && !isNaN(nevl)) {
               let desc = "Távolság";
               let k2009 = "200";
-              let k2120 = "1"; // Kétoldali határérték
+              let k2120 = "1";
 
               if (szi === "FT") {
                 desc = "2D polár helyzet";
                 k2009 = "109";
-                k2120 = "2"; // Egyoldali felső határ
+                k2120 = "2";
               } else if (szi === "D") {
                 desc = "Átmérő";
                 k2009 = "101";
@@ -675,8 +675,8 @@
     }
 
     function buildFileBody(file) {
-      const datum = file.headerData.datum;
-      const uhrzeit = file.headerData.uhrzeit;
+      const datum = file.headerData.datum || "09.09.2026";
+      const uhrzeit = file.headerData.uhrzeit || "08:43:20";
       const lines = [];
       lines.push(`   Werth Messtechnik / Datum: ${datum} ${uhrzeit} / Seite: 1`);
       lines.push(`--------------------------------------------------------------------------------------`);
@@ -875,9 +875,11 @@
       editingFileIdx = null;
     });
 
-    // Szigorú kötelező mezők ellenőrzése
+    // Szigorú érvényesség-vizsgálat: K1001, K1002, K1003 nem lehet üres!
     function isHeaderComplete(h) {
-      return !!(h.teileNr && h.teileNr.trim() && h.bemerkung && h.bemerkung.trim() && h.teileBez && h.teileBez.trim());
+      return !!(h.teileNr && h.teileNr.trim() && 
+                h.bemerkung && h.bemerkung.trim() && 
+                h.teileBez && h.teileBez.trim());
     }
 
     function openManualHeaderModal(idx) {
@@ -890,6 +892,7 @@
       openHeaderModal(file);
     }
 
+    // DFQ letöltési kérés: ha hiányos a fejléc, kötelezően felugrik a modal!
     function requestDfqExport(idx) {
       const file = loadedFiles[idx];
       if (!file) return;
@@ -921,7 +924,7 @@
       document.getElementById('m_datum').value = h.datum || "";
       document.getElementById('m_uhrzeit').value = h.uhrzeit || "";
 
-      // Hiányzó kötelező mezők piros kiemelése
+      // Kötelező hiányzó mezők pirossal jelölése
       document.getElementById('m_teileNr').classList.toggle('missing', !h.teileNr || !h.teileNr.trim());
       document.getElementById('m_bemerkung').classList.toggle('missing', !h.bemerkung || !h.bemerkung.trim());
       document.getElementById('m_teileBez').classList.toggle('missing', !h.teileBez || !h.teileBez.trim());
@@ -976,9 +979,9 @@
 
       if (!teileNr || !bemerkung || !teileBez) {
         alert("A Cikkszám, a Megjegyzés (Fészek) és a Munkadarab neve kötelező a DFQ generáláshoz!");
-        if (!teileNr) document.getElementById('m_teileNr').focus();
-        else if (!bemerkung) document.getElementById('m_bemerkung').focus();
-        else document.getElementById('m_teileBez').focus();
+        if (!teileNr) { document.getElementById('m_teileNr').classList.add('missing'); document.getElementById('m_teileNr').focus(); }
+        else if (!bemerkung) { document.getElementById('m_bemerkung').classList.add('missing'); document.getElementById('m_bemerkung').focus(); }
+        else { document.getElementById('m_teileBez').classList.add('missing'); document.getElementById('m_teileBez').focus(); }
         return;
       }
 
@@ -990,7 +993,6 @@
       }
     });
 
-    // Szabványos, tiszta DFQ fájlgenerálás a működő minta szerint
     function buildDfqString(file) {
       const h = file.headerData;
       const lines = [];
@@ -1066,11 +1068,9 @@
       });
       lines.push(dataRow);
 
-      // Windows ANSI CRLF sorvégek a CAQ kompatibilitáshoz
       return lines.join("\r\n") + "\r\n";
     }
 
-    // Szabványos fájlnévképzés: [CIKKSZÁM]_[FÉSZEK]_[IDŐBÉLYEG].DFQ
     function getStandardDfqFileName(file) {
       const h = file.headerData;
       const cleanPart = (h.teileNr || "CIKKSZAM").replace(/[^a-zA-Z0-9_-]/g, "");
@@ -1121,7 +1121,7 @@
     document.getElementById('btnDownloadAllDfq').addEventListener('click', async () => {
       const missingFiles = loadedFiles.filter(f => !isHeaderComplete(f.headerData));
       if (missingFiles.length > 0) {
-        alert(`Figyelem! ${missingFiles.length} fájlnál hiányoznak a kötelező paraméterek (Cikkszám, Fészek vagy Megnevezés). Kérlek pótold őket a "DFQ Letöltése" vagy "Fejléc" gombbal!`);
+        alert(`Figyelem! ${missingFiles.length} fájlnál hiányoznak kötelező paraméterek (Cikkszám, Fészek vagy Munkadarab név). Kérlek pótold őket a sorok mellett lévő "DFQ Letöltése" gombbal!`);
         return;
       }
 
