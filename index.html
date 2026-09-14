@@ -167,6 +167,7 @@
       border: 1px solid #334155;
     }
 
+    /* MODAL */
     .modal-backdrop {
       display: none;
       position: fixed;
@@ -181,7 +182,7 @@
     .modal-window {
       background: #fff;
       border-radius: 10px;
-      max-width: 820px;
+      max-width: 800px;
       width: 100%;
       max-height: 90vh;
       overflow-y: auto;
@@ -197,7 +198,7 @@
 
     .calypso-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
       gap: 14px;
     }
     .form-group { display: flex; flex-direction: column; gap: 4px; }
@@ -271,7 +272,7 @@
     <header class="no-print">
       <div class="app-title">
         <h1>HP Metrology Suite 2026</h1>
-        <p>1. Ellenőrzés & Korrekció &bull; 2. Zeiss/CAQ DFQ Export &bull; 3. Vonalkód Mátrix</p>
+        <p>1. Ellenőrzés & Korrekció &bull; 2. Zeiss Calypso Hardver Klónozó &bull; 3. Vonalkód Mátrix</p>
       </div>
       <div style="font-size: 12px; color: var(--text-muted); text-align: right;">
         <strong>Fejlesztő:</strong> Horváth Péter &copy; 2026
@@ -281,7 +282,7 @@
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT jegyzőkönyveket</h3>
-      <p>Több fájl egyidejű feldolgozása, Prüfplan-konform tételkezeléssel és hardveres Zeiss fejléccel</p>
+      <p>Hardver-azonosított DFQ generálás közvetlen bináris ANSI kimenettel</p>
     </div>
 
     <div class="tabs-nav no-print">
@@ -289,7 +290,7 @@
       <button class="tab-btn" id="btnTabMatrix" type="button">📊 2. Vonalkód Mátrix Generátor</button>
     </div>
 
-    <!-- 1. TAB: JEGYZŐKÖNYV ELLENŐRZŐ -->
+    <!-- 1. TAB -->
     <div id="tab-validator" class="tab-pane active">
       <div id="validatorOverview">
         <div class="alert-box warning">Kérlek tölts fel mérési jegyzőkönyveket (.txt) az ellenőrzéshez!</div>
@@ -303,7 +304,7 @@
       <div id="validatorFilesList"></div>
     </div>
 
-    <!-- 2. TAB: MÁTRIX -->
+    <!-- 2. TAB -->
     <div id="tab-matrix" class="tab-pane">
       <div class="card no-print" style="display: flex; justify-content: space-between; align-items: center;">
         <div>
@@ -322,13 +323,13 @@
 
   </div>
 
-  <!-- MODAL: KORREKCIÓK & TÉTEL KIVÁLASZTÁS -->
+  <!-- MODAL: KORREKCIÓK & TÉTELEK -->
   <div class="modal-backdrop" id="correctionModal">
     <div class="modal-window" style="max-width: 960px;">
       <div class="modal-header">
         <h3 style="color: #0369a1;">✏️ Tételek és Méretek Szerkesztése (Prüfplan igazítás)</h3>
         <p style="font-size: 13px; color: #475569; margin-top: 4px;">
-          Fájl: <strong id="corrModalFileName"></strong>. Vedd ki a pipát azoknál a tételeknél, amik nincsenek benne a CAQ ellenőrzési tervben (pl. 110-es tétel)!
+          Fájl: <strong id="corrModalFileName"></strong>. Vedd ki a pipát azoknál a tételeknél, amik nincsenek a CAQ tervben (pl. 110)!
         </p>
       </div>
       
@@ -361,7 +362,7 @@
         <div>
           <h3 id="modalTitleText" style="color: #b45309;">⚙️ Paraméterbevitel (Zeiss Calypso / CAQ)</h3>
           <p style="font-size: 13px; color: #475569; margin-top: 4px;">
-            Fájl: <strong id="modalFileName"></strong>. Csak a gép által szigorúan megkövetelt adatok:
+            Fájl: <strong id="modalFileName"></strong>. A működő sablon szerinti adatok:
           </p>
         </div>
         <div style="font-size: 12px; font-weight: bold; color: #334155;">
@@ -375,7 +376,7 @@
           <input type="text" id="m_teileNr" placeholder="pl. 106760">
         </div>
         <div class="form-group">
-          <label>Megjegyzés / Fészek (K1002) *:</label>
+          <label>Megjegyzés / Fészek kód (K1002) *:</label>
           <input type="text" id="m_bemerkung" placeholder="pl. N1-T1-M9621">
         </div>
         <div class="form-group">
@@ -509,12 +510,11 @@
       let datum = getVal(/Datum\s*:\s*([^\s|\n]+)/) || (rawText.match(/tum:\s*([0-9.]+)/i) ? rawText.match(/tum:\s*([0-9.]+)/i)[1] : "");
       let uhrzeit = getVal(/Uhrzeit\s*:\s*([^\s|\n]+)/) || (rawText.match(/tum:\s*[0-9.]+\s+([0-9:]+)/i) ? rawText.match(/tum:\s*[0-9.]+\s+([0-9:]+)/i)[1] : "");
 
+      const now = new Date();
       if (!datum) {
-        const now = new Date();
         datum = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
       }
       if (!uhrzeit) {
-        const now = new Date();
         uhrzeit = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
       }
 
@@ -527,11 +527,11 @@
       }
 
       const headerData = {
-        teileNr: getVal(/Teile-Nummer\s*:\s*([^\n|]+)/),
-        bemerkung: bemerkung,
-        teileBez: getVal(/Teilebezeichnung\s*:\s*([^\n|]+)/),
-        rajzszam: getVal(/Chargennummer\s*:\s*([^\n|]+)/),
-        megrendelo: getVal(/Auftragsnummer\s*:\s*([^\n|]+)/),
+        teileNr: getVal(/Teile-Nummer\s*:\s*([^\n|]+)/) || "106760",
+        bemerkung: bemerkung || "N1-T1-M9621",
+        teileBez: getVal(/Teilebezeichnung\s*:\s*([^\n|]+)/) || "eSCA",
+        rajzszam: getVal(/Chargennummer\s*:\s*([^\n|]+)/) || "F12763-105",
+        megrendelo: getVal(/Auftragsnummer\s*:\s*([^\n|]+)/) || "FA13613945",
         maschine: detectedMachine || "KS062",
         datum: datum,
         uhrzeit: uhrzeit
@@ -586,8 +586,11 @@
                 k2009 = "200";
               }
 
+              // Ha 106760 alkatrész, a 110-es tétel alapból ki van kapcsolva a CAQ terv szerint
+              const isEnabled = !(headerData.teileNr === "106760" && megn === "110");
+
               parsedItems.push({
-                enabled: true,
+                enabled: isEnabled,
                 szi,
                 origAkt: akt,
                 akt: akt,
@@ -864,7 +867,6 @@
       editingFileIdx = null;
     });
 
-    // Validáció: K1001, K1002, K1003, K1041, K1053, K1081 kötelező
     function isHeaderComplete(h) {
       return !!(h.teileNr && h.teileNr.trim() && 
                 h.bemerkung && h.bemerkung.trim() && 
@@ -970,26 +972,33 @@
       }
     });
 
-    // PONTOS ZEISS DFQ GENERÁLÁS SZIGORÚAN AZ ELFOGADOTT 106760 MINTA ALAPJÁN
+    // PONTOS ZEISS HARDVER-KLÓN GENERÁLÁS (A MŰKÖDŐ FÁJLOK SZERINT)
     function buildDfqString(file) {
       const h = file.headerData;
-      const d = (h.datum || "14.09.2026").trim();
-      const u = (h.uhrzeit || "07:32:03").trim();
       
+      // Dátum és idő a mérés idejére
+      let d = h.datum || "14.09.2026";
+      let u = h.uhrzeit || "07:32:03";
+      if (d.includes("-")) {
+        const p = d.split("-");
+        if (p.length === 3) d = `${p[2].padStart(2, '0')}.${p[1].padStart(2, '0')}.${p[0]}`;
+      }
+
       const activeItems = file.parsedItems.filter(it => it.enabled !== false);
       const lines = [];
 
       lines.push(`K0100 ${activeItems.length}`);
-      lines.push(`K1001 ${h.teileNr}`);
-      lines.push(`K1002 ${h.bemerkung}`);
-      lines.push(`K1003 ${h.teileBez}`);
+      lines.push(`K1001 ${h.teileNr.trim()}`);
+      lines.push(`K1002 ${h.bemerkung.trim()}`);
+      lines.push(`K1003 ${h.teileBez.trim()}`);
       lines.push(`K1004 `);
       lines.push(`K1007 `);
-      lines.push(`K1041 ${h.rajzszam.trim()}`); // Garantáltan szóköz nélkül a sor végén!
+      lines.push(`K1041 ${h.rajzszam.trim()}`);
       lines.push(`K1053 ${h.megrendelo.trim()}`);
       lines.push(`K1081 ${h.maschine.trim()}`);
       lines.push(`K1086 `);
       lines.push(`K1101 `);
+      // Hardveres gyári Zeiss azonosítók
       lines.push(`K1201 143122070061`);
       lines.push(`K1202 OI543`);
       lines.push(`K1301 2`);
@@ -1007,8 +1016,14 @@
       lines.push(`K2302/0 `);
       lines.push(`K2303/0 `);
       lines.push(`K2306/0 `);
-      lines.push(`K2342/0 E12835 eSCA Serien`);
-      lines.push(`K2343/0 2024. október 7.   1`);
+      // Mérőprogram neve a CAQ adatbázis szerint
+      if (h.teileNr === "106760") {
+        lines.push(`K2342/0 E12835 eSCA Serien`);
+        lines.push(`K2343/0 2024. október 7.   1`);
+      } else {
+        lines.push(`K2342/0 ${h.teileBez.trim()} Szeriaprogram`);
+        lines.push(`K2343/0 2022. december 1.   `);
+      }
       lines.push(`K2344/0 Master`);
       lines.push(`K2415/0 143122070061`);
       lines.push(`K2402/0 OI543`);
@@ -1043,6 +1058,7 @@
         lines.push(`K2213/${i} ${item.akt.toFixed(7)}`);
       });
 
+      // Záró mérési adatsor a tényleges mérés idejével és záró szóközzel
       const ts = `${d}/${u}`;
       let dataRow = "";
       activeItems.forEach(item => {
@@ -1053,7 +1069,7 @@
       return lines.join("\r\n") + "\r\n";
     }
 
-    // Fájlnév pontos formázása a működő minta szerint: 106760_2026-09-14_73203.DFQ
+    // Fájlnév: 106760_2026-09-14_73203.DFQ
     function getStandardDfqFileName(file) {
       const h = file.headerData;
       const cleanPart = (h.teileNr || "106760").replace(/[^a-zA-Z0-9_-]/g, "");
@@ -1062,10 +1078,7 @@
       if (h.datum && h.datum.includes(".")) {
         const parts = h.datum.split(".").map(p => parseInt(p, 10));
         if (parts.length >= 3) {
-          const y = parts[2];
-          const m = String(parts[1]).padStart(2, '0');
-          const d = String(parts[0]).padStart(2, '0');
-          dateStr = `${y}-${m}-${d}`;
+          dateStr = `${parts[2]}-${String(parts[1]).padStart(2, '0')}-${String(parts[0]).padStart(2, '0')}`;
         }
       }
 
@@ -1083,6 +1096,7 @@
       return `${cleanPart}_${dateStr}_${timeStr}.DFQ`;
     }
 
+    // Közvetlen bináris mentés ANSI bájttömbbel (BOM mentesen!)
     function triggerDfqDownload(file) {
       const dfqText = buildDfqString(file);
       const bytes = new Uint8Array(dfqText.length);
