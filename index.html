@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HP Metrology Suite 2026</title>
   
-  <!-- PDF.js motor Calypso PDF jegyzőkönyvekhez -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -173,7 +172,6 @@
       border: 1px solid #334155;
     }
 
-    /* MODAL */
     .modal-backdrop {
       display: none;
       position: fixed;
@@ -204,7 +202,7 @@
 
     .calypso-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
       gap: 14px;
     }
     .form-group { display: flex; flex-direction: column; gap: 4px; }
@@ -288,7 +286,7 @@
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt,.pdf" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT vagy Zeiss CALYPSO PDF jegyzőkönyveket</h3>
-      <p>Közös 6 mezős fejléc-kezelés, automatikus fészekszám-léptetéssel és DC4/SI vezérlőkkel</p>
+      <p>Hardver-azonosított DFQ generálás pontos időbélyeggel és DC4/SI bináris elválasztókkal</p>
     </div>
 
     <div class="tabs-nav no-print">
@@ -361,7 +359,7 @@
     </div>
   </div>
 
-  <!-- MODAL: EGYSÉGES ZEISS PARAMÉTERBEVITEL (PONTOSAN AZ ÁLTALAD KÉRT 6 MEZŐ) -->
+  <!-- MODAL: PARAMÉTERBEVITEL -->
   <div class="modal-backdrop" id="headerModal">
     <div class="modal-window">
       <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
@@ -379,32 +377,40 @@
       <div class="calypso-grid">
         <div class="form-group">
           <label>Cikkszám (K1001) *:</label>
-          <input type="text" id="m_teileNr" placeholder="pl. 106760">
+          <input type="text" id="m_teileNr" placeholder="pl. 106760 vagy 107937">
         </div>
         <div class="form-group">
           <label>Megjegyzés / Fészek kód (K1002) *:</label>
-          <input type="text" id="m_bemerkung" placeholder="pl. N1-T1-MO096">
+          <input type="text" id="m_bemerkung" placeholder="pl. N1-T1-M9621">
         </div>
         <div class="form-group">
           <label>Munkadarab neve (K1003) *:</label>
-          <input type="text" id="m_teileBez" placeholder="pl. Steckerplatte montiert">
+          <input type="text" id="m_teileBez" placeholder="pl. eSCA vagy VUS 107938">
         </div>
         <div class="form-group">
           <label>Rajzszám (K1041) *:</label>
-          <input type="text" id="m_rajzszam" placeholder="pl. F12763-105">
+          <input type="text" id="m_rajzszam" placeholder="pl. F12763-105 vagy 1">
         </div>
         <div class="form-group">
           <label>Megrendelő (K1053) *:</label>
-          <input type="text" id="m_megrendelo" placeholder="pl. 7">
+          <input type="text" id="m_megrendelo" placeholder="pl. FA13613945 vagy 1118161">
         </div>
         <div class="form-group">
           <label>Gép száma (K1081) *:</label>
-          <input type="text" id="m_maschine" placeholder="pl. KS026">
+          <input type="text" id="m_maschine" placeholder="pl. KS062 vagy KS004">
+        </div>
+        <div class="form-group">
+          <label>Mérés Dátuma (DD.MM.YYYY) *:</label>
+          <input type="text" id="m_datum" placeholder="pl. 09.09.2026">
+        </div>
+        <div class="form-group">
+          <label>Mérés Időpontja (HH:MM:SS) *:</label>
+          <input type="text" id="m_uhrzeit" placeholder="pl. 08:41:01">
         </div>
       </div>
 
       <div style="margin-top: 15px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 10px 14px; font-size: 12px; color: #1e40af;">
-        ℹ️ <strong>Több jegyzőkönyv esetén:</strong> A mentés átörökíti a fejlécet a többi betöltött fájlra, a fészekszámot pedig növekvő sorrendbe rendezi.
+        ℹ️ <strong>Több jegyzőkönyv esetén:</strong> A mentés átörökíti az adatokat a többi betöltött fájlra, a fészekszámot pedig növekvő sorrendbe rendezi.
       </div>
 
       <div style="margin-top: 22px; display: flex; justify-content: flex-end; gap: 10px;">
@@ -471,9 +477,8 @@
       return offset;
     }
 
-    // Növekményes fészekkód képzés (pl. N1-T1-MO096 -> N2-T1-MO096, F1 -> F2 stb.)
     function incrementNestCode(baseCode, stepOffset) {
-      if (!baseCode) return `N${stepOffset + 1}-T1-MO096`;
+      if (!baseCode) return `N${stepOffset + 1}-T1-M9621`;
       let replaced = false;
       return baseCode.replace(/([A-Za-z]+)?(\d+)/, (match, prefix, numStr) => {
         if (!replaced) {
@@ -532,7 +537,7 @@
       renderMatrixView();
     }
 
-    // --- KÖZVETLEN ZEISS CALYPSO PDF FELDOLGOZÓ MODUL ---
+    // --- PDF FELDOLGOZÓ PONTOS IDŐ- ÉS DÁTUMKINYERÉSSEL ---
     async function parseCalypsoPdf(fileName, arrayBuffer, fileOrderIndex) {
       try {
         const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -558,19 +563,24 @@
         const kunde = getMatch(/Customer\s*[:|]?\s*([A-Za-z0-9_-]+)/i) || "SCHAFFLER";
         const maschine = getMatch(/Manuf\.\s*Machine\s*No\.\s*[:|]?\s*([A-Za-z0-9_-]+)/i) || "MO096";
         const textVal = getMatch(/Text\s*[:|]?\s*([^\s|\n]+)/i) || `N${fileOrderIndex + 1}-T1-MO096`;
-        const timeDateStr = getMatch(/Time\/Date\s*[:|]?\s*([0-9.]+)\s*([0-9:]+)/i);
 
-        let datum = "08.09.2026";
-        let uhrzeit = "15:53:00";
-        if (timeDateStr) {
-          const m = fullText.match(/Time\/Date\s*[:|]?\s*([0-9.]+)\s*([0-9:]+)/i);
-          if (m) {
-            datum = m[1];
-            uhrzeit = m[2].length === 5 ? m[2] + ":00" : m[2];
+        // Dátum és idő pontos kinyerése a PDF-ből vagy fájlnévből
+        let datum = "09.09.2026";
+        let uhrzeit = "08:41:01";
+
+        const mTimeDate = fullText.match(/Time\/Date\s*[:|]?\s*([0-9.]+)\s*([0-9:]+)/i);
+        if (mTimeDate) {
+          datum = mTimeDate[1].replace(/\.$/, '');
+          uhrzeit = mTimeDate[2];
+          if (uhrzeit.length === 5) uhrzeit += ":00";
+        } else {
+          const fnMatch = fileName.match(/(\d{4})[._\s](\d{2})[._\s](\d{2})[._\s](\d{2})_(\d{2})_(\d{2})/);
+          if (fnMatch) {
+            datum = `${fnMatch[4]}.${fnMatch[3]}.${fnMatch[2]}`;
+            uhrzeit = `${fnMatch[5]}:${fnMatch[6]}:00`;
           }
         }
 
-        // Pontosan a képen látható 6 adatmező struktúrája
         const headerData = {
           teileNr,
           bemerkung: textVal,
@@ -659,7 +669,7 @@
       }
     }
 
-    // --- TXT JEGYZŐKÖNYV FELDOLGOZÓ MODUL ---
+    // --- TXT FELDOLGOZÓ MODUL ---
     function parseAndValidateTxt(fileName, rawText, fileOrderIndex) {
       const getVal = (regex) => {
         const m = rawText.match(regex);
@@ -673,7 +683,6 @@
       if (!datum) datum = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
       if (!uhrzeit) uhrzeit = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
 
-      // Tisztított Teilebezeichnung: levágjuk az esetlegesen belelógó Uhrzeit-et!
       let teileBezRaw = getVal(/Teilebezeichnung\s*:\s*([^\n|]+)/).replace(/Uhrzeit\s*:.*$/i, '').trim();
       const bemerkungRaw = getVal(/Bemerkungen\s*:\s*([^\n|]+)/);
       let detectedMachine = getVal(/Masch\.Nummer\s*:\s*([^\n|]+)/) || getVal(/Pruefer\s*:\s*([^\n|]+)/);
@@ -683,9 +692,8 @@
         if (mMatch) detectedMachine = mMatch[0];
       }
 
-      const defaultNest = bemerkungRaw || `N${fileOrderIndex + 1}-T1-MO096`;
+      const defaultNest = bemerkungRaw || `N${fileOrderIndex + 1}-T1-M9621`;
 
-      // Pontosan a képen látható 6 adatmező struktúrája
       const headerData = {
         teileNr: getVal(/Teile-Nummer\s*:\s*([^\n|]+)/) || "106760",
         bemerkung: defaultNest,
@@ -1052,7 +1060,6 @@
       }
     }
 
-    // Modal megnyitása: pontosan a 6 kívánt adatmezővel
     function openHeaderModal(file) {
       const h = file.headerData;
       document.getElementById('modalFileName').innerText = file.name;
@@ -1063,6 +1070,8 @@
       document.getElementById('m_rajzszam').value = h.rajzszam || "";
       document.getElementById('m_megrendelo').value = h.megrendelo || "7";
       document.getElementById('m_maschine').value = h.maschine || "KS026";
+      document.getElementById('m_datum').value = h.datum || "09.09.2026";
+      document.getElementById('m_uhrzeit').value = h.uhrzeit || "08:41:01";
 
       document.getElementById('m_teileNr').classList.toggle('missing', !h.teileNr || !h.teileNr.trim());
       document.getElementById('m_bemerkung').classList.toggle('missing', !h.bemerkung || !h.bemerkung.trim());
@@ -1079,7 +1088,6 @@
       pendingFileIdx = null;
     });
 
-    // Fejléc mentése és szinkronizálása a többi fájlra növekményes fészekkóddal
     function saveHeaderFromModal() {
       if (pendingFileIdx === null) return false;
 
@@ -1089,6 +1097,8 @@
       const rajzszam = document.getElementById('m_rajzszam').value.trim();
       const megrendelo = document.getElementById('m_megrendelo').value.trim();
       const maschine = document.getElementById('m_maschine').value.trim();
+      const datum = document.getElementById('m_datum').value.trim();
+      const uhrzeit = document.getElementById('m_uhrzeit').value.trim();
 
       loadedFiles.forEach((file, index) => {
         file.headerData.teileNr = teileNr;
@@ -1096,6 +1106,8 @@
         file.headerData.rajzszam = rajzszam;
         file.headerData.megrendelo = megrendelo;
         file.headerData.maschine = maschine;
+        file.headerData.datum = datum;
+        file.headerData.uhrzeit = uhrzeit;
 
         const offset = index - pendingFileIdx;
         file.headerData.bemerkung = (offset === 0) ? baseBemerkung : incrementNestCode(baseBemerkung, offset);
@@ -1143,8 +1155,8 @@
     function buildDfqString(file) {
       const h = file.headerData;
       
-      let d = h.datum || "14.09.2026";
-      let u = h.uhrzeit || "07:32:03";
+      let d = h.datum || "09.09.2026";
+      let u = h.uhrzeit || "08:41:01";
       if (d.includes("-")) {
         const p = d.split("-");
         if (p.length === 3) d = `${p[2].padStart(2, '0')}.${p[1].padStart(2, '0')}.${p[0]}`;
@@ -1185,8 +1197,8 @@
         lines.push(`K2342/0 E12835 eSCA Serien`);
         lines.push(`K2343/0 2024. október 7.   1`);
       } else {
-        lines.push(`K2342/0 ${h.teileBez.trim()} Serien`);
-        lines.push(`K2343/0 2024. október 7.   1`);
+        lines.push(`K2342/0 ${h.teileNr.trim()}_Program_1_szeriaprogram`);
+        lines.push(`K2343/0 2023. január 28.   8`);
       }
       lines.push(`K2344/0 Master`);
       lines.push(`K2415/0 143122070061`);
@@ -1236,19 +1248,20 @@
       return lines.join("\r\n") + "\r\n";
     }
 
+    // Fájlnév: pontosan az időbélyeggel összhangban
     function getStandardDfqFileName(file) {
       const h = file.headerData;
       const cleanPart = (h.teileNr || "106760").replace(/[^a-zA-Z0-9_-]/g, "");
 
-      let dateStr = "2026-09-14";
+      let dateStr = "2026-9-9";
       if (h.datum && h.datum.includes(".")) {
         const parts = h.datum.split(".").map(p => parseInt(p, 10));
         if (parts.length >= 3) {
-          dateStr = `${parts[2]}-${String(parts[1]).padStart(2, '0')}-${String(parts[0]).padStart(2, '0')}`;
+          dateStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
         }
       }
 
-      let timeStr = "73203";
+      let timeStr = "84100";
       if (h.uhrzeit) {
         const rawT = h.uhrzeit.replace(/[^0-9]/g, "");
         if (rawT.length === 6) {
