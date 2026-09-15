@@ -5,10 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HP Metrology Suite 2026</title>
   
+  <!-- PDF.js motor Calypso PDF jegyzőkönyvekhez -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   </script>
+
+  <!-- SheetJS az Excel (.xlsx) exportáláshoz -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -251,12 +255,18 @@
     .megn-col {
       background: #f8fafc;
       font-weight: bold;
-      min-width: 120px;
+      min-width: 110px;
       text-align: left;
       padding-left: 10px;
       position: sticky;
       left: 0;
       z-index: 2;
+    }
+    .tol-col {
+      background: #f8fafc;
+      font-size: 11px;
+      color: #475569;
+      white-space: nowrap;
     }
     .barcode-svg { max-height: 38px; width: 100%; }
     .meta-text { font-size: 11px; color: #555; margin-top: 2px; }
@@ -276,7 +286,7 @@
     <header class="no-print">
       <div class="app-title">
         <h1>HP Metrology Suite 2026</h1>
-        <p>1. Ellenőrzés & Korrekció &bull; 2. Zeiss Calypso Bináris DFQ Export &bull; 3. Vonalkód Mátrix</p>
+        <p>1. Ellenőrzés & Korrekció &bull; 2. Zeiss Calypso Bináris DFQ Export &bull; 3. Vonalkód Mátrix & Excel</p>
       </div>
       <div style="font-size: 12px; color: var(--text-muted); text-align: right;">
         <strong>Fejlesztő:</strong> Horváth Péter &copy; 2026
@@ -286,12 +296,12 @@
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt,.pdf" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT vagy Zeiss CALYPSO PDF jegyzőkönyveket</h3>
-      <p>Hardver-azonosított DFQ generálás pontos időbélyeggel és DC4/SI bináris elválasztókkal</p>
+      <p>Hardver-azonosított DFQ generálás, Excel exportálás és DC4/SI bináris elválasztók</p>
     </div>
 
     <div class="tabs-nav no-print">
       <button class="tab-btn active" id="btnTabValidator" type="button">🔍 1. Jegyzőkönyv Ellenőrző</button>
-      <button class="tab-btn" id="btnTabMatrix" type="button">📊 2. Vonalkód Mátrix Generátor</button>
+      <button class="tab-btn" id="btnTabMatrix" type="button">📊 2. Vonalkód Mátrix & Excel</button>
     </div>
 
     <!-- 1. TAB -->
@@ -310,12 +320,16 @@
 
     <!-- 2. TAB -->
     <div id="tab-matrix" class="tab-pane">
-      <div class="card no-print" style="display: flex; justify-content: space-between; align-items: center;">
+      <div class="card no-print" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background: #fff; padding: 15px 20px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 15px;">
         <div>
-          <h3>Több Fészek Mátrix Táblázat</h3>
-          <p style="font-size: 13px; color: var(--text-muted);">Megnevezések numerikusan növekvő sorrendben.</p>
+          <h3 style="font-size: 16px;">Több Fészek Mátrix Táblázat</h3>
+          <p style="font-size: 13px; color: var(--text-muted);">Névleges méretekkel, tűrésekkel és mért értékekkel fészkenként.</p>
         </div>
-        <button class="btn btn-secondary" onclick="window.print()" type="button">🖨️ Nyomtatás (A4 Fekvő)</button>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn btn-success" id="btnExportExcel" type="button">📥 Excel (.xlsx) Letöltése</button>
+          <button class="btn btn-primary" id="btnCopyClipboard" type="button">📋 Másolás Vágólapra (Excel)</button>
+          <button class="btn btn-secondary" onclick="window.print()" type="button">🖨️ Nyomtatás (A4 Fekvő)</button>
+        </div>
       </div>
       <div class="table-container" id="matrixWrapper" style="display: none;">
         <table>
@@ -359,7 +373,7 @@
     </div>
   </div>
 
-  <!-- MODAL: PARAMÉTERBEVITEL -->
+  <!-- MODAL: ZEISS PARAMÉTERBEVITEL -->
   <div class="modal-backdrop" id="headerModal">
     <div class="modal-window">
       <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
@@ -537,7 +551,7 @@
       renderMatrixView();
     }
 
-    // --- PDF FELDOLGOZÓ PONTOS IDŐ- ÉS DÁTUMKINYERÉSSEL ---
+    // --- PDF FELDOLGOZÓ MODUL ---
     async function parseCalypsoPdf(fileName, arrayBuffer, fileOrderIndex) {
       try {
         const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -564,7 +578,6 @@
         const maschine = getMatch(/Manuf\.\s*Machine\s*No\.\s*[:|]?\s*([A-Za-z0-9_-]+)/i) || "MO096";
         const textVal = getMatch(/Text\s*[:|]?\s*([^\s|\n]+)/i) || `N${fileOrderIndex + 1}-T1-MO096`;
 
-        // Dátum és idő pontos kinyerése a PDF-ből vagy fájlnévből
         let datum = "09.09.2026";
         let uhrzeit = "08:41:01";
 
@@ -1033,7 +1046,9 @@
                 h.teileBez && h.teileBez.trim() && 
                 h.rajzszam && h.rajzszam.trim() && 
                 h.megrendelo && h.megrendelo.trim() && 
-                h.maschine && h.maschine.trim());
+                h.maschine && h.maschine.trim() &&
+                h.datum && h.datum.trim() &&
+                h.uhrzeit && h.uhrzeit.trim());
     }
 
     function openManualHeaderModal(idx) {
@@ -1248,7 +1263,6 @@
       return lines.join("\r\n") + "\r\n";
     }
 
-    // Fájlnév: pontosan az időbélyeggel összhangban
     function getStandardDfqFileName(file) {
       const h = file.headerData;
       const cleanPart = (h.teileNr || "106760").replace(/[^a-zA-Z0-9_-]/g, "");
@@ -1264,11 +1278,8 @@
       let timeStr = "84100";
       if (h.uhrzeit) {
         const rawT = h.uhrzeit.replace(/[^0-9]/g, "");
-        if (rawT.length === 6) {
-          timeStr = rawT.startsWith("0") ? String(parseInt(rawT, 10)) : rawT;
-          if (timeStr.length < 5) timeStr = rawT;
-        } else {
-          timeStr = rawT;
+        if (rawT.length >= 5) {
+          timeStr = rawT.startsWith("0") ? String(parseInt(rawT.slice(0, 6), 10)) : rawT.slice(0, 6);
         }
       }
 
@@ -1342,6 +1353,10 @@
       a.click();
     });
 
+    // --- MÁTRIX NÉZET, EXCEL ÉS VÁGÓLAP KEZELÉS ---
+    let matrixHeadersGlobal = [];
+    let matrixRowsGlobal = [];
+
     function renderMatrixView() {
       if (!loadedFiles.length) {
         document.getElementById('matrixWrapper').style.display = 'none';
@@ -1352,6 +1367,7 @@
       const tbody = document.getElementById('matrixBody');
 
       const matrixData = {};
+      const metaData = {};
       const feszekNevek = [];
       const megnSet = new Set();
 
@@ -1364,32 +1380,65 @@
             megnSet.add(t.megn);
             if (!matrixData[t.megn]) matrixData[t.megn] = {};
             matrixData[t.megn][fAzon] = t.akt.toFixed(3);
+
+            if (!metaData[t.megn]) {
+              const maxTol = +(t.nevl + t.ftur).toFixed(4);
+              const minTol = +(t.nevl + t.atur).toFixed(4);
+              metaData[t.megn] = {
+                nevl: t.nevl.toFixed(4),
+                ftur: (t.ftur >= 0 ? "+" : "") + t.ftur.toFixed(4),
+                atur: (t.atur >= 0 ? "+" : "") + t.atur.toFixed(4),
+                minTol: minTol.toFixed(4),
+                maxTol: maxTol.toFixed(4)
+              };
+            }
           }
         });
       });
 
       const megnLista = Array.from(megnSet).sort((a, b) => naturalCompare(a, b));
 
-      let headHtml = `<tr><th class="megn-col">Megn.</th>`;
+      // HTML fejléc összeállítás
+      let headHtml = `<tr>
+        <th class="megn-col">Tétel</th>
+        <th class="tol-col">Névleges</th>
+        <th class="tol-col">Tűrés (+)</th>
+        <th class="tol-col">Tűrés (-)</th>
+        <th class="tol-col">Min</th>
+        <th class="tol-col">Max</th>`;
+      
       feszekNevek.forEach((fNev, i) => {
-        headHtml += `<th title="${fNev}">F${i + 1}</th>`;
+        headHtml += `<th title="${fNev}">F${i + 1}<br><span style="font-size:10px; font-weight:normal; color:#475569;">${fNev}</span></th>`;
       });
       headHtml += `</tr>`;
       thead.innerHTML = headHtml;
 
+      // Adatok elmentése az Excel export számára
+      matrixHeadersGlobal = ["Tétel", "Névleges", "Tűrés (+)", "Tűrés (-)", "Alsó határ (Min)", "Felső határ (Max)", ...feszekNevek];
+      matrixRowsGlobal = [];
+
       tbody.innerHTML = "";
       megnLista.forEach(megn => {
         const tr = document.createElement('tr');
-        const tdMegn = document.createElement('td');
-        tdMegn.className = 'megn-col';
-        tdMegn.textContent = megn;
-        tr.appendChild(tdMegn);
+        const m = metaData[megn] || { nevl: "-", ftur: "-", atur: "-", minTol: "-", maxTol: "-" };
+
+        const rowExport = [megn, m.nevl, m.ftur, m.atur, m.minTol, m.maxTol];
+
+        tr.innerHTML = `
+          <td class="megn-col">${megn}</td>
+          <td class="tol-col">${m.nevl}</td>
+          <td class="tol-col">${m.ftur}</td>
+          <td class="tol-col">${m.atur}</td>
+          <td class="tol-col">${m.minTol}</td>
+          <td class="tol-col">${m.maxTol}</td>
+        `;
 
         feszekNevek.forEach(fNev => {
           const td = document.createElement('td');
           const val = matrixData[megn]?.[fNev];
 
           if (val && val !== "-") {
+            rowExport.push(parseFloat(val));
             const card = document.createElement('div');
             const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             svg.className = 'barcode-svg';
@@ -1413,15 +1462,65 @@
               });
             } catch (err) {}
           } else {
+            rowExport.push("");
             td.textContent = "-";
           }
           tr.appendChild(td);
         });
+
+        matrixRowsGlobal.push(rowExport);
         tbody.appendChild(tr);
       });
 
       document.getElementById('matrixWrapper').style.display = 'block';
     }
+
+    // EXCEL (.XLSX) FÁJL GENERÁLÁSA ÉS LETÖLTÉSE
+    document.getElementById('btnExportExcel').addEventListener('click', () => {
+      if (!matrixRowsGlobal.length) {
+        alert("Nincsenek adatok az exportáláshoz!");
+        return;
+      }
+
+      const wsData = [matrixHeadersGlobal, ...matrixRowsGlobal];
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+      // Oszlopszélességek beállítása
+      ws['!cols'] = [
+        { wch: 14 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 14 },
+        { wch: 14 },
+        ...matrixHeadersGlobal.slice(6).map(() => ({ wch: 16 }))
+      ];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Mérési Mátrix");
+
+      const teileNr = loadedFiles[0]?.headerData?.teileNr || "Meresi_Eredmenyek";
+      XLSX.writeFile(wb, `${teileNr}_Meresi_Matrix.xlsx`);
+    });
+
+    // VÁGÓLAPRA MÁSOLÁS GOMB (EXCEL KOMPATIBILIS TABULÁLT FORMÁTUMBAN)
+    document.getElementById('btnCopyClipboard').addEventListener('click', () => {
+      if (!matrixRowsGlobal.length) {
+        alert("Nincsenek adatok a másoláshoz!");
+        return;
+      }
+
+      let tsvText = matrixHeadersGlobal.join("\t") + "\r\n";
+      matrixRowsGlobal.forEach(row => {
+        tsvText += row.join("\t") + "\r\n";
+      });
+
+      navigator.clipboard.writeText(tsvText).then(() => {
+        alert("✅ A mérési mátrix és a tűrések sikeresen a vágólapra másolva! Egy üres Excel munkalapon azonnal beillesztheted (Ctrl + V).");
+      }).catch(err => {
+        alert("Nem sikerült a vágólapra másolás: " + err);
+      });
+    });
   </script>
 </body>
 </html>
