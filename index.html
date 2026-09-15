@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HP Metrology Suite 2026</title>
   
-  <!-- PDF.js könyvtár a Calypso PDF jegyzőkönyvek közvetlen olvasásához -->
+  <!-- PDF.js motor Calypso PDF jegyzőkönyvekhez -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -173,6 +173,7 @@
       border: 1px solid #334155;
     }
 
+    /* MODAL */
     .modal-backdrop {
       display: none;
       position: fixed;
@@ -203,7 +204,7 @@
 
     .calypso-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
       gap: 14px;
     }
     .form-group { display: flex; flex-direction: column; gap: 4px; }
@@ -277,7 +278,7 @@
     <header class="no-print">
       <div class="app-title">
         <h1>HP Metrology Suite 2026</h1>
-        <p>1. Ellenőrzés & Korrekció &bull; 2. Zeiss Calypso PDF/TXT DFQ Export &bull; 3. Vonalkód Mátrix</p>
+        <p>1. Ellenőrzés & Korrekció &bull; 2. Zeiss Calypso Bináris DFQ Export &bull; 3. Vonalkód Mátrix</p>
       </div>
       <div style="font-size: 12px; color: var(--text-muted); text-align: right;">
         <strong>Fejlesztő:</strong> Horváth Péter &copy; 2026
@@ -287,7 +288,7 @@
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt,.pdf" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT vagy Zeiss CALYPSO PDF jegyzőkönyveket</h3>
-      <p>Közvetlen PDF feldolgozás, DC4/SI vezérlőkarakteres DFQ generálással és automatikus fészeknöveléssel</p>
+      <p>Közös 6 mezős fejléc-kezelés, automatikus fészekszám-léptetéssel és DC4/SI vezérlőkkel</p>
     </div>
 
     <div class="tabs-nav no-print">
@@ -360,7 +361,7 @@
     </div>
   </div>
 
-  <!-- MODAL: ZEISS PARAMÉTERBEVITEL -->
+  <!-- MODAL: EGYSÉGES ZEISS PARAMÉTERBEVITEL (PONTOSAN AZ ÁLTALAD KÉRT 6 MEZŐ) -->
   <div class="modal-backdrop" id="headerModal">
     <div class="modal-window">
       <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
@@ -378,7 +379,7 @@
       <div class="calypso-grid">
         <div class="form-group">
           <label>Cikkszám (K1001) *:</label>
-          <input type="text" id="m_teileNr" placeholder="pl. 10196414 vagy 106760">
+          <input type="text" id="m_teileNr" placeholder="pl. 106760">
         </div>
         <div class="form-group">
           <label>Megjegyzés / Fészek kód (K1002) *:</label>
@@ -386,7 +387,7 @@
         </div>
         <div class="form-group">
           <label>Munkadarab neve (K1003) *:</label>
-          <input type="text" id="m_teileBez" placeholder="pl. Verschaltrin...">
+          <input type="text" id="m_teileBez" placeholder="pl. Steckerplatte montiert">
         </div>
         <div class="form-group">
           <label>Rajzszám (K1041) *:</label>
@@ -394,11 +395,11 @@
         </div>
         <div class="form-group">
           <label>Megrendelő (K1053) *:</label>
-          <input type="text" id="m_megrendelo" placeholder="pl. FA80000780">
+          <input type="text" id="m_megrendelo" placeholder="pl. 7">
         </div>
         <div class="form-group">
           <label>Gép száma (K1081) *:</label>
-          <input type="text" id="m_maschine" placeholder="pl. MO096 vagy KS026">
+          <input type="text" id="m_maschine" placeholder="pl. KS026">
         </div>
       </div>
 
@@ -470,6 +471,7 @@
       return offset;
     }
 
+    // Növekményes fészekkód képzés (pl. N1-T1-MO096 -> N2-T1-MO096, F1 -> F2 stb.)
     function incrementNestCode(baseCode, stepOffset) {
       if (!baseCode) return `N${stepOffset + 1}-T1-MO096`;
       let replaced = false;
@@ -549,7 +551,9 @@
         };
 
         const teileNr = getMatch(/Item\s*Number\s*[:|]?\s*([A-Za-z0-9_-]+)/i) || "10196414";
-        const teileBez = getMatch(/Part\s*name\s*[:|]?\s*([^|\n]+)/i) || "Verschaltrin...";
+        let teileBez = getMatch(/Part\s*name\s*[:|]?\s*([^|\n]+)/i) || "Verschaltrin...";
+        teileBez = teileBez.replace(/Uhrzeit\s*:.*$/i, '').trim();
+
         const megrendelo = getMatch(/Order\s*number\s*[:|]?\s*([A-Za-z0-9_-]+)/i) || "FA80000780";
         const kunde = getMatch(/Customer\s*[:|]?\s*([A-Za-z0-9_-]+)/i) || "SCHAFFLER";
         const maschine = getMatch(/Manuf\.\s*Machine\s*No\.\s*[:|]?\s*([A-Za-z0-9_-]+)/i) || "MO096";
@@ -566,6 +570,7 @@
           }
         }
 
+        // Pontosan a képen látható 6 adatmező struktúrája
         const headerData = {
           teileNr,
           bemerkung: textVal,
@@ -578,7 +583,6 @@
           uhrzeit
         };
 
-        // Calypso táblázat tételek felismerése
         const parsedItems = [];
         const regex = /(\b\d{2,4}\b)\s+(\d+\.\d{3,4})\s+(\d+\.\d{3,4})\s+(\d+\.\d{3,4})\s+(\d+\.\d{3,4})/g;
         let match;
@@ -605,7 +609,6 @@
           });
         }
 
-        // Tűréshatár validáció
         const validationErrors = [];
         parsedItems.forEach(item => {
           const maxTol = +(item.nevl + item.ftur).toFixed(4);
@@ -656,7 +659,7 @@
       }
     }
 
-    // --- MEGLÉVŐ TXT JEGYZŐKÖNYV FELDOLGOZÓ MODUL ---
+    // --- TXT JEGYZŐKÖNYV FELDOLGOZÓ MODUL ---
     function parseAndValidateTxt(fileName, rawText, fileOrderIndex) {
       const getVal = (regex) => {
         const m = rawText.match(regex);
@@ -670,6 +673,7 @@
       if (!datum) datum = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
       if (!uhrzeit) uhrzeit = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
 
+      // Tisztított Teilebezeichnung: levágjuk az esetlegesen belelógó Uhrzeit-et!
       let teileBezRaw = getVal(/Teilebezeichnung\s*:\s*([^\n|]+)/).replace(/Uhrzeit\s*:.*$/i, '').trim();
       const bemerkungRaw = getVal(/Bemerkungen\s*:\s*([^\n|]+)/);
       let detectedMachine = getVal(/Masch\.Nummer\s*:\s*([^\n|]+)/) || getVal(/Pruefer\s*:\s*([^\n|]+)/);
@@ -681,12 +685,13 @@
 
       const defaultNest = bemerkungRaw || `N${fileOrderIndex + 1}-T1-MO096`;
 
+      // Pontosan a képen látható 6 adatmező struktúrája
       const headerData = {
         teileNr: getVal(/Teile-Nummer\s*:\s*([^\n|]+)/) || "106760",
         bemerkung: defaultNest,
-        teileBez: teileBezRaw || "eSCA",
+        teileBez: teileBezRaw || "Steckerplatte montiert",
         rajzszam: getVal(/Chargennummer\s*:\s*([^\n|]+)/) || "F12763-105",
-        megrendelo: getVal(/Auftragsnummer\s*:\s*([^\n|]+)/) || "FA13613945",
+        megrendelo: getVal(/Auftragsnummer\s*:\s*([^\n|]+)/) || "7",
         maschine: detectedMachine || "KS026",
         datum: datum,
         uhrzeit: uhrzeit
@@ -1047,6 +1052,7 @@
       }
     }
 
+    // Modal megnyitása: pontosan a 6 kívánt adatmezővel
     function openHeaderModal(file) {
       const h = file.headerData;
       document.getElementById('modalFileName').innerText = file.name;
@@ -1055,8 +1061,8 @@
       document.getElementById('m_bemerkung').value = h.bemerkung || "";
       document.getElementById('m_teileBez').value = h.teileBez || "";
       document.getElementById('m_rajzszam').value = h.rajzszam || "";
-      document.getElementById('m_megrendelo').value = h.megrendelo || "FA80000780";
-      document.getElementById('m_maschine').value = h.maschine || "MO096";
+      document.getElementById('m_megrendelo').value = h.megrendelo || "7";
+      document.getElementById('m_maschine').value = h.maschine || "KS026";
 
       document.getElementById('m_teileNr').classList.toggle('missing', !h.teileNr || !h.teileNr.trim());
       document.getElementById('m_bemerkung').classList.toggle('missing', !h.bemerkung || !h.bemerkung.trim());
@@ -1073,6 +1079,7 @@
       pendingFileIdx = null;
     });
 
+    // Fejléc mentése és szinkronizálása a többi fájlra növekményes fészekkóddal
     function saveHeaderFromModal() {
       if (pendingFileIdx === null) return false;
 
@@ -1231,7 +1238,7 @@
 
     function getStandardDfqFileName(file) {
       const h = file.headerData;
-      const cleanPart = (h.teileNr || "10196414").replace(/[^a-zA-Z0-9_-]/g, "");
+      const cleanPart = (h.teileNr || "106760").replace(/[^a-zA-Z0-9_-]/g, "");
 
       let dateStr = "2026-09-14";
       if (h.datum && h.datum.includes(".")) {
