@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HP Metrology Suite 2026 - psm-protech Edition</title>
+  <title>HP Metrology Suite 2026</title>
   
   <!-- PDF.js motor Calypso PDF jegyzőkönyvekhez -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -42,7 +42,7 @@
       padding: 20px;
     }
 
-    .container { max-width: 1650px; margin: 0 auto; }
+    .container { max-width: 100%; margin: 0 auto; padding: 0 10px; }
 
     header {
       background: var(--surface);
@@ -248,7 +248,6 @@
     table { width: 100%; border-collapse: collapse; font-size: 12px; }
     th, td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: center; vertical-align: middle; }
     
-    /* PSM SABLON SZÍNEK ÉS STÍLUS */
     th.ureg-header {
       background: #3b82f6 !important;
       color: #ffffff !important;
@@ -279,9 +278,9 @@
       color: #475569;
       white-space: nowrap;
     }
-    .val-cell { font-family: 'Consolas', monospace; font-size: 12px; }
-    .val-cell.err { color: var(--danger); font-weight: bold; background: #fef2f2; }
-    .barcode-svg { max-height: 38px; width: 100%; }
+    .val-cell { font-family: 'Consolas', monospace; font-size: 12px; font-weight: 600; }
+    .val-cell.err { color: var(--danger) !important; font-weight: 700 !important; background: #fef2f2 !important; }
+    .barcode-svg { max-height: 38px; width: 100%; min-width: 90px; }
     .meta-text { font-size: 11px; color: #555; margin-top: 2px; }
 
     @media print {
@@ -299,7 +298,7 @@
     <header class="no-print">
       <div class="app-title">
         <h1>HP Metrology Suite 2026</h1>
-        <p>1. Ellenőrzés &bull; 2. Vonalkód Mátrix &bull; 3. psm-protech Mintázási Táblázat (PPAP / FOT)</p>
+        <p>1. Ellenőrzés &bull; 2. Vonalkód Mátrix &bull; 3. Mintázási Táblázat (FOT / PPAP)</p>
       </div>
       <div style="font-size: 12px; color: var(--text-muted); text-align: right;">
         <strong>Fejlesztő:</strong> Horváth Péter &copy; 2026
@@ -309,14 +308,14 @@
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt,.pdf" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT vagy Zeiss CALYPSO PDF jegyzőkönyveket</h3>
-      <p>Korlátlan fészekszám kezelése, automatikus 5 darabos üreg-csoportosítás és közvetlen Excel másolás</p>
+      <p>Korlátlan fészekszám kezelése (8, 16 vagy több), automatikus üreg- és mintafeltöltés, közvetlen Excel export</p>
     </div>
 
     <!-- 3 FÜL -->
     <div class="tabs-nav no-print">
       <button class="tab-btn active" id="btnTabValidator" type="button">🔍 1. Jegyzőkönyv Ellenőrző</button>
       <button class="tab-btn" id="btnTabMatrix" type="button">📊 2. Vonalkód Mátrix</button>
-      <button class="tab-btn" id="btnTabExcel" type="button">📑 3. psm Mérési Táblázat (Excel)</button>
+      <button class="tab-btn" id="btnTabExcel" type="button">📑 3. Mérési Táblázat (Excel)</button>
     </div>
 
     <!-- 1. TAB -->
@@ -338,7 +337,7 @@
       <div class="card no-print" style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 14px 20px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 15px;">
         <div>
           <h3 style="font-size: 16px;">Vonalkód Mátrix (Code128)</h3>
-          <p style="font-size: 13px; color: var(--text-muted);">Mért értékek vonalkódjai fészkenként és darabonként csoportosítva.</p>
+          <p style="font-size: 13px; color: var(--text-muted);">Mért értékek vonalkódjai az összes betöltött fészekre korlátlanul.</p>
         </div>
         <button class="btn btn-secondary" onclick="window.print()" type="button">🖨️ Nyomtatás (A4 Fekvő)</button>
       </div>
@@ -350,18 +349,18 @@
       </div>
     </div>
 
-    <!-- 3. TAB: PSM-PROTECH MÉRÉSI TÁBLÁZAT -->
+    <!-- 3. TAB: MÉRÉSI TÁBLÁZAT -->
     <div id="tab-excel" class="tab-pane">
       <div class="card no-print" style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 14px 20px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 15px;">
         <div>
-          <h3 style="font-size: 16px;">psm-protech Mintázási Táblázat (FOT / PPAP)</h3>
+          <h3 style="font-size: 16px;">Mintázási Táblázat (FOT / PPAP)</h3>
           <p style="font-size: 13px; color: var(--text-muted);">
-            Pontosan a céges sablon szerinti fejléc: <strong>üreg 1 (1_1 .. 1_5)</strong>, <strong>üreg 2 (2_1 .. 2_5)</strong> stb. Korlátlan számú fészekkel!
+            Céges sablon szerinti oszloprend: <strong>üreg 1 (1_1 .. 1_5)</strong>, <strong>üreg 2 (2_1 .. 2_5)</strong>... az összes betöltött fészekkel!
           </p>
         </div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button class="btn btn-success" id="btnExportExcel" type="button">📥 psm Excel (.xlsx) Letöltése</button>
-          <button class="btn btn-primary" id="btnCopyClipboard" type="button">📋 Másolás Vágólapra (psm Sablonba illeszthető)</button>
+          <button class="btn btn-success" id="btnExportExcel" type="button">📥 Excel (.xlsx) Letöltése</button>
+          <button class="btn btn-primary" id="btnCopyClipboard" type="button">📋 Másolás Vágólapra</button>
         </div>
       </div>
       <div class="table-container" id="excelTableWrapper" style="display: none;">
@@ -526,29 +525,29 @@
       return offset;
     }
 
-    // Fészek és Darab index felderítése a fájlnévből vagy a fejlécből
+    // Stabil fészek- és minta-képzés
     function parseNestAndSample(fileName, bemerkung, fileIndex) {
       const combined = `${fileName} ${bemerkung}`;
       
-      // Minta felismerés pl: 1_2, N1_2, F2_3, üreg 2 / 3. minta
       let ureg = null;
-      let minta = null;
+      let minta = 1;
 
+      // 1. Felismerés N1, F1, üreg 1, fészek 1 szerint
       const mUreg = combined.match(/(?:üreg|fészek|feszek|nest|N|F)\s*(\d+)/i);
-      if (mUreg) ureg = parseInt(mUreg[1], 10);
-
-      const mPair = combined.match(/(\d+)[_-](\d+)/);
-      if (mPair) {
-        if (!ureg) ureg = parseInt(mPair[1], 10);
-        minta = parseInt(mPair[2], 10);
+      if (mUreg) {
+        ureg = parseInt(mUreg[1], 10);
       }
 
-      if (!ureg) {
-        // Ha nincs explicit jelölve, 5-ös csoportokban képezzük a fészkeket
-        ureg = Math.floor(fileIndex / 5) + 1;
+      // 2. Darab felismerése (pl. _1, -1, 1_2)
+      const mSample = combined.match(/[_-\s](\d+)(?:\.txt|\.pdf|\.dfq)?$/i);
+      if (mSample) {
+        const val = parseInt(mSample[1], 10);
+        if (val >= 1 && val <= 10) minta = val;
       }
-      if (!minta) {
-        minta = (fileIndex % 5) + 1;
+
+      // Ha nincs azonosítva, közvetlenül a fájl sorrendjéből kap számot
+      if (ureg === null || isNaN(ureg)) {
+        ureg = fileIndex + 1;
       }
 
       return { ureg, minta };
@@ -667,7 +666,7 @@
             enabled: true,
             szi: "LT",
             origAkt: akt,
-            akt: akt, // Eredeti érték megőrzése
+            akt: akt,
             nevl: nevl,
             ftur: otol,
             atur: utol,
@@ -815,7 +814,7 @@
                 enabled: isEnabled,
                 szi,
                 origAkt: akt,
-                akt: akt, // Eredeti érték megőrzése
+                akt: akt,
                 nevl,
                 ftur,
                 atur,
@@ -931,7 +930,7 @@
         overview.innerHTML = `
           <div class="alert-box warning">
             <h3>⚠️ Figyelem! Tűrésen kívüli méretek találhatók (${unfixedFiles.length} jegyzőkönyvben)</h3>
-            <p style="font-size:13px; margin-top:4px;">Az adatok jelenleg a valós <strong>eredeti mért értékeket</strong> tartalmazzák. Ha a tűréshatár peremére szeretnéd húzni őket, kattints a sárga gombra!</p>
+            <p style="font-size:13px; margin-top:4px;">Az adatok az eredeti mért értékeket mutatják. A sárga gombra kattintva a peremre húzhatók!</p>
             ${errHtml}
           </div>
         `;
@@ -1176,8 +1175,13 @@
         file.headerData.datum = datum;
         file.headerData.uhrzeit = uhrzeit;
 
-        const offset = index - pendingFileIdx;
-        file.headerData.bemerkung = (offset === 0) ? baseBemerkung : `N${index + 1}-T1-M9621`;
+        // Fészekkód automatikus léptetése stabilan N1..N8 szerint
+        if (index === pendingFileIdx) {
+          file.headerData.bemerkung = baseBemerkung;
+        } else {
+          file.headerData.bemerkung = `N${index + 1}-T1-M9621`;
+          file.ureg = index + 1;
+        }
 
         const preEl = document.getElementById(`previewBox_${index}`);
         if (preEl && preEl.style.display === 'block') {
@@ -1218,7 +1222,7 @@
       }
     });
 
-    // PONTOS ZEISS BINÁRIS DFQ GENERÁLÁS (DC4 ÉS SI VEZÉRLŐKKEL)
+    // PONTOS ZEISS BINÁRIS DFQ GENERÁLÁS
     function buildDfqString(file) {
       const h = file.headerData;
       
@@ -1301,7 +1305,6 @@
         lines.push(`K2213/${i} ${item.akt.toFixed(7)}`);
       });
 
-      // ZEISS ELVÁLASZTÓK: DC4 (0x14) és SI (0x0F)
       const DC4 = String.fromCharCode(20);
       const SI  = String.fromCharCode(15);
       const ts  = `${d}/${u}`;
@@ -1405,10 +1408,10 @@
       a.click();
     });
 
-    // --- PSM-PROTECH MINTÁZÁSI TÁBLÁZAT GENERÁLÁSA (KORLÁTLAN ÜREG SZÁMMAL) ---
-    let psmHeadersL1Global = [];
-    let psmHeadersL2Global = [];
-    let psmRowsGlobal = [];
+    // --- MEGBÍZHATÓ MÁTRIX ÉS EXCEL ADATÉPÍTŐ (NINCS 7-ES OSZLOPKORLÁT!) ---
+    let tableHeadersL1Global = [];
+    let tableHeadersL2Global = [];
+    let tableRowsGlobal = [];
 
     function renderMatrixViews() {
       if (!loadedFiles.length) {
@@ -1422,17 +1425,11 @@
       const eHead = document.getElementById('excelTableHead');
       const eBody = document.getElementById('excelTableBody');
 
-      // Üregek és minták feltérképezése
-      const uregMap = new Map(); // uregSzam -> Map(mintaSzam -> file)
-      const allUregSet = new Set();
+      // Összes tétel és névleges méret összegyűjtése az összes fájlból
       const megnSet = new Set();
       const metaData = {};
 
       loadedFiles.forEach(file => {
-        allUregSet.add(file.ureg);
-        if (!uregMap.has(file.ureg)) uregMap.set(file.ureg, new Map());
-        uregMap.get(file.ureg).set(file.minta, file);
-
         file.parsedItems.forEach(t => {
           if (t.enabled !== false) {
             megnSet.add(t.megn);
@@ -1451,21 +1448,20 @@
         });
       });
 
-      const sortedUregek = Array.from(allUregSet).sort((a, b) => a - b);
       const megnLista = Array.from(megnSet).sort((a, b) => naturalCompare(a, b));
 
-      // 1. FEJLÉC: VONALKÓD MÁTRIX
-      let bHeadHtml = `<tr><th class="megn-col">Tétel</th>`;
-      sortedUregek.forEach(u => {
-        for (let m = 1; m <= 5; m++) {
-          bHeadHtml += `<th>üreg ${u}<br><span style="font-weight:normal; font-size:10px;">${u}_${m}</span></th>`;
-        }
+      // 1. FEJLÉC: VONALKÓD MÁTRIX (KORLÁTLANUL MINDEN BETÖLTÖTT FÁJL MEGJELENIK!)
+      let bHeadHtml = `<tr><th class="megn-col">Megn.</th>`;
+      loadedFiles.forEach((file, i) => {
+        const uregNum = file.ureg || (i + 1);
+        const label = file.headerData.bemerkung || `üreg ${uregNum}`;
+        bHeadHtml += `<th>F${i + 1}<br><span style="font-size:10px; font-weight:normal;">${label}</span></th>`;
       });
       bHeadHtml += `</tr>`;
       bHead.innerHTML = bHeadHtml;
 
-      // 2. FEJLÉC: PSM MÉRÉSI TÁBLÁZAT (2 szintes fejléc, pont mint a képen!)
-      let eHeadHtml = `
+      // 2. FEJLÉC: EXCEL TÁBLÁZAT (2 szintes fejléc, az összes betöltött fájlra)
+      let eHeadHtmlL1 = `
         <tr>
           <th rowspan="2" class="megn-col">Tétel</th>
           <th rowspan="2" class="tol-col">Névleges</th>
@@ -1474,32 +1470,30 @@
           <th rowspan="2" class="tol-col">UG in [mm]</th>
           <th rowspan="2" class="tol-col">OG in [mm]</th>
       `;
+      let eHeadHtmlL2 = `<tr>`;
 
-      sortedUregek.forEach(u => {
-        eHeadHtml += `<th colspan="5" class="ureg-header">üreg ${u}</th>`;
-      });
-      eHeadHtml += `</tr><tr>`;
+      tableHeadersL1Global = ["Tétel", "Névleges", "Tűrés (+)", "Tűrés (-)", "UG in [mm]", "OG in [mm]"];
+      tableHeadersL2Global = ["", "", "", "", "", ""];
 
-      sortedUregek.forEach(u => {
-        for (let m = 1; m <= 5; m++) {
-          eHeadHtml += `<th class="sub-header">${u}_${m}</th>`;
-        }
-      });
-      eHeadHtml += `</tr>`;
-      eHead.innerHTML = eHeadHtml;
+      loadedFiles.forEach((file, i) => {
+        const uregNum = file.ureg || (i + 1);
+        const mintaNum = file.minta || 1;
+        const colTitle = `üreg ${uregNum}`;
+        const subColName = `${uregNum}_${mintaNum}`;
 
-      // Excel export struktúra felkészítése
-      psmHeadersL1Global = ["Tétel", "Névleges", "Tűrés (+)", "Tűrés (-)", "UG in [mm]", "OG in [mm]"];
-      psmHeadersL2Global = ["", "", "", "", "", ""];
+        eHeadHtmlL1 += `<th class="ureg-header">${colTitle}</th>`;
+        eHeadHtmlL2 += `<th class="sub-header">${subColName}</th>`;
 
-      sortedUregek.forEach(u => {
-        psmHeadersL1Global.push(`üreg ${u}`, "", "", "", "");
-        for (let m = 1; m <= 5; m++) {
-          psmHeadersL2Global.push(`${u}_${m}`);
-        }
+        tableHeadersL1Global.push(colTitle);
+        tableHeadersL2Global.push(subColName);
       });
 
-      psmRowsGlobal = [];
+      eHeadHtmlL1 += `</tr>`;
+      eHeadHtmlL2 += `</tr>`;
+      eHead.innerHTML = eHeadHtmlL1 + eHeadHtmlL2;
+
+      // Sorok és cellák feltöltése
+      tableRowsGlobal = [];
       bBody.innerHTML = "";
       eBody.innerHTML = "";
 
@@ -1520,106 +1514,102 @@
           <td class="tol-col">${m.maxTol}</td>
         `;
 
-        sortedUregek.forEach(u => {
-          for (let mintaNum = 1; mintaNum <= 5; mintaNum++) {
-            const file = uregMap.get(u)?.get(mintaNum);
-            const item = file?.parsedItems.find(it => it.megn === megn && it.enabled !== false);
-            
-            const val = item ? item.akt.toFixed(3) : null;
-            const isErr = item ? isStillError(item) : false;
+        loadedFiles.forEach(file => {
+          const item = file.parsedItems.find(it => it.megn === megn && it.enabled !== false);
+          const val = item ? item.akt.toFixed(3) : null;
+          const isErr = item ? isStillError(item) : false;
 
-            // Vonalkód cella
-            const bTd = document.createElement('td');
-            if (val) {
-              const card = document.createElement('div');
-              const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-              svg.className = 'barcode-svg';
-              card.appendChild(svg);
+          // Vonalkód cella
+          const bTd = document.createElement('td');
+          if (val) {
+            const card = document.createElement('div');
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.className = 'barcode-svg';
+            card.appendChild(svg);
 
-              const meta = document.createElement('div');
-              meta.className = 'meta-text';
-              meta.innerHTML = `<b>${val}</b>`;
-              card.appendChild(meta);
-              bTd.appendChild(card);
+            const meta = document.createElement('div');
+            meta.className = 'meta-text';
+            meta.innerHTML = `<b>${val}</b>`;
+            card.appendChild(meta);
+            bTd.appendChild(card);
 
-              try {
-                JsBarcode(svg, val, {
-                  format: "CODE128",
-                  width: 1.0,
-                  height: 28,
-                  displayValue: false,
-                  margin: 1
-                });
-              } catch (err) {}
-            } else {
-              bTd.textContent = "-";
-            }
-            bTr.appendChild(bTd);
-
-            // PSM Excel cella
-            const eTd = document.createElement('td');
-            eTd.className = "val-cell" + (isErr ? " err" : "");
-            if (val) {
-              eTd.textContent = val;
-              rowExport.push(parseFloat(val));
-            } else {
-              eTd.textContent = "";
-              rowExport.push("");
-            }
-            eTr.appendChild(eTd);
+            try {
+              JsBarcode(svg, val, {
+                format: "CODE128",
+                width: 1.0,
+                height: 28,
+                displayValue: false,
+                margin: 1
+              });
+            } catch (err) {}
+          } else {
+            bTd.textContent = "-";
           }
+          bTr.appendChild(bTd);
+
+          // Excel mérési cella (MINDEN BETÖLTÖTT FÁJLBÓL MEGJELENIK!)
+          const eTd = document.createElement('td');
+          eTd.className = "val-cell" + (isErr ? " err" : "");
+          if (val) {
+            eTd.textContent = val;
+            rowExport.push(parseFloat(val));
+          } else {
+            eTd.textContent = "-";
+            rowExport.push("");
+          }
+          eTr.appendChild(eTd);
         });
 
         bBody.appendChild(bTr);
         eBody.appendChild(eTr);
-        psmRowsGlobal.push(rowExport);
+        tableRowsGlobal.push(rowExport);
       });
 
       document.getElementById('matrixBarcodeWrapper').style.display = 'block';
       document.getElementById('excelTableWrapper').style.display = 'block';
     }
 
-    // EXCEL (.XLSX) FÁJL MENTÉSE PSM FORMÁTUMBAN
+    // EXCEL (.XLSX) FÁJL GENERÁLÁSA
     document.getElementById('btnExportExcel').addEventListener('click', () => {
-      if (!psmRowsGlobal.length) {
+      if (!tableRowsGlobal.length) {
         alert("Nincsenek adatok az exportáláshoz!");
         return;
       }
 
-      const wsData = [psmHeadersL1Global, psmHeadersL2Global, ...psmRowsGlobal];
+      const wsData = [tableHeadersL1Global, tableHeadersL2Global, ...tableRowsGlobal];
       const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-      // Üreg fejlécek összevonása az Excelben (Merge cells)
-      const merges = [];
-      let colIdx = 6;
-      const totalCols = psmHeadersL1Global.length;
-      while (colIdx < totalCols) {
-        merges.push({ s: { r: 0, c: colIdx }, e: { r: 0, c: colIdx + 4 } });
-        colIdx += 5;
-      }
-      ws['!merges'] = merges;
+      ws['!cols'] = [
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 14 },
+        { wch: 14 },
+        ...tableHeadersL2Global.slice(6).map(() => ({ wch: 12 }))
+      ];
 
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "measurement table");
 
-      const teileNr = loadedFiles[0]?.headerData?.teileNr || "psm_Mintazas";
+      const teileNr = loadedFiles[0]?.headerData?.teileNr || "Mintazas";
       XLSX.writeFile(wb, `${teileNr}_FOT_PPAP_Matrix.xlsx`);
     });
 
-    // VÁGÓLAPRA MÁSOLÁS (CSAK A MÉRT ADATOK VAGY A TELJES TÁBLA)
+    // VÁGÓLAPRA MÁSOLÁS
     document.getElementById('btnCopyClipboard').addEventListener('click', () => {
-      if (!psmRowsGlobal.length) {
+      if (!tableRowsGlobal.length) {
         alert("Nincsenek adatok a másoláshoz!");
         return;
       }
 
-      let tsvText = psmHeadersL1Global.join("\t") + "\r\n" + psmHeadersL2Global.join("\t") + "\r\n";
-      psmRowsGlobal.forEach(row => {
+      let tsvText = tableHeadersL1Global.join("\t") + "\r\n" + tableHeadersL2Global.join("\t") + "\r\n";
+      tableRowsGlobal.forEach(row => {
         tsvText += row.join("\t") + "\r\n";
       });
 
       navigator.clipboard.writeText(tsvText).then(() => {
-        alert("✅ A psm mérési tábla sikeresen a vágólapra másolva! A céges Excel táblázatodban azonnal beillesztheted (Ctrl + V).");
+        alert("✅ A mérési táblázat a vágólapra másolva! Egy üres Excel munkalapon azonnal beillesztheted (Ctrl + V).");
       }).catch(err => {
         alert("Nem sikerült a vágólapra másolás: " + err);
       });
