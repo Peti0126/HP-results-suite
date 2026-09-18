@@ -129,17 +129,23 @@
     .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
     .btn-outline:hover { background: #f1f5f9; }
 
-    .select-item {
-      padding: 6px 10px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
+    .checkbox-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      padding: 4px 10px;
+      border-radius: 16px;
       font-size: 12px;
-      font-weight: 600;
-      background: #fff;
+      font-weight: 700;
       color: #334155;
       cursor: pointer;
-      outline: none;
+      user-select: none;
+      transition: 0.15s;
     }
+    .checkbox-pill:hover { background: #f1f5f9; border-color: #94a3b8; }
+    .checkbox-pill input { cursor: pointer; }
 
     .action-bar {
       display: flex;
@@ -308,7 +314,7 @@
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt,.pdf" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT vagy Zeiss CALYPSO PDF jegyzőkönyveket</h3>
-      <p>Szelektív tételjavítás legördülő menüből, hardver-azonosított DFQ generálás és megbízható több-fészkes adatmátrix</p>
+      <p>Többszörös tételválasztás checkboxokkal, hardver-azonosított DFQ generálás és megbízható több-fészkes adatmátrix</p>
     </div>
 
     <div class="tabs-nav no-print">
@@ -995,37 +1001,27 @@
       return item.akt > maxTol || item.akt < minTol;
     }
 
-    // --- SZELEKTÍV JAVÍTÁSI MOTOR (EGYENKÉNT VAGY GLOBÁLISAN) ---
-    function applySelectiveFix(fileIdx, selectedTarget) {
-      const f = loadedFiles[fileIdx];
-      if (!f) return;
-
-      f.validationErrors.forEach(err => {
-        if (selectedTarget === 'ALL' || err.megn === selectedTarget) {
-          err.itemRef.akt = parseFloat(err.suggestedAkt);
-        }
+    // --- TÖBBSZÖRÖS / SZELEKTÍV JAVÍTÁS (CHECKBOXOK ALAPJÁN) ---
+    function setGlobalCheckboxes(state) {
+      document.querySelectorAll('.chk-global-item').forEach(chk => {
+        chk.checked = state;
       });
-
-      const hasAnyRemaining = f.parsedItems.some(it => it.enabled !== false && isStillError(it));
-      f.isFixed = !hasAnyRemaining;
-
-      renderValidatorView();
-      renderMatrixViews();
-
-      const box = document.getElementById(`previewBox_${fileIdx}`);
-      if (box && box.style.display === 'block') {
-        box.textContent = buildHeaderString(f.headerData) + buildFileBody(f);
-      }
     }
 
-    function applyGlobalSelectiveFix() {
-      const sel = document.getElementById('globalFixSelect');
-      if (!sel) return;
-      const target = sel.value;
+    function applyGlobalMultiFix() {
+      const selectedItems = [];
+      document.querySelectorAll('.chk-global-item:checked').forEach(chk => {
+        selectedItems.push(chk.value);
+      });
+
+      if (selectedItems.length === 0) {
+        alert("Nincs egyetlen tétel sem bepipálva a javításhoz!");
+        return;
+      }
 
       loadedFiles.forEach((f, idx) => {
         f.validationErrors.forEach(err => {
-          if (target === 'ALL' || err.megn === target) {
+          if (selectedItems.includes(err.megn)) {
             err.itemRef.akt = parseFloat(err.suggestedAkt);
           }
         });
@@ -1042,6 +1038,38 @@
       renderMatrixViews();
     }
 
+    function applyFileMultiFix(fileIdx) {
+      const f = loadedFiles[fileIdx];
+      if (!f) return;
+
+      const selectedItems = [];
+      document.querySelectorAll(`.chk-file-${fileIdx}:checked`).forEach(chk => {
+        selectedItems.push(chk.value);
+      });
+
+      if (selectedItems.length === 0) {
+        alert("Nincs egyetlen tétel sem bepipálva ennél a fájlnál!");
+        return;
+      }
+
+      f.validationErrors.forEach(err => {
+        if (selectedItems.includes(err.megn)) {
+          err.itemRef.akt = parseFloat(err.suggestedAkt);
+        }
+      });
+
+      const hasAnyRemaining = f.parsedItems.some(it => it.enabled !== false && isStillError(it));
+      f.isFixed = !hasAnyRemaining;
+
+      renderValidatorView();
+      renderMatrixViews();
+
+      const box = document.getElementById(`previewBox_${fileIdx}`);
+      if (box && box.style.display === 'block') {
+        box.textContent = buildHeaderString(f.headerData) + buildFileBody(f);
+      }
+    }
+
     function renderValidatorView() {
       const overview = document.getElementById('validatorOverview');
       const list = document.getElementById('validatorFilesList');
@@ -1052,7 +1080,7 @@
       const unfixedFiles = loadedFiles.filter(f => f.parsedItems.some(it => it.enabled !== false && isStillError(it)));
       const totalInitialErrors = loadedFiles.reduce((sum, f) => sum + f.validationErrors.length, 0);
 
-      // Összes hibás tételszám összegyűjtése a globális szűrőhöz
+      // Összes hibás tételszám összegyűjtése a checkboxokhoz
       const globalErrorItemsSet = new Set();
       loadedFiles.forEach(f => {
         f.validationErrors.forEach(e => {
@@ -1076,18 +1104,30 @@
 
         overview.innerHTML = `
           <div class="alert-box warning">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 14px;">
               <div>
                 <h3 style="font-size: 16px;">⚠️ Figyelem! Tűrésen kívüli méretek találhatók (${unfixedFiles.length} jegyzőkönyvben)</h3>
-                <p style="font-size:13px; margin-top:2px;">Az adatok jelenleg az <strong>eredeti mért értékeket</strong> tartalmazzák.</p>
+                <p style="font-size:13px; margin-top:2px;">
+                  Válaszd ki a javítandó tételeket! Amelyikből <strong>kiveszed a pipát, az szándékosan hibás/eredeti marad</strong>.
+                </p>
               </div>
-              <div style="display: flex; gap: 8px; align-items: center; background: #fff; padding: 6px 12px; border-radius: 6px; border: 1px solid #fcd34d;">
-                <label style="font-size: 12px; font-weight: bold; color: #78350f;">Minden jegyzőkönyvre:</label>
-                <select id="globalFixSelect" class="select-item">
-                  <option value="ALL">⚡ ÖSSZES hibás méret</option>
-                  ${globalErrorItems.map(it => `<option value="${it}">Csak a(z) ${it} tétel</option>`).join('')}
-                </select>
-                <button class="btn btn-warning" onclick="applyGlobalSelectiveFix()" type="button">⚡ Javítás az ÖSSZES fájlban</button>
+              <div style="background: #fff; padding: 10px 14px; border-radius: 8px; border: 1px solid #fcd34d; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px;">
+                  <span style="font-size: 12px; font-weight: 700; color: #78350f;">Összes fájlra kijelölés:</span>
+                  <div style="display: flex; gap: 6px;">
+                    <button class="btn btn-outline" style="padding: 2px 6px; font-size: 11px;" onclick="setGlobalCheckboxes(true)" type="button">Mind pipál</button>
+                    <button class="btn btn-outline" style="padding: 2px 6px; font-size: 11px;" onclick="setGlobalCheckboxes(false)" type="button">Mind töröl</button>
+                  </div>
+                </div>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap; max-width: 440px; margin-bottom: 10px;">
+                  ${globalErrorItems.map(it => `
+                    <label class="checkbox-pill">
+                      <input type="checkbox" class="chk-global-item" value="${it}" checked>
+                      ${it}
+                    </label>
+                  `).join('')}
+                </div>
+                <button class="btn btn-warning" style="width: 100%; justify-content: center;" onclick="applyGlobalMultiFix()" type="button">⚡ Kijelöltek javítása az ÖSSZES fájlban</button>
               </div>
             </div>
             <div style="margin-top: 10px; border-top: 1px dashed #fde68a; padding-top: 8px;">
@@ -1136,10 +1176,15 @@
               </div>
               <div class="btn-group">
                 ${remainingErrors.length > 0 ? `
-                  <select id="fileFixSelect_${idx}" class="select-item" style="border-color: #f59e0b;">
-                    <option value="ALL">Összes hiba (${remainingErrors.length})</option>${remainingErrors.map(e => `<option value="${e.megn}">Csak: ${e.megn}</option>`).join('')}
-                  </select>
-                  <button class="btn btn-warning" onclick="applySelectiveFix(${idx}, document.getElementById('fileFixSelect_${idx}').value)">⚡ Javítás (Javasoltra)</button>
+                  <div style="display: inline-flex; align-items: center; gap: 4px; background: #fff; padding: 3px 8px; border-radius: 6px; border: 1px solid #fcd34d;">
+                    ${remainingErrors.map(e => `
+                      <label class="checkbox-pill" style="padding: 2px 6px; font-size: 11px;">
+                        <input type="checkbox" class="chk-file-${idx}" value="${e.megn}" checked>
+                        ${e.megn}
+                      </label>
+                    `).join('')}
+                    <button class="btn btn-warning" style="padding: 4px 8px; margin-left: 4px;" onclick="applyFileMultiFix(${idx})">⚡ Javítás</button>
+                  </div>
                 ` : ''}
                 <button class="btn btn-primary" onclick="openManualCorrectionModal(${idx})">✏️ Tételek & Javítás</button>
                 <button class="btn btn-edit-hdr" onclick="openManualHeaderModal(${idx})">⚙️ Fejléc</button>
@@ -1667,7 +1712,6 @@
           <td class="tol-col">${m.maxTol}</td>
         `;
 
-        // Közvetlen fájl-index alapú kiolvasás (nem klónozódnak az adatok)
         loadedFiles.forEach(file => {
           const item = file.parsedItems.find(it => it.megn === megn && it.enabled !== false);
           const val = item ? item.akt.toFixed(3) : null;
