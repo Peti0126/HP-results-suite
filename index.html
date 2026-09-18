@@ -190,7 +190,7 @@
     .modal-window {
       background: #fff;
       border-radius: 10px;
-      max-width: 860px;
+      max-width: 890px;
       width: 100%;
       max-height: 90vh;
       overflow-y: auto;
@@ -206,7 +206,7 @@
 
     .calypso-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
       gap: 14px;
     }
     .form-group { display: flex; flex-direction: column; gap: 4px; }
@@ -296,7 +296,7 @@
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt,.pdf" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT vagy Zeiss CALYPSO PDF jegyzőkönyveket</h3>
-      <p>Hardver-azonosított DFQ generálás (K2415), darabonkénti 5 mp-es időeltolás és automatikus fészekléptetés</p>
+      <p>Hardver-azonosított DFQ generálás (K2415, K1202, K2406), darabonkénti 5 mp-es időeltolás és automatikus fészekléptetés</p>
     </div>
 
     <div class="tabs-nav no-print">
@@ -390,7 +390,7 @@
     </div>
   </div>
 
-  <!-- MODAL: ZEISS PARAMÉTERBEVITEL (K2415-TEL KIEGÉSZÍTVE) -->
+  <!-- MODAL: ZEISS PARAMÉTERBEVITEL (K2415, K1202, K2406 MEZŐKKEL) -->
   <div class="modal-backdrop" id="headerModal">
     <div class="modal-window">
       <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
@@ -428,11 +428,19 @@
         </div>
         <div class="form-group">
           <label>Gép száma (K1081) *:</label>
-          <input type="text" id="m_maschine" placeholder="pl. KS062 vagy KS004">
+          <input type="text" id="m_maschine" placeholder="pl. KS062 vagy KS004 vagy 9578">
         </div>
         <div class="form-group">
-          <label>Gép gyári száma (K2415) *:</label>
-          <input type="text" id="m_k2415" placeholder="pl. 143122070061">
+          <label>Gép gyári száma (K2415 / K1201) *:</label>
+          <input type="text" id="m_k2415" placeholder="pl. 143122070061 vagy 15-00027">
+        </div>
+        <div class="form-group">
+          <label>Mérőeszköz típusa / leírása (K1202 / K2402) *:</label>
+          <input type="text" id="m_k1202" placeholder="pl. Messmaschine Werth Scope Check vagy OI543">
+        </div>
+        <div class="form-group">
+          <label>Mérőgép gyártója (K2406) *:</label>
+          <input type="text" id="m_k2406" placeholder="pl. Werth Messtechnik vagy Carl Zeiss Oberkochen">
         </div>
         <div class="form-group">
           <label>Mérés Dátuma (DD.MM.YYYY) *:</label>
@@ -531,7 +539,6 @@
       });
     }
 
-    // Időpont eltolása másodpercekkel (HH:MM:SS formátumban)
     function addSecondsToTime(timeStr, secondsToAdd) {
       if (!timeStr) return "08:41:01";
       const parts = timeStr.split(':').map(p => parseInt(p, 10));
@@ -540,7 +547,7 @@
       let s = parts[2] || 0;
 
       let totalSec = h * 3600 + m * 60 + s + secondsToAdd;
-      totalSec = (totalSec + 86400) % 86400; // 24 órás átfordulás kezelése
+      totalSec = (totalSec + 86400) % 86400;
 
       const nh = Math.floor(totalSec / 3600);
       const nm = Math.floor((totalSec % 3600) / 60);
@@ -634,7 +641,6 @@
           if (baseUhrzeit.length === 5) baseUhrzeit += ":00";
         }
 
-        // Fájlonkénti +5 másodperces eltolás
         const uhrzeit = addSecondsToTime(baseUhrzeit, fileOrderIndex * 5);
 
         const headerData = {
@@ -644,7 +650,9 @@
           rajzszam: "F12763-105",
           megrendelo,
           maschine,
-          k2415,
+          k2415: k2415,
+          k1202: "OI543",
+          k2406: "Carl Zeiss Oberkochen",
           kunde,
           datum,
           uhrzeit
@@ -739,7 +747,6 @@
       if (!datum) datum = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
       if (!rawUhrzeit) rawUhrzeit = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
 
-      // Fájlonkénti +5 másodperces eltolás
       const uhrzeit = addSecondsToTime(rawUhrzeit, fileOrderIndex * 5);
 
       let teileBezRaw = getVal(/Teilebezeichnung\s*:\s*([^\n|]+)/).replace(/Uhrzeit\s*:.*$/i, '').trim();
@@ -761,6 +768,8 @@
         megrendelo: getVal(/Auftragsnummer\s*:\s*([^\n|]+)/) || "7",
         maschine: detectedMachine || "KS026",
         k2415: "143122070061",
+        k1202: "OI543",
+        k2406: "Carl Zeiss Oberkochen",
         datum: datum,
         uhrzeit: uhrzeit
       };
@@ -964,7 +973,7 @@
                 <strong>${f.name}</strong>
                 ${statusBadge}
                 <div style="font-size:11px; color:#64748b; margin-top:2px;">
-                  Időpont: <b>${f.headerData.uhrzeit}</b> | Gép gyári száma: <b>${f.headerData.k2415 || '-'}</b>
+                  Időpont: <b>${f.headerData.uhrzeit}</b> | Gép gyári: <b>${f.headerData.k2415 || '-'}</b> | Típus: <b>${f.headerData.k1202 || '-'}</b>
                 </div>
               </div>
               <div class="btn-group">
@@ -1105,6 +1114,8 @@
                 h.megrendelo && h.megrendelo.trim() && 
                 h.maschine && h.maschine.trim() &&
                 h.k2415 && h.k2415.trim() &&
+                h.k1202 && h.k1202.trim() &&
+                h.k2406 && h.k2406.trim() &&
                 h.datum && h.datum.trim() &&
                 h.uhrzeit && h.uhrzeit.trim());
     }
@@ -1144,6 +1155,8 @@
       document.getElementById('m_megrendelo').value = h.megrendelo || "7";
       document.getElementById('m_maschine').value = h.maschine || "KS026";
       document.getElementById('m_k2415').value = h.k2415 || "143122070061";
+      document.getElementById('m_k1202').value = h.k1202 || "OI543";
+      document.getElementById('m_k2406').value = h.k2406 || "Carl Zeiss Oberkochen";
       document.getElementById('m_datum').value = h.datum || "09.09.2026";
       document.getElementById('m_uhrzeit').value = h.uhrzeit || "08:41:01";
 
@@ -1154,6 +1167,8 @@
       document.getElementById('m_megrendelo').classList.toggle('missing', !h.megrendelo || !h.megrendelo.trim());
       document.getElementById('m_maschine').classList.toggle('missing', !h.maschine || !h.maschine.trim());
       document.getElementById('m_k2415').classList.toggle('missing', !h.k2415 || !h.k2415.trim());
+      document.getElementById('m_k1202').classList.toggle('missing', !h.k1202 || !h.k1202.trim());
+      document.getElementById('m_k2406').classList.toggle('missing', !h.k2406 || !h.k2406.trim());
 
       document.getElementById('headerModal').classList.add('active');
     }
@@ -1163,7 +1178,6 @@
       pendingFileIdx = null;
     });
 
-    // MENTÉS: ÁTÖRÖKÍTÉS, FÉSZEKLÉPTETÉS ÉS DARABONKÉNT +5 MP IDŐELTOLÁS
     function saveHeaderFromModal() {
       if (pendingFileIdx === null) return false;
 
@@ -1174,6 +1188,8 @@
       const megrendelo = document.getElementById('m_megrendelo').value.trim();
       const maschine = document.getElementById('m_maschine').value.trim();
       const k2415 = document.getElementById('m_k2415').value.trim();
+      const k1202 = document.getElementById('m_k1202').value.trim();
+      const k2406 = document.getElementById('m_k2406').value.trim();
       const datum = document.getElementById('m_datum').value.trim();
       const baseUhrzeit = document.getElementById('m_uhrzeit').value.trim();
 
@@ -1184,12 +1200,12 @@
         file.headerData.megrendelo = megrendelo;
         file.headerData.maschine = maschine;
         file.headerData.k2415 = k2415;
+        file.headerData.k1202 = k1202;
+        file.headerData.k2406 = k2406;
         file.headerData.datum = datum;
 
         const offset = index - pendingFileIdx;
         file.headerData.bemerkung = (offset === 0) ? baseBemerkung : incrementNestCode(baseBemerkung, offset);
-
-        // Darabonként +5 másodperc hozzáadása az egyedi időbélyegért
         file.headerData.uhrzeit = addSecondsToTime(baseUhrzeit, offset * 5);
 
         const preEl = document.getElementById(`previewBox_${index}`);
@@ -1218,9 +1234,11 @@
       const megrendelo = document.getElementById('m_megrendelo').value.trim();
       const maschine = document.getElementById('m_maschine').value.trim();
       const k2415 = document.getElementById('m_k2415').value.trim();
+      const k1202 = document.getElementById('m_k1202').value.trim();
+      const k2406 = document.getElementById('m_k2406').value.trim();
 
-      if (!teileNr || !bemerkung || !teileBez || !rajzszam || !megrendelo || !maschine || !k2415) {
-        alert("Kérlek töltsd ki a pirossal jelölt összes kötelező mezőt (beleértve a K2415-öt is) a DFQ generáláshoz!");
+      if (!teileNr || !bemerkung || !teileBez || !rajzszam || !megrendelo || !maschine || !k2415 || !k1202 || !k2406) {
+        alert("Kérlek töltsd ki az összes kötelező mezőt a DFQ generáláshoz!");
         return;
       }
 
@@ -1232,7 +1250,7 @@
       }
     });
 
-    // PONTOS ZEISS BINÁRIS DFQ GENERÁLÁS (K1201 ÉS K2415 KÖTELEZŐ MEZŐKKEL)
+    // PONTOS BINÁRIS DFQ GENERÁLÁS (WERTH ÉS ZEISS SZERINTI DINAMIKUS TÖRZSADATOKKAL)
     function buildDfqString(file) {
       const h = file.headerData;
       
@@ -1246,6 +1264,10 @@
       const activeItems = file.parsedItems.filter(it => it.enabled !== false);
       const lines = [];
 
+      const k1201Val = (h.k2415 || '143122070061').trim();
+      const k1202Val = (h.k1202 || 'OI543').trim();
+      const k2406Val = (h.k2406 || 'Carl Zeiss Oberkochen').trim();
+
       lines.push(`K0100 ${activeItems.length}`);
       lines.push(`K1001 ${h.teileNr.trim()}`);
       lines.push(`K1002 ${h.bemerkung.trim()}`);
@@ -1257,8 +1279,8 @@
       lines.push(`K1081 ${h.maschine.trim()}`);
       lines.push(`K1086 `);
       lines.push(`K1101 `);
-      lines.push(`K1201 ${(h.k2415 || '143122070061').trim()}`);
-      lines.push(`K1202 OI543`);
+      lines.push(`K1201 ${k1201Val}`);
+      lines.push(`K1202 ${k1202Val}`);
       lines.push(`K1301 2`);
       lines.push(`K1900 `);
 
@@ -1282,9 +1304,9 @@
         lines.push(`K2343/0 2023. január 28.   8`);
       }
       lines.push(`K2344/0 Master`);
-      lines.push(`K2415/0 ${(h.k2415 || '143122070061').trim()}`);
-      lines.push(`K2402/0 OI543`);
-      lines.push(`K2406/0 Carl Zeiss Oberkochen`);
+      lines.push(`K2415/0 ${k1201Val}`);
+      lines.push(`K2402/0 ${k1202Val}`);
+      lines.push(`K2406/0 ${k2406Val}`);
       lines.push(`K8500/0 `);
 
       activeItems.forEach((item, idx) => {
@@ -1315,7 +1337,6 @@
         lines.push(`K2213/${i} ${item.akt.toFixed(7)}`);
       });
 
-      // ZEISS ELVÁLASZTÓK: DC4 (0x14) és SI (0x0F)
       const DC4 = String.fromCharCode(20);
       const SI  = String.fromCharCode(15);
       const ts  = `${d}/${u}`;
@@ -1329,7 +1350,6 @@
       return lines.join("\r\n") + "\r\n";
     }
 
-    // Fájlnév: az 5 mp-cel eltolt időbélyeggel összhangban
     function getStandardDfqFileName(file) {
       const h = file.headerData;
       const cleanPart = (h.teileNr || "106760").replace(/[^a-zA-Z0-9_-]/g, "");
@@ -1400,7 +1420,7 @@
     document.getElementById('btnDownloadAllDfq').addEventListener('click', async () => {
       const missingFiles = loadedFiles.filter(f => !isHeaderComplete(f.headerData));
       if (missingFiles.length > 0) {
-        alert(`Figyelem! ${missingFiles.length} fájlnál hiányoznak a kötelező adatok (pl. K2415). Kérlek pótold őket a sorok mellett lévő "DFQ Letöltése" gombbal!`);
+        alert(`Figyelem! ${missingFiles.length} fájlnál hiányoznak a kötelező adatok. Kérlek pótold őket a sorok mellett lévő "DFQ Letöltése" gombbal!`);
         return;
       }
 
