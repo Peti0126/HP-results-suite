@@ -296,7 +296,7 @@
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt,.pdf" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT vagy Zeiss CALYPSO PDF jegyzőkönyveket</h3>
-      <p>Hardver-azonosított DFQ generálás (K2415, K1202, K2406), darabonkénti 5 mp-es időeltolás és automatikus fészekléptetés</p>
+      <p>Hardver-azonosított DFQ generálás (K2415, K1202, K2406), darabonkénti 5 mp-es időeltolás és megbízható több-fészkes adatmátrix</p>
     </div>
 
     <div class="tabs-nav no-print">
@@ -616,7 +616,6 @@
           
           fullPlainText += content.items.map(it => it.str).join(" ") + "\n";
 
-          // Elemek csoportosítása vertikális (Y) koordináta szerint, tűréssel (2.5pt)
           const pageLines = [];
           content.items.forEach(it => {
             const str = it.str.trim();
@@ -632,7 +631,6 @@
             line.items.push({ x: x, text: str });
           });
 
-          // Sorok sorbarendezése fentről lefelé, azon belül balról jobbra
           pageLines.sort((a, b) => b.y - a.y);
           pageLines.forEach(l => {
             l.items.sort((a, b) => a.x - b.x);
@@ -653,7 +651,13 @@
         const kunde = getMatch(/Customer\s*[:|]?\s*([A-Za-z0-9_-]+)/i) || "Bosch";
         const maschine = getMatch(/Manuf\.\s*Machine\s*No\.\s*[:|]?\s*([A-Za-z0-9_-]+)/i) || "KS004";
         const k2415 = getMatch(/Machine\s*Number\s*[:|]?\s*([A-Za-z0-9_-]+)/i) || "143122070061";
-        const textVal = getMatch(/Text\s*[:|]?\s*([^\s|\n]+)/i) || `N${fileOrderIndex + 1}-T1-M9621`;
+        
+        // Fészekkód kinyerése a PDF-ből (pl. N1-T1-M9621, N2-T1-M9621...)
+        let textVal = getMatch(/Text\s*[:|]?\s*([^\s|\n]+)/i);
+        if (!textVal) {
+          const mN = fullPlainText.match(/N\d+-T\d+-[A-Za-z0-9_-]+/);
+          textVal = mN ? mN[0] : `N${fileOrderIndex + 1}-T1-M9621`;
+        }
 
         let datum = "09.09.2026";
         let baseUhrzeit = "08:41:01";
@@ -685,17 +689,14 @@
         const parsedItems = [];
         let currentItemLabel = "";
 
-        // Sorok feldolgozása a strukturált geometriából
         for (let r = 0; r < allRows.length; r++) {
           const items = allRows[r];
           const lineStr = items.map(it => it.text).join(" ");
 
-          // Fejléc és statisztikai sorok kizárása
           if (/Minden jellemző|No\.\s*measured|Mérés időtartama|Measured value|Time\/Date|Part name|Page \d+/i.test(lineStr)) {
             continue;
           }
 
-          // Számok kinyerése a sorból (vesszőt pontra konvertálva)
           const rowNumbers = [];
           items.forEach(it => {
             const clean = it.text.replace(',', '.');
@@ -704,7 +705,6 @@
             }
           });
 
-          // Tételnév felderítése a sor bal oldalán (x < 190)
           const labelParts = [];
           items.forEach(it => {
             const clean = it.text.replace(',', '.');
@@ -717,14 +717,12 @@
             currentItemLabel = rowLabel;
           }
 
-          // Ha legalább 4 szám van (Mért, Névleges, Felső tűrés, Alsó tűrés), az egy érvényes méret
           if (rowNumbers.length >= 4) {
             const akt = rowNumbers[0];
             const nevl = rowNumbers[1];
             const otol = rowNumbers[2];
             const utol = rowNumbers[3];
 
-            // Tételszám tiszta kinyerése (pl. "Z 605" -> "605", "4850_Y" -> "4850", "850 F1" -> "850")
             let cleanMegn = currentItemLabel;
             const mCode = currentItemLabel.match(/\b(\d{2,4})\b/);
             if (mCode) {
@@ -787,6 +785,7 @@
 
         return {
           name: fileName,
+          fileIndex: fileOrderIndex,
           headerData,
           parsedItems,
           validationErrors,
@@ -941,6 +940,7 @@
 
       return {
         name: fileName,
+        fileIndex: fileOrderIndex,
         headerData: headerData,
         parsedItems: parsedItems,
         validationErrors: validationErrors,
@@ -991,7 +991,7 @@
       if (unfixedFiles.length > 0) {
         let errHtml = "";
         unfixedFiles.forEach(f => {
-          errHtml += `<div style="margin-top:10px;"><strong>📄 ${f.name}</strong><ul style="padding-left:20px; font-family:monospace; font-size:12px; margin-top:4px;">`;
+          errHtml += `<div style="margin-top:10px;"><strong>📄 ${f.name}</strong> [${f.headerData.bemerkung}]<ul style="padding-left:20px; font-family:monospace; font-size:12px; margin-top:4px;">`;
           f.validationErrors.forEach(e => {
             errHtml += `<li>Tétel: <b>${e.megn}</b> | Eredeti mért: <span style="color:var(--danger); font-weight:bold;">${e.origAkt}</span> | Kiesés: ${e.diff} | Javaslat: <b style="color:var(--success)">${e.suggestedAkt}</b></li>`;
           });
@@ -1035,7 +1035,7 @@
           <div class="file-row">
             <div class="file-row-header">
               <div>
-                <strong>${f.name}</strong>
+                <strong>${f.name}</strong> &bull; <b style="color:#0284c7;">${f.headerData.bemerkung}</b>
                 ${statusBadge}
                 <div style="font-size:11px; color:#64748b; margin-top:2px;">
                   Időpont: <b>${f.headerData.uhrzeit}</b> | Gép gyári: <b>${f.headerData.k2415 || '-'}</b> | Típus: <b>${f.headerData.k1202 || '-'}</b>
@@ -1088,7 +1088,7 @@
 
       const box = document.getElementById(`previewBox_${idx}`);
       if (box && box.style.display === 'block') {
-        box.textContent = buildHeaderString(f.headerData) + buildFileBody(f);
+        box.textContent = buildHeaderString(f.headerData) + buildFileBody(file);
       }
     }
 
@@ -1505,7 +1505,7 @@
       a.click();
     });
 
-    // --- MÁTRIX ÉS EXCEL ADATOK ÉPÍTÉSE ---
+    // --- MÁTRIX ÉS EXCEL ADATOK ÉPÍTÉSE (GARANTÁLT EGYEDI OSZLOP-ÖSSZERENDELÉSSEL) ---
     let excelHeadersGlobal = [];
     let excelRowsGlobal = [];
 
@@ -1521,24 +1521,13 @@
       const eHead = document.getElementById('excelTableHead');
       const eBody = document.getElementById('excelTableBody');
 
-      const matrixData = {};
       const metaData = {};
-      const feszekNevek = [];
       const megnSet = new Set();
 
       loadedFiles.forEach(file => {
-        const fAzon = file.headerData.bemerkung || file.name.replace(/\.[^/.]+$/, "");
-        feszekNevek.push(fAzon);
-
         file.parsedItems.forEach(t => {
           if (t.enabled !== false) {
             megnSet.add(t.megn);
-            if (!matrixData[t.megn]) matrixData[t.megn] = {};
-            matrixData[t.megn][fAzon] = {
-              val: t.akt.toFixed(3),
-              isErr: isStillError(t)
-            };
-
             if (!metaData[t.megn]) {
               const maxTol = +(t.nevl + t.ftur).toFixed(4);
               const minTol = +(t.nevl + t.atur).toFixed(4);
@@ -1558,8 +1547,9 @@
 
       // 1. FEJLÉC: VONALKÓD MÁTRIX
       let bHeadHtml = `<tr><th class="megn-col">Megn.</th>`;
-      feszekNevek.forEach((fNev, i) => {
-        bHeadHtml += `<th title="${fNev}">F${i + 1}</th>`;
+      loadedFiles.forEach((file, i) => {
+        const label = file.headerData.bemerkung || `F${i + 1}`;
+        bHeadHtml += `<th>F${i + 1}<br><span style="font-size:10px; font-weight:normal; color:#475569;">${label}</span></th>`;
       });
       bHeadHtml += `</tr>`;
       bHead.innerHTML = bHeadHtml;
@@ -1572,13 +1562,14 @@
         <th class="tol-col">Tűrés (-)</th>
         <th class="tol-col">Min</th>
         <th class="tol-col">Max</th>`;
-      feszekNevek.forEach((fNev, i) => {
-        eHeadHtml += `<th title="${fNev}">F${i + 1}<br><span style="font-size:10px; font-weight:normal; color:#475569;">${fNev}</span></th>`;
+      loadedFiles.forEach((file, i) => {
+        const label = file.headerData.bemerkung || `F${i + 1}`;
+        eHeadHtml += `<th>F${i + 1}<br><span style="font-size:10px; font-weight:normal; color:#475569;">${label}</span></th>`;
       });
       eHeadHtml += `</tr>`;
       eHead.innerHTML = eHeadHtml;
 
-      excelHeadersGlobal = ["Tétel", "Névleges", "Tűrés (+)", "Tűrés (-)", "Min", "Max", ...feszekNevek];
+      excelHeadersGlobal = ["Tétel", "Névleges", "Tűrés (+)", "Tűrés (-)", "Min", "Max", ...loadedFiles.map((f, i) => f.headerData.bemerkung || `F${i + 1}`)];
       excelRowsGlobal = [];
 
       bBody.innerHTML = "";
@@ -1604,10 +1595,11 @@
           <td class="tol-col">${m.maxTol}</td>
         `;
 
-        feszekNevek.forEach(fNev => {
-          const itemData = matrixData[megn]?.[fNev];
-          const val = itemData ? itemData.val : null;
-          const isErr = itemData ? itemData.isErr : false;
+        // PONTOS ÉS BIZTOS FORRÁSAZONOSÍTÁS: Közvetlenül az i-edik fájlból olvassuk ki az értéket!
+        loadedFiles.forEach(file => {
+          const item = file.parsedItems.find(it => it.megn === megn && it.enabled !== false);
+          const val = item ? item.akt.toFixed(3) : null;
+          const isErr = item ? isStillError(item) : false;
 
           // Vonalkód fül
           const bTd = document.createElement('td');
