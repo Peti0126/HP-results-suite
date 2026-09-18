@@ -603,21 +603,45 @@
       renderMatrixViews();
     }
 
-    // --- PDF FELDOLGOZÓ MODUL: NEGATÍV TŰRÉSEK ÉS TÖBBSOROS JELLEMZŐK TÁMOGATÁSÁVAL ---
+    // --- MEGBÍZHATÓ, KOORDINÁTA-ALAPÚ CALYPSO PDF FELDOLGOZÓ ---
     async function parseCalypsoPdf(fileName, arrayBuffer, fileOrderIndex) {
       try {
         const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        let fullText = "";
+        let fullPlainText = "";
+        const allRows = [];
 
         for (let p = 1; p <= pdfDoc.numPages; p++) {
           const page = await pdfDoc.getPage(p);
           const content = await page.getTextContent();
-          const strings = content.items.map(item => item.str);
-          fullText += strings.join(" ") + "\n";
+          
+          fullPlainText += content.items.map(it => it.str).join(" ") + "\n";
+
+          // Elemek csoportosítása vertikális (Y) koordináta szerint, tűréssel (2.5pt)
+          const pageLines = [];
+          content.items.forEach(it => {
+            const str = it.str.trim();
+            if (!str) return;
+            const x = it.transform[4];
+            const y = it.transform[5];
+
+            let line = pageLines.find(l => Math.abs(l.y - y) < 2.8);
+            if (!line) {
+              line = { y: y, items: [] };
+              pageLines.push(line);
+            }
+            line.items.push({ x: x, text: str });
+          });
+
+          // Sorok sorbarendezése fentről lefelé, azon belül balról jobbra
+          pageLines.sort((a, b) => b.y - a.y);
+          pageLines.forEach(l => {
+            l.items.sort((a, b) => a.x - b.x);
+            allRows.push(l.items);
+          });
         }
 
         const getMatch = (regex) => {
-          const m = fullText.match(regex);
+          const m = fullPlainText.match(regex);
           return m ? m[1].trim() : "";
         };
 
@@ -634,7 +658,7 @@
         let datum = "09.09.2026";
         let baseUhrzeit = "08:41:01";
 
-        const mTimeDate = fullText.match(/Time\/Date\s*[:|]?\s*([0-9.]+)\s*([0-9:]+)/i);
+        const mTimeDate = fullPlainText.match(/Time\/Date\s*[:|]?\s*([0-9.]+)\s*([0-9:]+)/i);
         if (mTimeDate) {
           datum = mTimeDate[1].replace(/\.$/, '');
           baseUhrzeit = mTimeDate[2];
@@ -659,31 +683,70 @@
         };
 
         const parsedItems = [];
-        
-        // JAVÍTOTT REGEX: Elfogadja a negatív számokat (+/-) és a tétel melletti szöveges utótagot is
-        const regex = /(\b\d{2,4}\b)(?:[^\d\n\r+-]+)?\s+([+-]?\d+\.\d{3,4})\s+([+-]?\d+\.\d{3,4})\s+([+-]?\d+\.\d{3,4})\s+([+-]?\d+\.\d{3,4})/g;
-        let match;
+        let currentItemLabel = "";
 
-        while ((match = regex.exec(fullText)) !== null) {
-          const megn = match[1];
-          const akt = parseFloat(match[2]);
-          const nevl = parseFloat(match[3]);
-          const otol = parseFloat(match[4]);
-          const utol = parseFloat(match[5]);
+        // Sorok feldolgozása a strukturált geometriából
+        for (let r = 0; r < allRows.length; r++) {
+          const items = allRows[r];
+          const lineStr = items.map(it => it.text).join(" ");
 
-          parsedItems.push({
-            enabled: true,
-            szi: "LT",
-            origAkt: akt,
-            akt: akt,
-            nevl: nevl,
-            ftur: otol,
-            atur: utol,
-            megn: megn,
-            desc: "Tolóm.táv.",
-            k2009: "200",
-            k2120: "1"
+          // Fejléc és statisztikai sorok kizárása
+          if (/Minden jellemző|No\.\s*measured|Mérés időtartama|Measured value|Time\/Date|Part name|Page \d+/i.test(lineStr)) {
+            continue;
+          }
+
+          // Számok kinyerése a sorból (vesszőt pontra konvertálva)
+          const rowNumbers = [];
+          items.forEach(it => {
+            const clean = it.text.replace(',', '.');
+            if (/^[+-]?\d+\.\d+$/.test(clean)) {
+              rowNumbers.push(parseFloat(clean));
+            }
           });
+
+          // Tételnév felderítése a sor bal oldalán (x < 190)
+          const labelParts = [];
+          items.forEach(it => {
+            const clean = it.text.replace(',', '.');
+            if (it.x < 190 && !/^[+-]?\d+\.\d+$/.test(clean) && !/^[-+]$/.test(clean)) {
+              labelParts.push(it.text);
+            }
+          });
+          const rowLabel = labelParts.join(" ").trim();
+          if (rowLabel) {
+            currentItemLabel = rowLabel;
+          }
+
+          // Ha legalább 4 szám van (Mért, Névleges, Felső tűrés, Alsó tűrés), az egy érvényes méret
+          if (rowNumbers.length >= 4) {
+            const akt = rowNumbers[0];
+            const nevl = rowNumbers[1];
+            const otol = rowNumbers[2];
+            const utol = rowNumbers[3];
+
+            // Tételszám tiszta kinyerése (pl. "Z 605" -> "605", "4850_Y" -> "4850", "850 F1" -> "850")
+            let cleanMegn = currentItemLabel;
+            const mCode = currentItemLabel.match(/\b(\d{2,4})\b/);
+            if (mCode) {
+              cleanMegn = mCode[1];
+            } else if (!cleanMegn) {
+              cleanMegn = `P${parsedItems.length + 1}`;
+            }
+
+            parsedItems.push({
+              enabled: true,
+              szi: "LT",
+              origAkt: akt,
+              akt: akt,
+              nevl: nevl,
+              ftur: otol,
+              atur: utol,
+              megn: cleanMegn,
+              desc: currentItemLabel || "Tolóm.táv.",
+              k2009: "200",
+              k2120: "1"
+            });
+          }
         }
 
         const validationErrors = [];
