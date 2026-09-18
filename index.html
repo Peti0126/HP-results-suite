@@ -129,6 +129,18 @@
     .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
     .btn-outline:hover { background: #f1f5f9; }
 
+    .select-item {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 600;
+      background: #fff;
+      color: #334155;
+      cursor: pointer;
+      outline: none;
+    }
+
     .action-bar {
       display: flex;
       gap: 12px;
@@ -296,7 +308,7 @@
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt,.pdf" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT vagy Zeiss CALYPSO PDF jegyzőkönyveket</h3>
-      <p>Hardver-azonosított DFQ generálás (K2415, K1202, K2406), darabonkénti 5 mp-es időeltolás és megbízható több-fészkes adatmátrix</p>
+      <p>Szelektív tételjavítás legördülő menüből, hardver-azonosított DFQ generálás és megbízható több-fészkes adatmátrix</p>
     </div>
 
     <div class="tabs-nav no-print">
@@ -652,7 +664,6 @@
         const maschine = getMatch(/Manuf\.\s*Machine\s*No\.\s*[:|]?\s*([A-Za-z0-9_-]+)/i) || "KS004";
         const k2415 = getMatch(/Machine\s*Number\s*[:|]?\s*([A-Za-z0-9_-]+)/i) || "143122070061";
         
-        // Fészekkód kinyerése a PDF-ből (pl. N1-T1-M9621, N2-T1-M9621...)
         let textVal = getMatch(/Text\s*[:|]?\s*([^\s|\n]+)/i);
         if (!textVal) {
           const mN = fullPlainText.match(/N\d+-T\d+-[A-Za-z0-9_-]+/);
@@ -978,6 +989,59 @@
       return "\n" + lines.join("\r\n");
     }
 
+    function isStillError(item) {
+      const maxTol = +(item.nevl + item.ftur).toFixed(4);
+      const minTol = +(item.nevl + item.atur).toFixed(4);
+      return item.akt > maxTol || item.akt < minTol;
+    }
+
+    // --- SZELEKTÍV JAVÍTÁSI MOTOR (EGYENKÉNT VAGY GLOBÁLISAN) ---
+    function applySelectiveFix(fileIdx, selectedTarget) {
+      const f = loadedFiles[fileIdx];
+      if (!f) return;
+
+      f.validationErrors.forEach(err => {
+        if (selectedTarget === 'ALL' || err.megn === selectedTarget) {
+          err.itemRef.akt = parseFloat(err.suggestedAkt);
+        }
+      });
+
+      const hasAnyRemaining = f.parsedItems.some(it => it.enabled !== false && isStillError(it));
+      f.isFixed = !hasAnyRemaining;
+
+      renderValidatorView();
+      renderMatrixViews();
+
+      const box = document.getElementById(`previewBox_${fileIdx}`);
+      if (box && box.style.display === 'block') {
+        box.textContent = buildHeaderString(f.headerData) + buildFileBody(f);
+      }
+    }
+
+    function applyGlobalSelectiveFix() {
+      const sel = document.getElementById('globalFixSelect');
+      if (!sel) return;
+      const target = sel.value;
+
+      loadedFiles.forEach((f, idx) => {
+        f.validationErrors.forEach(err => {
+          if (target === 'ALL' || err.megn === target) {
+            err.itemRef.akt = parseFloat(err.suggestedAkt);
+          }
+        });
+        const hasAnyRemaining = f.parsedItems.some(it => it.enabled !== false && isStillError(it));
+        f.isFixed = !hasAnyRemaining;
+
+        const box = document.getElementById(`previewBox_${idx}`);
+        if (box && box.style.display === 'block') {
+          box.textContent = buildHeaderString(f.headerData) + buildFileBody(f);
+        }
+      });
+
+      renderValidatorView();
+      renderMatrixViews();
+    }
+
     function renderValidatorView() {
       const overview = document.getElementById('validatorOverview');
       const list = document.getElementById('validatorFilesList');
@@ -985,23 +1049,50 @@
       
       actions.style.display = loadedFiles.length > 0 ? "flex" : "none";
 
-      const unfixedFiles = loadedFiles.filter(f => f.validationErrors.length > 0 && !f.isFixed);
+      const unfixedFiles = loadedFiles.filter(f => f.parsedItems.some(it => it.enabled !== false && isStillError(it)));
       const totalInitialErrors = loadedFiles.reduce((sum, f) => sum + f.validationErrors.length, 0);
+
+      // Összes hibás tételszám összegyűjtése a globális szűrőhöz
+      const globalErrorItemsSet = new Set();
+      loadedFiles.forEach(f => {
+        f.validationErrors.forEach(e => {
+          if (isStillError(e.itemRef)) {
+            globalErrorItemsSet.add(e.megn);
+          }
+        });
+      });
+      const globalErrorItems = Array.from(globalErrorItemsSet).sort((a, b) => naturalCompare(a, b));
 
       if (unfixedFiles.length > 0) {
         let errHtml = "";
         unfixedFiles.forEach(f => {
-          errHtml += `<div style="margin-top:10px;"><strong>📄 ${f.name}</strong> [${f.headerData.bemerkung}]<ul style="padding-left:20px; font-family:monospace; font-size:12px; margin-top:4px;">`;
-          f.validationErrors.forEach(e => {
+          const currentErrors = f.validationErrors.filter(e => isStillError(e.itemRef));
+          errHtml += `<div style="margin-top:8px;"><strong>📄 ${f.name}</strong> &bull; <span style="color:#0284c7; font-weight:bold;">${f.headerData.bemerkung}</span><ul style="padding-left:20px; font-family:monospace; font-size:12px; margin-top:3px;">`;
+          currentErrors.forEach(e => {
             errHtml += `<li>Tétel: <b>${e.megn}</b> | Eredeti mért: <span style="color:var(--danger); font-weight:bold;">${e.origAkt}</span> | Kiesés: ${e.diff} | Javaslat: <b style="color:var(--success)">${e.suggestedAkt}</b></li>`;
           });
           errHtml += `</ul></div>`;
         });
+
         overview.innerHTML = `
           <div class="alert-box warning">
-            <h3>⚠️ Figyelem! Tűrésen kívüli méretek találhatók (${unfixedFiles.length} jegyzőkönyvben)</h3>
-            <p style="font-size:13px; margin-top:4px;">Az adatok jelenleg az <strong>eredeti mért értékeket</strong> tartalmazzák. Ha javítani szeretnéd őket a határon belülre, kattints a sárga gombra!</p>
-            ${errHtml}
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <h3 style="font-size: 16px;">⚠️ Figyelem! Tűrésen kívüli méretek találhatók (${unfixedFiles.length} jegyzőkönyvben)</h3>
+                <p style="font-size:13px; margin-top:2px;">Az adatok jelenleg az <strong>eredeti mért értékeket</strong> tartalmazzák.</p>
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center; background: #fff; padding: 6px 12px; border-radius: 6px; border: 1px solid #fcd34d;">
+                <label style="font-size: 12px; font-weight: bold; color: #78350f;">Minden jegyzőkönyvre:</label>
+                <select id="globalFixSelect" class="select-item">
+                  <option value="ALL">⚡ ÖSSZES hibás méret</option>
+                  ${globalErrorItems.map(it => `<option value="${it}">Csak a(z) ${it} tétel</option>`).join('')}
+                </select>
+                <button class="btn btn-warning" onclick="applyGlobalSelectiveFix()" type="button">⚡ Javítás az ÖSSZES fájlban</button>
+              </div>
+            </div>
+            <div style="margin-top: 10px; border-top: 1px dashed #fde68a; padding-top: 8px;">
+              ${errHtml}
+            </div>
           </div>
         `;
       } else if (totalInitialErrors > 0) {
@@ -1022,13 +1113,15 @@
 
       let cardsHtml = "";
       loadedFiles.forEach((f, idx) => {
+        const remainingErrors = f.validationErrors.filter(e => isStillError(e.itemRef));
         let statusBadge = "";
+
         if (f.validationErrors.length === 0) {
           statusBadge = `<span style="font-size:12px; margin-left:8px; font-weight:600; color:var(--success);">(Hibátlan)</span>`;
-        } else if (f.isFixed) {
-          statusBadge = `<span style="font-size:12px; margin-left:8px; font-weight:600; color:var(--success);">(✅ Javítva: ${f.validationErrors.length} méret)</span>`;
+        } else if (remainingErrors.length === 0) {
+          statusBadge = `<span style="font-size:12px; margin-left:8px; font-weight:600; color:var(--success);">(✅ Minden hiba javítva)</span>`;
         } else {
-          statusBadge = `<span style="font-size:12px; margin-left:8px; font-weight:600; color:var(--danger);">(⚠️ ${f.validationErrors.length} hiba - Eredeti adatokkal)</span>`;
+          statusBadge = `<span style="font-size:12px; margin-left:8px; font-weight:600; color:var(--danger);">(⚠️ ${remainingErrors.length} aktív hiba)</span>`;
         }
 
         cardsHtml += `
@@ -1042,8 +1135,11 @@
                 </div>
               </div>
               <div class="btn-group">
-                ${f.validationErrors.length > 0 ? `
-                  <button class="btn btn-warning" onclick="applyAutoFix(${idx})">⚡ Javítás (Javasoltra)</button>
+                ${remainingErrors.length > 0 ? `
+                  <select id="fileFixSelect_${idx}" class="select-item" style="border-color: #f59e0b;">
+                    <option value="ALL">Összes hiba (${remainingErrors.length})</option>${remainingErrors.map(e => `<option value="${e.megn}">Csak: ${e.megn}</option>`).join('')}
+                  </select>
+                  <button class="btn btn-warning" onclick="applySelectiveFix(${idx}, document.getElementById('fileFixSelect_${idx}').value)">⚡ Javítás (Javasoltra)</button>
                 ` : ''}
                 <button class="btn btn-primary" onclick="openManualCorrectionModal(${idx})">✏️ Tételek & Javítás</button>
                 <button class="btn btn-edit-hdr" onclick="openManualHeaderModal(${idx})">⚙️ Fejléc</button>
@@ -1071,24 +1167,6 @@
           box.textContent = buildHeaderString(file.headerData) + buildFileBody(file);
         }
         box.style.display = 'block';
-      }
-    }
-
-    function applyAutoFix(idx) {
-      const f = loadedFiles[idx];
-      if (!f) return;
-
-      f.validationErrors.forEach(err => {
-        err.itemRef.akt = parseFloat(err.suggestedAkt);
-      });
-      f.isFixed = true;
-
-      renderValidatorView();
-      renderMatrixViews();
-
-      const box = document.getElementById(`previewBox_${idx}`);
-      if (box && box.style.display === 'block') {
-        box.textContent = buildHeaderString(f.headerData) + buildFileBody(file);
       }
     }
 
@@ -1132,12 +1210,6 @@
       document.getElementById('correctionModal').classList.remove('active');
       editingFileIdx = null;
     });
-
-    function isStillError(item) {
-      const maxTol = +(item.nevl + item.ftur).toFixed(4);
-      const minTol = +(item.nevl + item.atur).toFixed(4);
-      return item.akt > maxTol || item.akt < minTol;
-    }
 
     document.getElementById('btnCorrApply').addEventListener('click', () => {
       if (editingFileIdx === null) return;
@@ -1505,7 +1577,7 @@
       a.click();
     });
 
-    // --- MÁTRIX ÉS EXCEL ADATOK ÉPÍTÉSE (GARANTÁLT EGYEDI OSZLOP-ÖSSZERENDELÉSSEL) ---
+    // --- MÁTRIX ÉS EXCEL ADATOK ÉPÍTÉSE (FÁJLINDEX-ALAPÚ BIZTOS ILLESZTÉSSEL) ---
     let excelHeadersGlobal = [];
     let excelRowsGlobal = [];
 
@@ -1595,7 +1667,7 @@
           <td class="tol-col">${m.maxTol}</td>
         `;
 
-        // PONTOS ÉS BIZTOS FORRÁSAZONOSÍTÁS: Közvetlenül az i-edik fájlból olvassuk ki az értéket!
+        // Közvetlen fájl-index alapú kiolvasás (nem klónozódnak az adatok)
         loadedFiles.forEach(file => {
           const item = file.parsedItems.find(it => it.megn === megn && it.enabled !== false);
           const val = item ? item.akt.toFixed(3) : null;
