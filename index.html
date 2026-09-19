@@ -171,6 +171,52 @@
     details.error-accordion[open] summary { border-bottom: 1px solid #fcd34d; }
     .error-accordion-content { padding: 14px; }
 
+    /* GYÁRTÓI NÉZET ELEMEK */
+    .nest-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .nest-card {
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 14px;
+      border: 2px solid var(--border);
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .nest-card.ok { border-color: var(--success); background: #f0fdf4; }
+    .nest-card.nok { border-color: var(--danger); background: #fef2f2; }
+    .nest-card-title { font-size: 16px; font-weight: 800; }
+    .nest-card-badge {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .nest-card.ok .nest-card-badge { background: #bbf7d0; color: #166534; }
+    .nest-card.nok .nest-card-badge { background: #fecaca; color: #991b1b; }
+
+    .delta-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .delta-card {
+      background: #fff;
+      border-left: 5px solid var(--danger);
+      border-radius: 6px;
+      padding: 12px 14px;
+      border-top: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+
     .action-bar {
       display: flex;
       gap: 12px;
@@ -328,7 +374,7 @@
     <header class="no-print">
       <div class="app-title">
         <h1>HP Metrology Suite 2026</h1>
-        <p>1. Ellenőrzés & Korrekció &bull; 2. Zeiss Calypso DFQ Export &bull; 3. Vonalkód Mátrix &bull; 4. Excel Tábla</p>
+        <p>1. Ellenőrzés & Korrekció &bull; 2. Zeiss Calypso DFQ Export &bull; 3. Vonalkód Mátrix &bull; 4. Excel Tábla &bull; 5. Gyártói Gyorsnézet</p>
       </div>
       <div style="font-size: 12px; color: var(--text-muted); text-align: right;">
         <strong>Fejlesztő:</strong> Horváth Péter &copy; 2026
@@ -338,13 +384,14 @@
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt,.pdf" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT vagy Zeiss CALYPSO PDF jegyzőkönyveket</h3>
-      <p>Lenyitható hiba- és tételkezelés, szelektív javítás checkboxokkal, hardveres DFQ azonosítás</p>
+      <p>Gyártói gyorsnézet fészek-státusszal és delta korrekcióval, szelektív tételkezelés, pontos DFQ kimenet</p>
     </div>
 
     <div class="tabs-nav no-print">
       <button class="tab-btn active" id="btnTabValidator" type="button">🔍 1. Jegyzőkönyv Ellenőrző</button>
       <button class="tab-btn" id="btnTabMatrix" type="button">📊 2. Vonalkód Mátrix</button>
       <button class="tab-btn" id="btnTabExcel" type="button">📑 3. Excel Táblázat</button>
+      <button class="tab-btn" id="btnTabProduction" type="button" style="background: #fef3c7; color: #78350f;">🏭 4. Gyártói Gyorsnézet</button>
     </div>
 
     <!-- 1. TAB -->
@@ -394,6 +441,34 @@
         <table>
           <thead id="excelTableHead"></thead>
           <tbody id="excelTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 4. TAB: GYÁRTÓI GYORSNÉZET -->
+    <div id="tab-production" class="tab-pane">
+      <div class="card no-print" style="background: #fff; padding: 14px 20px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 15px;">
+        <h3 style="font-size: 16px; color: #78350f;">🏭 Gyártásközi Állapot & Gépbeállítói Gyorslista</h3>
+        <p style="font-size: 13px; color: var(--text-muted);">Azonnali fészek-státusz (OK/NOK) és gépkorrekcióhoz szükséges eltérések (&Delta;).</p>
+      </div>
+
+      <!-- FÉSZEK STÁTUSZ KÁRTYÁK -->
+      <div class="nest-cards-grid" id="prodNestCards"></div>
+
+      <!-- GÉPBEÁLLÍTÓI KORREKCIÓS LISTA -->
+      <div id="prodDeltaSection" style="display: none;">
+        <h4 style="font-size: 14px; font-weight: 700; color: #991b1b; margin-bottom: 10px;">⚠️ Tűrésen Kívüli Méretek & Szükséges Gépbeállítási Eltérések (&Delta;):</h4>
+        <div class="delta-cards-grid" id="prodDeltaCards"></div>
+      </div>
+
+      <!-- HŐTÉRKÉPES MÁTRIX TÁBLÁZAT -->
+      <div class="table-container" id="prodHeatmapWrapper" style="display: none;">
+        <div style="padding: 10px 14px; background: #f8fafc; font-size: 12px; font-weight: bold; border-bottom: 1px solid var(--border);">
+          📊 Gyártási Hőtérkép: <span style="color:var(--success)">■ Tűrésen belül</span> | <span style="color:var(--danger)">■ Tűrésen kívül (Kiesés)</span>
+        </div>
+        <table>
+          <thead id="prodHeatmapHead"></thead>
+          <tbody id="prodHeatmapBody"></tbody>
         </table>
       </div>
     </div>
@@ -540,12 +615,16 @@
       } else if (tabId === 'excel') {
         document.getElementById('btnTabExcel').classList.add('active');
         document.getElementById('tab-excel').classList.add('active');
+      } else if (tabId === 'production') {
+        document.getElementById('btnTabProduction').classList.add('active');
+        document.getElementById('tab-production').classList.add('active');
       }
     }
 
     document.getElementById('btnTabValidator').addEventListener('click', () => activateTab('validator'));
     document.getElementById('btnTabMatrix').addEventListener('click', () => activateTab('matrix'));
     document.getElementById('btnTabExcel').addEventListener('click', () => activateTab('excel'));
+    document.getElementById('btnTabProduction').addEventListener('click', () => activateTab('production'));
 
     function naturalCompare(a, b) {
       return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
@@ -643,6 +722,7 @@
 
       renderValidatorView();
       renderMatrixViews();
+      renderProductionView();
     }
 
     // --- MEGBÍZHATÓ, KOORDINÁTA-ALAPÚ CALYPSO PDF FELDOLGOZÓ ---
@@ -1060,6 +1140,7 @@
 
       renderValidatorView();
       renderMatrixViews();
+      renderProductionView();
     }
 
     function applyFileMultiFix(fileIdx) {
@@ -1087,6 +1168,7 @@
 
       renderValidatorView();
       renderMatrixViews();
+      renderProductionView();
 
       const box = document.getElementById(`previewBox_${fileIdx}`);
       if (box && box.style.display === 'block') {
@@ -1323,6 +1405,7 @@
 
       renderValidatorView();
       renderMatrixViews();
+      renderProductionView();
 
       const box = document.getElementById(`previewBox_${editingFileIdx}`);
       if (box && box.style.display === 'block') {
@@ -1441,6 +1524,7 @@
 
       renderValidatorView();
       renderMatrixViews();
+      renderProductionView();
       return true;
     }
 
@@ -1755,7 +1839,6 @@
           <td class="tol-col">${m.maxTol}</td>
         `;
 
-        // Közvetlen fájl-index alapú kiolvasás
         loadedFiles.forEach(file => {
           const item = file.parsedItems.find(it => it.megn === megn && it.enabled !== false);
           const val = item ? item.akt.toFixed(3) : null;
@@ -1810,6 +1893,120 @@
 
       document.getElementById('matrixBarcodeWrapper').style.display = 'block';
       document.getElementById('excelTableWrapper').style.display = 'block';
+    }
+
+    // --- 4. TAB: GYÁRTÓI GYORSNÉZET MOTOR ---
+    function renderProductionView() {
+      const nestCardsContainer = document.getElementById('prodNestCards');
+      const deltaSection = document.getElementById('prodDeltaSection');
+      const deltaCardsContainer = document.getElementById('prodDeltaCards');
+      const heatmapWrapper = document.getElementById('prodHeatmapWrapper');
+      const heatmapHead = document.getElementById('prodHeatmapHead');
+      const heatmapBody = document.getElementById('prodHeatmapBody');
+
+      if (!loadedFiles.length) {
+        nestCardsContainer.innerHTML = "<div class='alert-box warning' style='grid-column: 1/-1;'>Nincsenek betöltött jegyzőkönyvek!</div>";
+        deltaSection.style.display = "none";
+        heatmapWrapper.style.display = "none";
+        return;
+      }
+
+      // 1. FÉSZEK STÁTUSZ KÁRTYÁK
+      let nestCardsHtml = "";
+      const deltaList = [];
+
+      loadedFiles.forEach((file, i) => {
+        const errors = file.parsedItems.filter(it => it.enabled !== false && isStillError(it));
+        const isOk = errors.length === 0;
+        const nestName = file.headerData.bemerkung || `Fészek ${i + 1}`;
+
+        nestCardsHtml += `
+          <div class="nest-card ${isOk ? 'ok' : 'nok'}">
+            <div class="nest-card-title">F${i + 1}</div>
+            <div style="font-size:11px; color:#64748b; font-weight:bold; margin-top:2px;">${nestName}</div>
+            <div class="nest-card-badge">${isOk ? '✅ MEGFELELŐ' : `❌ ${errors.length} HIBA`}</div>
+          </div>
+        `;
+
+        errors.forEach(item => {
+          const delta = +(item.akt - item.nevl).toFixed(4);
+          const maxTol = +(item.nevl + item.ftur).toFixed(4);
+          const minTol = +(item.nevl + item.atur).toFixed(4);
+          const isOver = item.akt > maxTol;
+
+          deltaList.push({
+            nest: `F${i + 1} (${nestName})`,
+            megn: item.megn,
+            desc: item.desc,
+            akt: item.akt.toFixed(4),
+            nevl: item.nevl.toFixed(4),
+            delta: (delta >= 0 ? "+" : "") + delta.toFixed(4),
+            status: isOver ? "TÚLMÉRET" : "ALULMÉRET",
+            diff: isOver ? `+${(item.akt - maxTol).toFixed(4)} mm a max felett` : `${(item.akt - minTol).toFixed(4)} mm a min alatt`
+          });
+        });
+      });
+      nestCardsContainer.innerHTML = nestCardsHtml;
+
+      // 2. GÉPBEÁLLÍTÓI KORREKCIÓS KÁRTYÁK
+      if (deltaList.length > 0) {
+        let deltaHtml = "";
+        deltaList.forEach(d => {
+          deltaHtml += `
+            <div class="delta-card">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <strong style="font-size:14px; color:#0f172a;">${d.nest} &bull; Tétel: ${d.megn}</strong>
+                <span style="font-size:11px; font-weight:bold; color:#ef4444; background:#fee2e2; padding:2px 6px; border-radius:4px;">${d.status}</span>
+              </div>
+              <div style="font-size:12px; color:#475569;">
+                Mért: <b>${d.akt}</b> | Névleges: <b>${d.nevl}</b> &rarr; Eltérés (&Delta;): <b style="color:#b91c1c;">${d.delta} mm</b>
+              </div>
+              <div style="font-size:12px; font-weight:bold; color:#b91c1c; margin-top:3px;">
+                Korrekciós irány: ${d.diff}
+              </div>
+            </div>
+          `;
+        });
+        deltaCardsContainer.innerHTML = deltaHtml;
+        deltaSection.style.display = "block";
+      } else {
+        deltaSection.style.display = "none";
+      }
+
+      // 3. GYÁRTÁSI HŐTÉRKÉP TÁBLÁZAT
+      const megnSet = new Set();
+      loadedFiles.forEach(f => f.parsedItems.forEach(it => { if (it.enabled !== false) megnSet.add(it.megn); }));
+      const megnLista = Array.from(megnSet).sort((a, b) => naturalCompare(a, b));
+
+      let hHeadHtml = `<tr><th class="megn-col">Tétel</th>`;
+      loadedFiles.forEach((f, i) => {
+        hHeadHtml += `<th>F${i + 1}</th>`;
+      });
+      hHeadHtml += `</tr>`;
+      heatmapHead.innerHTML = hHeadHtml;
+
+      heatmapBody.innerHTML = "";
+      megnLista.forEach(megn => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td class="megn-col">${megn}</td>`;
+
+        loadedFiles.forEach(file => {
+          const item = file.parsedItems.find(it => it.megn === megn && it.enabled !== false);
+          const td = document.createElement('td');
+          if (item) {
+            const isErr = isStillError(item);
+            td.style.backgroundColor = isErr ? "#fecaca" : "#dcfce7";
+            td.style.color = isErr ? "#991b1b" : "#166534";
+            td.style.fontWeight = "bold";
+            td.textContent = item.akt.toFixed(3);
+          } else {
+            td.textContent = "-";
+          }
+          tr.appendChild(td);
+        });
+        heatmapBody.appendChild(tr);
+      });
+      heatmapWrapper.style.display = "block";
     }
 
     // EXCEL (.XLSX) FÁJL GENERÁLÁSA
