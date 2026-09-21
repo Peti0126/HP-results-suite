@@ -147,17 +147,16 @@
     .checkbox-pill:hover { background: #f1f5f9; border-color: #94a3b8; }
     .checkbox-pill input { cursor: pointer; }
 
-    details.error-accordion {
+    details.error-accordion, details.prod-accordion {
       background: #fff;
-      border: 1px solid #fcd34d;
+      border: 1px solid var(--border);
       border-radius: 8px;
-      margin-top: 10px;
+      margin-bottom: 14px;
       overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     }
-    details.error-accordion summary {
-      padding: 10px 14px;
-      background: #fef3c7;
-      color: #78350f;
+    details.error-accordion summary, details.prod-accordion summary {
+      padding: 11px 16px;
       font-weight: 700;
       font-size: 13px;
       cursor: pointer;
@@ -167,16 +166,20 @@
       justify-content: space-between;
       align-items: center;
     }
-    details.error-accordion summary:hover { background: #fde68a; }
-    details.error-accordion[open] summary { border-bottom: 1px solid #fcd34d; }
-    .error-accordion-content { padding: 14px; }
+    details.error-accordion summary { background: #fef3c7; color: #78350f; border-bottom: 1px solid transparent; }
+    details.error-accordion[open] summary { border-bottom-color: #fcd34d; }
+
+    details.prod-accordion summary { background: #f8fafc; color: #1e293b; border-bottom: 1px solid transparent; }
+    details.prod-accordion summary:hover { background: #f1f5f9; }
+    details.prod-accordion[open] summary { border-bottom-color: var(--border); }
+
+    .prod-accordion-content { padding: 16px; }
 
     /* GYÁRTÓI NÉZET ELEMEK */
     .nest-cards-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
       gap: 12px;
-      margin-bottom: 20px;
     }
     .nest-card {
       background: #fff;
@@ -204,7 +207,6 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 12px;
-      margin-bottom: 20px;
     }
     .delta-card {
       background: #fff;
@@ -335,7 +337,7 @@
       background: #fff;
       border-radius: var(--radius);
       border: 1px solid var(--border);
-      margin-top: 15px;
+      margin-top: 10px;
     }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th, td { border: 1px solid #e2e8f0; padding: 6px; text-align: center; vertical-align: middle; }
@@ -384,7 +386,7 @@
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt,.pdf,.dfq" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT, Zeiss CALYPSO PDF vagy kész DFQ fájlokat</h3>
-      <p>Pontos DFQ adatsor-kiértékelés, fészek-státusz gyorsnézet, szelektív tételkezelés</p>
+      <p>Összecsukható gyártói panelek, pontos DFQ adatsor-kiértékelés, szelektív tételkezelés</p>
     </div>
 
     <div class="tabs-nav no-print">
@@ -445,29 +447,50 @@
       </div>
     </div>
 
-    <!-- 4. TAB: GYÁRTÓI GYORSNÉZET -->
+    <!-- 4. TAB: GYÁRTÓI GYORSNÉZET (ÖSSZECSUKHATÓ PANELEKKEL) -->
     <div id="tab-production" class="tab-pane">
       <div class="card no-print" style="background: #fff; padding: 14px 20px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 15px;">
         <h3 style="font-size: 16px; color: #78350f;">🏭 Gyártásközi Állapot & Gépbeállítói Gyorslista</h3>
-        <p style="font-size: 13px; color: var(--text-muted);">Azonnali fészek-státusz (OK/NOK) és gépkorrekcióhoz szükséges eltérések (&Delta;).</p>
+        <p style="font-size: 13px; color: var(--text-muted);">Azonnali fészek-státusz (OK/NOK), beállítói delta korrekciók és gyártási hőtérkép.</p>
       </div>
 
-      <div class="nest-cards-grid" id="prodNestCards"></div>
-
-      <div id="prodDeltaSection" style="display: none;">
-        <h4 style="font-size: 14px; font-weight: 700; color: #991b1b; margin-bottom: 10px;">⚠️ Tűrésen Kívüli Méretek & Szükséges Gépbeállítási Eltérések (&Delta;):</h4>
-        <div class="delta-cards-grid" id="prodDeltaCards"></div>
-      </div>
-
-      <div class="table-container" id="prodHeatmapWrapper" style="display: none;">
-        <div style="padding: 10px 14px; background: #f8fafc; font-size: 12px; font-weight: bold; border-bottom: 1px solid var(--border);">
-          📊 Gyártási Hőtérkép: <span style="color:var(--success)">■ Tűrésen belül</span> | <span style="color:var(--danger)">■ Tűrésen kívül (Kiesés)</span>
+      <!-- 1. PANEL: FÉSZEK STÁTUSZ KÁRTYÁK -->
+      <details class="prod-accordion" id="accProdNest" open>
+        <summary>
+          <span id="titleProdNest">📦 1. Fészek Státuszok (OK / NOK Blokkok)</span>
+          <span style="font-size:11px; color:#64748b; font-weight:normal;">Kattintásra nyílik / csukódik</span>
+        </summary>
+        <div class="prod-accordion-content">
+          <div class="nest-cards-grid" id="prodNestCards"></div>
         </div>
-        <table>
-          <thead id="prodHeatmapHead"></thead>
-          <tbody id="prodHeatmapBody"></tbody>
-        </table>
-      </div>
+      </details>
+
+      <!-- 2. PANEL: TŰRÉSEN KÍVÜLI MÉRETEK & GÉPBEÁLLÍTÁSI ELTÉRÉSEK -->
+      <details class="prod-accordion" id="accProdDelta" open>
+        <summary style="background: #fffbeb; color: #991b1b;">
+          <span id="titleProdDelta">⚠️ 2. Tűrésen Kívüli Méretek & Szükséges Gépbeállítási Eltérések (&Delta;)</span>
+          <span style="font-size:11px; color:#b45309; font-weight:normal;">Kattintásra nyílik / csukódik</span>
+        </summary>
+        <div class="prod-accordion-content">
+          <div class="delta-cards-grid" id="prodDeltaCards"></div>
+        </div>
+      </details>
+
+      <!-- 3. PANEL: GYÁRTÁSI HŐTÉRKÉP -->
+      <details class="prod-accordion" id="accProdHeatmap" open>
+        <summary>
+          <span>📊 3. Gyártási Hőtérkép: <span style="color:var(--success)">■ Tűrésen belül</span> | <span style="color:var(--danger)">■ Tűrésen kívül (Kiesés)</span></span>
+          <span style="font-size:11px; color:#64748b; font-weight:normal;">Kattintásra nyílik / csukódik</span>
+        </summary>
+        <div class="prod-accordion-content" style="padding-top: 6px;">
+          <div class="table-container" id="prodHeatmapWrapper" style="display: none; margin-top:0;">
+            <table>
+              <thead id="prodHeatmapHead"></thead>
+              <tbody id="prodHeatmapBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </details>
     </div>
 
   </div>
@@ -746,7 +769,6 @@
         }
       }
 
-      // Valódi mért értékek kiolvasása a bináris adatsorból (DC4 és SI szerint)
       const measuredValuesFromData = [];
       let datum = "09.09.2026";
       let uhrzeit = "08:41:01";
@@ -754,7 +776,6 @@
       if (dataLine) {
         const DC4 = String.fromCharCode(20);
         const SI = String.fromCharCode(15);
-        // Szétbontás tételenként az SI (0x0F) zárókarakter alapján
         const records = dataLine.split(SI).filter(r => r.trim().length > 0);
         
         records.forEach(rec => {
@@ -796,18 +817,15 @@
         const desc = tagMap[`K2003/${i}`] || megn;
         const nevl = parseFloat(tagMap[`K2100/${i}`] || "0");
         
-        // Határok közvetlen beolvasása: K2110 (alsó határ), K2111 (felső határ)
         let minTol = tagMap[`K2110/${i}`] !== undefined ? parseFloat(tagMap[`K2110/${i}`]) : undefined;
         let maxTol = tagMap[`K2111/${i}`] !== undefined ? parseFloat(tagMap[`K2111/${i}`]) : undefined;
         
-        // Relatív tűrések: K2112 (alsó tűrés), K2113 (felső tűrés)
         let atur = parseFloat(tagMap[`K2112/${i}`] || "0");
         let ftur = parseFloat(tagMap[`K2113/${i}`] || "0");
 
         if (minTol === undefined) minTol = +(nevl + atur).toFixed(4);
         if (maxTol === undefined) maxTol = +(nevl + ftur).toFixed(4);
 
-        // Mért érték kiválasztása: Elsőbbséget élvez az adatsorban lévő tényleges mérés!
         let akt = measuredValuesFromData[i - 1];
         if (akt === undefined && tagMap[`K2213/${i}`] !== undefined) {
           akt = parseFloat(tagMap[`K2213/${i}`]);
@@ -1714,7 +1732,7 @@
       }
     });
 
-    // PONTOS BINÁRIS DFQ GENERÁLÁS (DC4 ÉS SI VEZÉRLŐKKEL)
+    // PONTOS BINÁRIS DFQ GENERÁLÁS
     function buildDfqString(file) {
       const h = file.headerData;
       
@@ -2050,10 +2068,58 @@
       document.getElementById('excelTableWrapper').style.display = 'block';
     }
 
-    // --- 4. TAB: GYÁRTÓI GYORSNÉZET MOTOR ---
+    // EXCEL (.XLSX) FÁJL GENERÁLÁSA
+    document.getElementById('btnExportExcel').addEventListener('click', () => {
+      if (!excelRowsGlobal.length) {
+        alert("Nincsenek adatok az exportáláshoz!");
+        return;
+      }
+
+      const wsData = [excelHeadersGlobal, ...excelRowsGlobal];
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+      ws['!cols'] = [
+        { wch: 14 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 14 },
+        { wch: 14 },
+        ...excelHeadersGlobal.slice(6).map(() => ({ wch: 16 }))
+      ];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Mérési Mátrix");
+
+      const teileNr = loadedFiles[0]?.headerData?.teileNr || "Meresi_Adatok";
+      XLSX.writeFile(wb, `${teileNr}_Meresi_Matrix.xlsx`);
+    });
+
+    // VÁGÓLAPRA MÁSOLÁS
+    document.getElementById('btnCopyClipboard').addEventListener('click', () => {
+      if (!excelRowsGlobal.length) {
+        alert("Nincsenek adatok a másoláshoz!");
+        return;
+      }
+
+      let tsvText = excelHeadersGlobal.join("\t") + "\r\n";
+      excelRowsGlobal.forEach(row => {
+        tsvText += row.join("\t") + "\r\n";
+      });
+
+      navigator.clipboard.writeText(tsvText).then(() => {
+        alert("✅ A mérési táblázat a vágólapra másolva! Egy üres Excel munkalapon azonnal beillesztheted (Ctrl + V).");
+      }).catch(err => {
+        alert("Nem sikerült a vágólapra másolás: " + err);
+      });
+    });
+
+    // --- 4. TAB: GYÁRTÓI GYORSNÉZET MOTOR (ÖSSZECSUKHATÓ PANELEKKEL) ---
     function renderProductionView() {
       const nestCardsContainer = document.getElementById('prodNestCards');
-      const deltaSection = document.getElementById('prodDeltaSection');
+      const titleProdNest = document.getElementById('titleProdNest');
+      const accProdDelta = document.getElementById('accProdDelta');
+      const titleProdDelta = document.getElementById('titleProdDelta');
       const deltaCardsContainer = document.getElementById('prodDeltaCards');
       const heatmapWrapper = document.getElementById('prodHeatmapWrapper');
       const heatmapHead = document.getElementById('prodHeatmapHead');
@@ -2061,17 +2127,20 @@
 
       if (!loadedFiles.length) {
         nestCardsContainer.innerHTML = "<div class='alert-box warning' style='grid-column: 1/-1;'>Nincsenek betöltött jegyzőkönyvek!</div>";
-        deltaSection.style.display = "none";
+        accProdDelta.style.display = "none";
         heatmapWrapper.style.display = "none";
         return;
       }
 
       let nestCardsHtml = "";
       const deltaList = [];
+      let okCount = 0;
+      let nokCount = 0;
 
       loadedFiles.forEach((file, i) => {
         const errors = file.parsedItems.filter(it => it.enabled !== false && isStillError(it));
         const isOk = errors.length === 0;
+        if (isOk) okCount++; else nokCount++;
         const nestName = file.headerData.bemerkung || `Fészek ${i + 1}`;
 
         nestCardsHtml += `
@@ -2101,6 +2170,7 @@
         });
       });
       nestCardsContainer.innerHTML = nestCardsHtml;
+      titleProdNest.innerHTML = `📦 1. Fészek Státuszok (${loadedFiles.length} fészek &bull; <b style="color:var(--danger)">${nokCount} NOK</b>, <b style="color:var(--success)">${okCount} OK</b>)`;
 
       if (deltaList.length > 0) {
         let deltaHtml = "";
@@ -2121,9 +2191,10 @@
           `;
         });
         deltaCardsContainer.innerHTML = deltaHtml;
-        deltaSection.style.display = "block";
+        titleProdDelta.innerHTML = `⚠️ 2. Tűrésen Kívüli Méretek & Szükséges Gépbeállítási Eltérések (&Delta;) &bull; <b>${deltaList.length} mérethiba</b>`;
+        accProdDelta.style.display = "block";
       } else {
-        deltaSection.style.display = "none";
+        accProdDelta.style.display = "none";
       }
 
       const megnSet = new Set();
