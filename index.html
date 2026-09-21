@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HPR</title>
+  <title>HP Metrology Suite 2026</title>
   
   <!-- PDF.js motor Calypso PDF jegyzőkönyvekhez -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -373,7 +373,7 @@
     
     <header class="no-print">
       <div class="app-title">
-        <h1>HPR</h1>
+        <h1>HP Metrology Suite 2026</h1>
         <p>1. Ellenőrzés & Korrekció &bull; 2. Zeiss Calypso DFQ Export &bull; 3. Vonalkód Mátrix &bull; 4. Excel Tábla &bull; 5. Gyártói Gyorsnézet</p>
       </div>
       <div style="font-size: 12px; color: var(--text-muted); text-align: right;">
@@ -382,9 +382,9 @@
     </header>
 
     <div class="upload-box no-print" id="uploadDropZone">
-      <input type="file" id="fileSelector" multiple accept=".txt,.pdf" style="display: none;">
-      <h3>Kattints ide vagy húzd be a mérési TXT vagy Zeiss CALYPSO PDF jegyzőkönyveket</h3>
-      <p>Gyártói gyorsnézet fészek-státusszal és delta korrekcióval, szelektív tételkezelés, pontos DFQ kimenet</p>
+      <input type="file" id="fileSelector" multiple accept=".txt,.pdf,.dfq" style="display: none;">
+      <h3>Kattints ide vagy húzd be a mérési TXT, Zeiss CALYPSO PDF vagy kész DFQ fájlokat</h3>
+      <p>Közvetlen DFQ beolvasás és javítás, fészek-státusz gyorsnézet, szelektív tételkezelés</p>
     </div>
 
     <div class="tabs-nav no-print">
@@ -397,7 +397,7 @@
     <!-- 1. TAB -->
     <div id="tab-validator" class="tab-pane active">
       <div id="validatorOverview">
-        <div class="alert-box warning">Kérlek tölts fel mérési jegyzőkönyveket (.pdf vagy .txt) az ellenőrzéshez!</div>
+        <div class="alert-box warning">Kérlek tölts fel mérési jegyzőkönyveket (.pdf, .txt vagy .dfq) az ellenőrzéshez!</div>
       </div>
       
       <div id="validatorActions" class="action-bar" style="display: none;">
@@ -452,16 +452,13 @@
         <p style="font-size: 13px; color: var(--text-muted);">Azonnali fészek-státusz (OK/NOK) és gépkorrekcióhoz szükséges eltérések (&Delta;).</p>
       </div>
 
-      <!-- FÉSZEK STÁTUSZ KÁRTYÁK -->
       <div class="nest-cards-grid" id="prodNestCards"></div>
 
-      <!-- GÉPBEÁLLÍTÓI KORREKCIÓS LISTA -->
       <div id="prodDeltaSection" style="display: none;">
         <h4 style="font-size: 14px; font-weight: 700; color: #991b1b; margin-bottom: 10px;">⚠️ Tűrésen Kívüli Méretek & Szükséges Gépbeállítási Eltérések (&Delta;):</h4>
         <div class="delta-cards-grid" id="prodDeltaCards"></div>
       </div>
 
-      <!-- HŐTÉRKÉPES MÁTRIX TÁBLÁZAT -->
       <div class="table-container" id="prodHeatmapWrapper" style="display: none;">
         <div style="padding: 10px 14px; background: #f8fafc; font-size: 12px; font-weight: bold; border-bottom: 1px solid var(--border);">
           📊 Gyártási Hőtérkép: <span style="color:var(--success)">■ Tűrésen belül</span> | <span style="color:var(--danger)">■ Tűrésen kívül (Kiesés)</span>
@@ -525,7 +522,7 @@
       <div class="calypso-grid">
         <div class="form-group">
           <label>Cikkszám (K1001) *:</label>
-          <input type="text" id="m_teileNr" placeholder="pl. 106760 vagy 107937">
+          <input type="text" id="m_teileNr" placeholder="pl. 106760 vagy 107937 vagy 30004341">
         </div>
         <div class="form-group">
           <label>Megjegyzés / Fészek kód (K1002) *:</label>
@@ -709,10 +706,15 @@
       for (let i = 0; i < fileList.length; i++) {
         const file = fileList[i];
         const buffer = await file.arrayBuffer();
+        const lowerName = file.name.toLowerCase();
         
-        if (file.name.toLowerCase().endsWith('.pdf')) {
+        if (lowerName.endsWith('.pdf')) {
           const parsedPdf = await parseCalypsoPdf(file.name, buffer, i);
           if (parsedPdf) loadedFiles.push(parsedPdf);
+        } else if (lowerName.endsWith('.dfq')) {
+          const decoder = new TextDecoder('windows-1250');
+          const text = decoder.decode(buffer);
+          loadedFiles.push(parseDfqFile(file.name, text, i));
         } else {
           const decoder = new TextDecoder('windows-1250');
           const text = decoder.decode(buffer);
@@ -723,6 +725,129 @@
       renderValidatorView();
       renderMatrixViews();
       renderProductionView();
+    }
+
+    // --- MEGLÉVŐ .DFQ FÁJLOK BEOLVASÓ MODULJA ---
+    function parseDfqFile(fileName, rawText, fileOrderIndex) {
+      const lines = rawText.split(/\r?\n/);
+      const tagMap = {};
+      let dataLine = "";
+
+      for (let line of lines) {
+        line = line.trim();
+        if (!line) continue;
+        const spaceIdx = line.indexOf(' ');
+        if (spaceIdx > 0 && line.startsWith('K')) {
+          const key = line.slice(0, spaceIdx).trim();
+          const val = line.slice(spaceIdx + 1).trim();
+          tagMap[key] = val;
+        } else if (!line.startsWith('K') && (line.includes(String.fromCharCode(20)) || line.includes('/') || line.includes(':'))) {
+          dataLine = line;
+        }
+      }
+
+      let datum = "09.09.2026";
+      let uhrzeit = "08:41:01";
+      if (dataLine) {
+        const parts = dataLine.split(String.fromCharCode(20));
+        if (parts.length >= 3) {
+          const dt = parts[2].split(String.fromCharCode(15))[0];
+          if (dt.includes('/')) {
+            datum = dt.split('/')[0];
+            uhrzeit = dt.split('/')[1];
+          }
+        }
+      }
+
+      const headerData = {
+        teileNr: tagMap['K1001'] || "10197712",
+        bemerkung: tagMap['K1002'] || `N${fileOrderIndex + 1}-T1-M9621`,
+        teileBez: tagMap['K1003'] || "Krake",
+        rajzszam: tagMap['K1041'] || "1",
+        megrendelo: tagMap['K1053'] || "1118095",
+        maschine: tagMap['K1081'] || "KS-025",
+        k2415: tagMap['K2415/0'] || tagMap['K1201'] || "143122070061",
+        k1202: tagMap['K1202'] || tagMap['K2402/0'] || "OI543",
+        k2406: tagMap['K2406/0'] || "Carl Zeiss Oberkochen",
+        kunde: "Schaeffler",
+        datum: datum,
+        uhrzeit: uhrzeit
+      };
+
+      const parsedItems = [];
+      const count = parseInt(tagMap['K0100'] || "0", 10) || 50;
+
+      for (let i = 1; i <= count; i++) {
+        const megn = tagMap[`K2002/${i}`];
+        if (!megn) continue;
+
+        const desc = tagMap[`K2003/${i}`] || megn;
+        const nevl = parseFloat(tagMap[`K2100/${i}`] || "0");
+        const atur = parseFloat(tagMap[`K2112/${i}`] || "0");
+        const ftur = parseFloat(tagMap[`K2113/${i}`] || "0");
+        const akt = parseFloat(tagMap[`K2213/${i}`] || tagMap[`K2100/${i}`] || "0");
+        const k2009 = tagMap[`K2009/${i}`] || "200";
+        const k2120 = tagMap[`K2120/${i}`] || "1";
+
+        parsedItems.push({
+          enabled: true,
+          szi: "LT",
+          origAkt: akt,
+          akt: akt,
+          nevl: nevl,
+          ftur: ftur,
+          atur: atur,
+          megn: megn,
+          desc: desc,
+          k2009: k2009,
+          k2120: k2120
+        });
+      }
+
+      const validationErrors = [];
+      parsedItems.forEach(item => {
+        const maxTol = +(item.nevl + item.ftur).toFixed(4);
+        const minTol = +(item.nevl + item.atur).toFixed(4);
+        const tolBand = Math.abs(maxTol - minTol);
+        let hasErr = false;
+        let diff = 0;
+        let suggestedAkt = item.origAkt;
+
+        if (item.origAkt > maxTol) {
+          hasErr = true;
+          diff = +(item.origAkt - maxTol).toFixed(4);
+          const offset = generateNaturalOffset(tolBand);
+          suggestedAkt = +(maxTol - offset).toFixed(4);
+        } else if (item.origAkt < minTol) {
+          hasErr = true;
+          diff = +(item.origAkt - minTol).toFixed(4);
+          const offset = generateNaturalOffset(tolBand);
+          suggestedAkt = +(minTol + offset).toFixed(4);
+        }
+
+        if (hasErr) {
+          validationErrors.push({
+            megn: item.megn,
+            szi: item.szi,
+            nevl: item.nevl,
+            minTol: minTol,
+            maxTol: maxTol,
+            origAkt: item.origAkt.toFixed(4),
+            diff: (diff > 0 ? "+" : "") + diff.toFixed(4),
+            suggestedAkt: suggestedAkt.toFixed(4),
+            itemRef: item
+          });
+        }
+      });
+
+      return {
+        name: fileName,
+        fileIndex: fileOrderIndex,
+        headerData,
+        parsedItems,
+        validationErrors,
+        isFixed: false
+      };
     }
 
     // --- MEGBÍZHATÓ, KOORDINÁTA-ALAPÚ CALYPSO PDF FELDOLGOZÓ ---
@@ -1703,7 +1828,7 @@
       const blob = new Blob([fullTxt], { type: 'text/plain;charset=windows-1250' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `JAVITOTT_${file.name.replace(/\.pdf$/i, '.txt')}`;
+      a.download = `JAVITOTT_${file.name.replace(/\.(pdf|dfq)$/i, '.txt')}`;
       a.click();
     }
 
@@ -1716,7 +1841,7 @@
       const zip = new JSZip();
       loadedFiles.forEach(file => {
         const fullTxt = buildHeaderString(file.headerData) + buildFileBody(file);
-        zip.file(`JAVITOTT_${file.name.replace(/\.pdf$/i, '.txt')}`, fullTxt);
+        zip.file(`JAVITOTT_${file.name.replace(/\.(pdf|dfq)$/i, '.txt')}`, fullTxt);
       });
 
       const content = await zip.generateAsync({ type: "blob" });
@@ -1895,120 +2020,6 @@
       document.getElementById('excelTableWrapper').style.display = 'block';
     }
 
-    // --- 4. TAB: GYÁRTÓI GYORSNÉZET MOTOR ---
-    function renderProductionView() {
-      const nestCardsContainer = document.getElementById('prodNestCards');
-      const deltaSection = document.getElementById('prodDeltaSection');
-      const deltaCardsContainer = document.getElementById('prodDeltaCards');
-      const heatmapWrapper = document.getElementById('prodHeatmapWrapper');
-      const heatmapHead = document.getElementById('prodHeatmapHead');
-      const heatmapBody = document.getElementById('prodHeatmapBody');
-
-      if (!loadedFiles.length) {
-        nestCardsContainer.innerHTML = "<div class='alert-box warning' style='grid-column: 1/-1;'>Nincsenek betöltött jegyzőkönyvek!</div>";
-        deltaSection.style.display = "none";
-        heatmapWrapper.style.display = "none";
-        return;
-      }
-
-      // 1. FÉSZEK STÁTUSZ KÁRTYÁK
-      let nestCardsHtml = "";
-      const deltaList = [];
-
-      loadedFiles.forEach((file, i) => {
-        const errors = file.parsedItems.filter(it => it.enabled !== false && isStillError(it));
-        const isOk = errors.length === 0;
-        const nestName = file.headerData.bemerkung || `Fészek ${i + 1}`;
-
-        nestCardsHtml += `
-          <div class="nest-card ${isOk ? 'ok' : 'nok'}">
-            <div class="nest-card-title">F${i + 1}</div>
-            <div style="font-size:11px; color:#64748b; font-weight:bold; margin-top:2px;">${nestName}</div>
-            <div class="nest-card-badge">${isOk ? '✅ MEGFELELŐ' : `❌ ${errors.length} HIBA`}</div>
-          </div>
-        `;
-
-        errors.forEach(item => {
-          const delta = +(item.akt - item.nevl).toFixed(4);
-          const maxTol = +(item.nevl + item.ftur).toFixed(4);
-          const minTol = +(item.nevl + item.atur).toFixed(4);
-          const isOver = item.akt > maxTol;
-
-          deltaList.push({
-            nest: `F${i + 1} (${nestName})`,
-            megn: item.megn,
-            desc: item.desc,
-            akt: item.akt.toFixed(4),
-            nevl: item.nevl.toFixed(4),
-            delta: (delta >= 0 ? "+" : "") + delta.toFixed(4),
-            status: isOver ? "TÚLMÉRET" : "ALULMÉRET",
-            diff: isOver ? `+${(item.akt - maxTol).toFixed(4)} mm a max felett` : `${(item.akt - minTol).toFixed(4)} mm a min alatt`
-          });
-        });
-      });
-      nestCardsContainer.innerHTML = nestCardsHtml;
-
-      // 2. GÉPBEÁLLÍTÓI KORREKCIÓS KÁRTYÁK
-      if (deltaList.length > 0) {
-        let deltaHtml = "";
-        deltaList.forEach(d => {
-          deltaHtml += `
-            <div class="delta-card">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                <strong style="font-size:14px; color:#0f172a;">${d.nest} &bull; Tétel: ${d.megn}</strong>
-                <span style="font-size:11px; font-weight:bold; color:#ef4444; background:#fee2e2; padding:2px 6px; border-radius:4px;">${d.status}</span>
-              </div>
-              <div style="font-size:12px; color:#475569;">
-                Mért: <b>${d.akt}</b> | Névleges: <b>${d.nevl}</b> &rarr; Eltérés (&Delta;): <b style="color:#b91c1c;">${d.delta} mm</b>
-              </div>
-              <div style="font-size:12px; font-weight:bold; color:#b91c1c; margin-top:3px;">
-                Korrekciós irány: ${d.diff}
-              </div>
-            </div>
-          `;
-        });
-        deltaCardsContainer.innerHTML = deltaHtml;
-        deltaSection.style.display = "block";
-      } else {
-        deltaSection.style.display = "none";
-      }
-
-      // 3. GYÁRTÁSI HŐTÉRKÉP TÁBLÁZAT
-      const megnSet = new Set();
-      loadedFiles.forEach(f => f.parsedItems.forEach(it => { if (it.enabled !== false) megnSet.add(it.megn); }));
-      const megnLista = Array.from(megnSet).sort((a, b) => naturalCompare(a, b));
-
-      let hHeadHtml = `<tr><th class="megn-col">Tétel</th>`;
-      loadedFiles.forEach((f, i) => {
-        hHeadHtml += `<th>F${i + 1}</th>`;
-      });
-      hHeadHtml += `</tr>`;
-      heatmapHead.innerHTML = hHeadHtml;
-
-      heatmapBody.innerHTML = "";
-      megnLista.forEach(megn => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td class="megn-col">${megn}</td>`;
-
-        loadedFiles.forEach(file => {
-          const item = file.parsedItems.find(it => it.megn === megn && it.enabled !== false);
-          const td = document.createElement('td');
-          if (item) {
-            const isErr = isStillError(item);
-            td.style.backgroundColor = isErr ? "#fecaca" : "#dcfce7";
-            td.style.color = isErr ? "#991b1b" : "#166534";
-            td.style.fontWeight = "bold";
-            td.textContent = item.akt.toFixed(3);
-          } else {
-            td.textContent = "-";
-          }
-          tr.appendChild(td);
-        });
-        heatmapBody.appendChild(tr);
-      });
-      heatmapWrapper.style.display = "block";
-    }
-
     // EXCEL (.XLSX) FÁJL GENERÁLÁSA
     document.getElementById('btnExportExcel').addEventListener('click', () => {
       if (!excelRowsGlobal.length) {
@@ -2054,6 +2065,117 @@
         alert("Nem sikerült a vágólapra másolás: " + err);
       });
     });
+
+    // --- 4. TAB: GYÁRTÓI GYORSNÉZET MOTOR ---
+    function renderProductionView() {
+      const nestCardsContainer = document.getElementById('prodNestCards');
+      const deltaSection = document.getElementById('prodDeltaSection');
+      const deltaCardsContainer = document.getElementById('prodDeltaCards');
+      const heatmapWrapper = document.getElementById('prodHeatmapWrapper');
+      const heatmapHead = document.getElementById('prodHeatmapHead');
+      const heatmapBody = document.getElementById('prodHeatmapBody');
+
+      if (!loadedFiles.length) {
+        nestCardsContainer.innerHTML = "<div class='alert-box warning' style='grid-column: 1/-1;'>Nincsenek betöltött jegyzőkönyvek!</div>";
+        deltaSection.style.display = "none";
+        heatmapWrapper.style.display = "none";
+        return;
+      }
+
+      let nestCardsHtml = "";
+      const deltaList = [];
+
+      loadedFiles.forEach((file, i) => {
+        const errors = file.parsedItems.filter(it => it.enabled !== false && isStillError(it));
+        const isOk = errors.length === 0;
+        const nestName = file.headerData.bemerkung || `Fészek ${i + 1}`;
+
+        nestCardsHtml += `
+          <div class="nest-card ${isOk ? 'ok' : 'nok'}">
+            <div class="nest-card-title">F${i + 1}</div>
+            <div style="font-size:11px; color:#64748b; font-weight:bold; margin-top:2px;">${nestName}</div>
+            <div class="nest-card-badge">${isOk ? '✅ MEGFELELŐ' : `❌ ${errors.length} HIBA`}</div>
+          </div>
+        `;
+
+        errors.forEach(item => {
+          const delta = +(item.akt - item.nevl).toFixed(4);
+          const maxTol = +(item.nevl + item.ftur).toFixed(4);
+          const minTol = +(item.nevl + item.atur).toFixed(4);
+          const isOver = item.akt > maxTol;
+
+          deltaList.push({
+            nest: `F${i + 1} (${nestName})`,
+            megn: item.megn,
+            desc: item.desc,
+            akt: item.akt.toFixed(4),
+            nevl: item.nevl.toFixed(4),
+            delta: (delta >= 0 ? "+" : "") + delta.toFixed(4),
+            status: isOver ? "TÚLMÉRET" : "ALULMÉRET",
+            diff: isOver ? `+${(item.akt - maxTol).toFixed(4)} mm a max felett` : `${(item.akt - minTol).toFixed(4)} mm a min alatt`
+          });
+        });
+      });
+      nestCardsContainer.innerHTML = nestCardsHtml;
+
+      if (deltaList.length > 0) {
+        let deltaHtml = "";
+        deltaList.forEach(d => {
+          deltaHtml += `
+            <div class="delta-card">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <strong style="font-size:14px; color:#0f172a;">${d.nest} &bull; Tétel: ${d.megn}</strong>
+                <span style="font-size:11px; font-weight:bold; color:#ef4444; background:#fee2e2; padding:2px 6px; border-radius:4px;">${d.status}</span>
+              </div>
+              <div style="font-size:12px; color:#475569;">
+                Mért: <b>${d.akt}</b> | Névleges: <b>${d.nevl}</b> &rarr; Eltérés (&Delta;): <b style="color:#b91c1c;">${d.delta} mm</b>
+              </div>
+              <div style="font-size:12px; font-weight:bold; color:#b91c1c; margin-top:3px;">
+                Korrekciós irány: ${d.diff}
+              </div>
+            </div>
+          `;
+        });
+        deltaCardsContainer.innerHTML = deltaHtml;
+        deltaSection.style.display = "block";
+      } else {
+        deltaSection.style.display = "none";
+      }
+
+      const megnSet = new Set();
+      loadedFiles.forEach(f => f.parsedItems.forEach(it => { if (it.enabled !== false) megnSet.add(it.megn); }));
+      const megnLista = Array.from(megnSet).sort((a, b) => naturalCompare(a, b));
+
+      let hHeadHtml = `<tr><th class="megn-col">Tétel</th>`;
+      loadedFiles.forEach((f, i) => {
+        hHeadHtml += `<th>F${i + 1}</th>`;
+      });
+      hHeadHtml += `</tr>`;
+      heatmapHead.innerHTML = hHeadHtml;
+
+      heatmapBody.innerHTML = "";
+      megnLista.forEach(megn => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td class="megn-col">${megn}</td>`;
+
+        loadedFiles.forEach(file => {
+          const item = file.parsedItems.find(it => it.megn === megn && it.enabled !== false);
+          const td = document.createElement('td');
+          if (item) {
+            const isErr = isStillError(item);
+            td.style.backgroundColor = isErr ? "#fecaca" : "#dcfce7";
+            td.style.color = isErr ? "#991b1b" : "#166534";
+            td.style.fontWeight = "bold";
+            td.textContent = item.akt.toFixed(3);
+          } else {
+            td.textContent = "-";
+          }
+          tr.appendChild(td);
+        });
+        heatmapBody.appendChild(tr);
+      });
+      heatmapWrapper.style.display = "block";
+    }
   </script>
 </body>
 </html>
