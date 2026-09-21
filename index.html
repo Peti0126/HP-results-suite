@@ -47,7 +47,7 @@
     header {
       background: var(--surface);
       border-radius: var(--radius);
-      padding: 20px 25px;
+      padding: 16px 22px;
       margin-bottom: 20px;
       display: flex;
       justify-content: space-between;
@@ -60,6 +60,39 @@
 
     .app-title h1 { font-size: 22px; font-weight: 700; color: #0f172a; }
     .app-title p { color: var(--text-muted); font-size: 13px; margin-top: 3px; }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .lang-switcher {
+      display: inline-flex;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3px;
+      gap: 3px;
+    }
+    .lang-btn {
+      border: none;
+      background: transparent;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #475569;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .lang-btn:hover { color: var(--primary); }
+    .lang-btn.active {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
 
     .upload-box {
       background: #eff6ff;
@@ -376,17 +409,24 @@
     <header class="no-print">
       <div class="app-title">
         <h1>HP Metrology Suite 2026</h1>
-        <p>1. Ellenőrzés & Korrekció &bull; 2. Zeiss Calypso DFQ Export &bull; 3. Vonalkód Mátrix &bull; 4. Excel Tábla &bull; 5. Gyártói Gyorsnézet</p>
+        <p id="appSubtitle">1. Ellenőrzés &bull; 2. Zeiss Calypso DFQ Export &bull; 3. Vonalkód &bull; 4. Excel &bull; 5. Gyártói Gyorsnézet</p>
       </div>
-      <div style="font-size: 12px; color: var(--text-muted); text-align: right;">
-        <strong>Fejlesztő:</strong> Horváth Péter &copy; 2026
+      <div class="header-right">
+        <div class="lang-switcher">
+          <button class="lang-btn active" id="lang-hu" onclick="changeLanguage('hu')">HU 🇭🇺</button>
+          <button class="lang-btn" id="lang-de" onclick="changeLanguage('de')">DE 🇩🇪</button>
+          <button class="lang-btn" id="lang-en" onclick="changeLanguage('en')">EN 🇬🇧</button>
+        </div>
+        <div style="font-size: 12px; color: var(--text-muted); text-align: right;">
+          <strong>Fejlesztő:</strong> Horváth Péter &copy; 2026
+        </div>
       </div>
     </header>
 
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt,.pdf,.dfq" style="display: none;">
-      <h3>Kattints ide vagy húzd be a mérési TXT, Zeiss CALYPSO PDF vagy kész DFQ fájlokat</h3>
-      <p>Összecsukható gyártói panelek, pontos DFQ adatsor-kiértékelés, szelektív tételkezelés</p>
+      <h3 id="txtDropTitle">Kattints ide vagy húzd be a mérési TXT, Zeiss CALYPSO PDF vagy kész DFQ fájlokat</h3>
+      <p id="txtDropSub">Hardver-azonosított DFQ generálás, 5 mp-es időeltolás, közvetlen DFQ és PDF feldolgozás</p>
     </div>
 
     <div class="tabs-nav no-print">
@@ -399,7 +439,7 @@
     <!-- 1. TAB -->
     <div id="tab-validator" class="tab-pane active">
       <div id="validatorOverview">
-        <div class="alert-box warning">Kérlek tölts fel mérési jegyzőkönyveket (.pdf, .txt vagy .dfq) az ellenőrzéshez!</div>
+        <div class="alert-box warning" id="emptyValidatorMsg">Kérlek tölts fel mérési jegyzőkönyveket (.pdf, .txt vagy .dfq) az ellenőrzéshez!</div>
       </div>
       
       <div id="validatorActions" class="action-bar" style="display: none;">
@@ -414,10 +454,10 @@
     <div id="tab-matrix" class="tab-pane">
       <div class="card no-print" style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 14px 20px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 15px;">
         <div>
-          <h3 style="font-size: 16px;">Vonalkód Mátrix (Code128)</h3>
-          <p style="font-size: 13px; color: var(--text-muted);">Mért értékek vonalkódjai fészkenként csoportosítva.</p>
+          <h3 style="font-size: 16px;" id="matrixCardTitle">Vonalkód Mátrix (Code128)</h3>
+          <p style="font-size: 13px; color: var(--text-muted);" id="matrixCardSub">Mért értékek vonalkódjai fészkenként csoportosítva.</p>
         </div>
-        <button class="btn btn-secondary" onclick="window.print()" type="button">🖨️ Nyomtatás (A4 Fekvő)</button>
+        <button class="btn btn-secondary" onclick="window.print()" type="button" id="btnPrintBarcode">🖨️ Nyomtatás (A4 Fekvő)</button>
       </div>
       <div class="table-container" id="matrixBarcodeWrapper" style="display: none;">
         <table>
@@ -431,8 +471,8 @@
     <div id="tab-excel" class="tab-pane">
       <div class="card no-print" style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 14px 20px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 15px;">
         <div>
-          <h3 style="font-size: 16px;">Mérési Adatmátrix (Névleges & Tűrések)</h3>
-          <p style="font-size: 13px; color: var(--text-muted);">Mért értékek eredeti vagy jóváhagyott állapotban fészkenként.</p>
+          <h3 style="font-size: 16px;" id="excelCardTitle">Mérési Adatmátrix (Névleges & Tűrések)</h3>
+          <p style="font-size: 13px; color: var(--text-muted);" id="excelCardSub">Mért értékek eredeti vagy jóváhagyott állapotban fészkenként.</p>
         </div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
           <button class="btn btn-success" id="btnExportExcel" type="button">📥 Excel (.xlsx) Letöltése</button>
@@ -450,15 +490,15 @@
     <!-- 4. TAB: GYÁRTÓI GYORSNÉZET (ÖSSZECSUKHATÓ PANELEKKEL) -->
     <div id="tab-production" class="tab-pane">
       <div class="card no-print" style="background: #fff; padding: 14px 20px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 15px;">
-        <h3 style="font-size: 16px; color: #78350f;">🏭 Gyártásközi Állapot & Gépbeállítói Gyorslista</h3>
-        <p style="font-size: 13px; color: var(--text-muted);">Azonnali fészek-státusz (OK/NOK), beállítói delta korrekciók és gyártási hőtérkép.</p>
+        <h3 style="font-size: 16px; color: #78350f;" id="prodHeaderTitle">🏭 Gyártásközi Állapot & Gépbeállítói Gyorslista</h3>
+        <p style="font-size: 13px; color: var(--text-muted);" id="prodHeaderSub">Azonnali fészek-státusz (OK/NOK), beállítói delta korrekciók és gyártási hőtérkép.</p>
       </div>
 
       <!-- 1. PANEL: FÉSZEK STÁTUSZ KÁRTYÁK -->
       <details class="prod-accordion" id="accProdNest" open>
         <summary>
           <span id="titleProdNest">📦 1. Fészek Státuszok (OK / NOK Blokkok)</span>
-          <span style="font-size:11px; color:#64748b; font-weight:normal;">Kattintásra nyílik / csukódik</span>
+          <span style="font-size:11px; color:#64748b; font-weight:normal;" class="lblClickToggle">Kattintásra nyílik / csukódik</span>
         </summary>
         <div class="prod-accordion-content">
           <div class="nest-cards-grid" id="prodNestCards"></div>
@@ -469,7 +509,7 @@
       <details class="prod-accordion" id="accProdDelta" open>
         <summary style="background: #fffbeb; color: #991b1b;">
           <span id="titleProdDelta">⚠️ 2. Tűrésen Kívüli Méretek & Szükséges Gépbeállítási Eltérések (&Delta;)</span>
-          <span style="font-size:11px; color:#b45309; font-weight:normal;">Kattintásra nyílik / csukódik</span>
+          <span style="font-size:11px; color:#b45309; font-weight:normal;" class="lblClickToggle">Kattintásra nyílik / csukódik</span>
         </summary>
         <div class="prod-accordion-content">
           <div class="delta-cards-grid" id="prodDeltaCards"></div>
@@ -479,8 +519,8 @@
       <!-- 3. PANEL: GYÁRTÁSI HŐTÉRKÉP -->
       <details class="prod-accordion" id="accProdHeatmap" open>
         <summary>
-          <span>📊 3. Gyártási Hőtérkép: <span style="color:var(--success)">■ Tűrésen belül</span> | <span style="color:var(--danger)">■ Tűrésen kívül (Kiesés)</span></span>
-          <span style="font-size:11px; color:#64748b; font-weight:normal;">Kattintásra nyílik / csukódik</span>
+          <span id="titleProdHeatmap">📊 3. Gyártási Hőtérkép: <span style="color:var(--success)">■ Tűrésen belül</span> | <span style="color:var(--danger)">■ Tűrésen kívül (Kiesés)</span></span>
+          <span style="font-size:11px; color:#64748b; font-weight:normal;" class="lblClickToggle">Kattintásra nyílik / csukódik</span>
         </summary>
         <div class="prod-accordion-content" style="padding-top: 6px;">
           <div class="table-container" id="prodHeatmapWrapper" style="display: none; margin-top:0;">
@@ -499,9 +539,9 @@
   <div class="modal-backdrop" id="correctionModal">
     <div class="modal-window" style="max-width: 960px;">
       <div class="modal-header">
-        <h3 style="color: #0369a1;">✏️ Tételek és Méretek Szerkesztése (Prüfplan igazítás)</h3>
+        <h3 style="color: #0369a1;" id="corrModalTitle">✏️ Tételek és Méretek Szerkesztése (Prüfplan igazítás)</h3>
         <p style="font-size: 13px; color: #475569; margin-top: 4px;">
-          Fájl: <strong id="corrModalFileName"></strong>. Itt módosíthatod a mért értékeket vagy kiveheted a pipát a felesleges tételeknél!
+          <span id="corrModalFileLabel">Fájl:</span> <strong id="corrModalFileName"></strong>. <span id="corrModalSub">Itt módosíthatod a mért értékeket vagy kiveheted a pipát a felesleges tételeknél!</span>
         </p>
       </div>
       
@@ -509,12 +549,12 @@
         <thead>
           <tr>
             <th style="width: 45px; text-align: center;">DFQ?</th>
-            <th>Tétel (K2002)</th>
-            <th>Megnevezés (K2003)</th>
-            <th>Névleges</th>
-            <th>Tűrésmező</th>
-            <th>Eredeti</th>
-            <th>Érvényes érték (módosítható)</th>
+            <th id="th_k2002">Tétel (K2002)</th>
+            <th id="th_k2003">Megnevezés (K2003)</th>
+            <th id="th_nom">Névleges</th>
+            <th id="th_tol">Tűrésmező</th>
+            <th id="th_orig">Eredeti</th>
+            <th id="th_valid">Érvényes érték (módosítható)</th>
           </tr>
         </thead>
         <tbody id="corrModalTableBody"></tbody>
@@ -534,63 +574,63 @@
         <div>
           <h3 id="modalTitleText" style="color: #b45309;">⚙️ Paraméterbevitel (Zeiss Calypso / CAQ)</h3>
           <p style="font-size: 13px; color: #475569; margin-top: 4px;">
-            Fájl: <strong id="modalFileName"></strong>. Mentéskor a fészekkód léptetésre kerül, az időpontok pedig darabonként <strong>+5 másodperccel eltolódnak</strong>:
+            <span id="lblModalFile">Fájl:</span> <strong id="modalFileName"></strong>. <span id="lblModalStep">Mentéskor a fészekkód léptetésre kerül, az időpontok pedig darabonként <strong>+5 másodperccel eltolódnak</strong>:</span>
           </p>
         </div>
         <div style="font-size: 12px; font-weight: bold; color: #334155;">
-          Felhasználók: <span style="background: #e2e8f0; padding: 4px 10px; border-radius: 4px;">Master</span>
+          <span id="lblUser">Felhasználók:</span> <span style="background: #e2e8f0; padding: 4px 10px; border-radius: 4px;">Master</span>
         </div>
       </div>
       
       <div class="calypso-grid">
         <div class="form-group">
-          <label>Cikkszám (K1001) *:</label>
+          <label id="lbl_m_teileNr">Cikkszám (K1001) *:</label>
           <input type="text" id="m_teileNr" placeholder="pl. 106760 vagy 107937 vagy 30004341">
         </div>
         <div class="form-group">
-          <label>Megjegyzés / Fészek kód (K1002) *:</label>
+          <label id="lbl_m_bemerkung">Megjegyzés / Fészek kód (K1002) *:</label>
           <input type="text" id="m_bemerkung" placeholder="pl. N1-T1-M9621">
         </div>
         <div class="form-group">
-          <label>Munkadarab neve (K1003) *:</label>
+          <label id="lbl_m_teileBez">Munkadarab neve (K1003) *:</label>
           <input type="text" id="m_teileBez" placeholder="pl. eSCA vagy VUS 107938">
         </div>
         <div class="form-group">
-          <label>Rajzszám (K1041) *:</label>
+          <label id="lbl_m_rajzszam">Rajzszám (K1041) *:</label>
           <input type="text" id="m_rajzszam" placeholder="pl. F12763-105 vagy 1">
         </div>
         <div class="form-group">
-          <label>Megrendelő (K1053) *:</label>
+          <label id="lbl_m_megrendelo">Megrendelő (K1053) *:</label>
           <input type="text" id="m_megrendelo" placeholder="pl. FA13613945 vagy 1118161">
         </div>
         <div class="form-group">
-          <label>Gép száma (K1081) *:</label>
+          <label id="lbl_m_maschine">Gép száma (K1081) *:</label>
           <input type="text" id="m_maschine" placeholder="pl. KS062 vagy KS004 vagy 9578">
         </div>
         <div class="form-group">
-          <label>Gép gyári száma (K2415 / K1201) *:</label>
+          <label id="lbl_m_k2415">Gép gyári száma (K2415 / K1201) *:</label>
           <input type="text" id="m_k2415" placeholder="pl. 143122070061 vagy 15-00027">
         </div>
         <div class="form-group">
-          <label>Mérőeszköz típusa / leírása (K1202 / K2402) *:</label>
+          <label id="lbl_m_k1202">Mérőeszköz típusa / leírása (K1202 / K2402) *:</label>
           <input type="text" id="m_k1202" placeholder="pl. Messmaschine Werth Scope Check vagy OI543">
         </div>
         <div class="form-group">
-          <label>Mérőgép gyártója (K2406) *:</label>
+          <label id="lbl_m_k2406">Mérőgép gyártója (K2406) *:</label>
           <input type="text" id="m_k2406" placeholder="pl. Werth Messtechnik vagy Carl Zeiss Oberkochen">
         </div>
         <div class="form-group">
-          <label>Mérés Dátuma (DD.MM.YYYY) *:</label>
+          <label id="lbl_m_datum">Mérés Dátuma (DD.MM.YYYY) *:</label>
           <input type="text" id="m_datum" placeholder="pl. 09.09.2026">
         </div>
         <div class="form-group">
-          <label>Mérés Kezdő Időpontja (HH:MM:SS) *:</label>
+          <label id="lbl_m_uhrzeit">Mérés Kezdő Időpontja (HH:MM:SS) *:</label>
           <input type="text" id="m_uhrzeit" placeholder="pl. 08:41:01">
         </div>
       </div>
 
-      <div style="margin-top: 15px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 10px 14px; font-size: 12px; color: #1e40af;">
-        ℹ️ <strong>Több jegyzőkönyv esetén:</strong> Mentéskor az adatok átöröklődnek, a fészekszám növekszik, és minden darab mérése <strong>5 másodperccel későbbi</strong> időbélyeget kap a fájlnevek ütközésének kizárására.
+      <div style="margin-top: 15px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 10px 14px; font-size: 12px; color: #1e40af;" id="lblModalInfoBox">
+        ℹ️ <strong>Több jegyzőkönyv esetén:</strong> Mentéskor az adatok átöröklődnek, a fészekszám növekszik, és minden darab mérése <strong>5 másodperccel későbbi</strong> időbélyeget kap.
       </div>
 
       <div style="margin-top: 22px; display: flex; justify-content: flex-end; gap: 10px;">
@@ -602,6 +642,230 @@
   </div>
 
   <script>
+    // BIZTONSÁGOS 5 MÁSODPERCES ELTOLÁS A FÁJLNÉV- ÉS SZERVERÜTKÖZÉSEK ELLEN
+    const TIME_OFFSET_SECONDS = 5;
+
+    // --- TÖBBNYELVŰ NYELVI SZÓTÁR (HU / DE / EN) ---
+    const i18n = {
+      hu: {
+        appSubtitle: "1. Ellenőrzés &bull; 2. Zeiss Calypso DFQ Export &bull; 3. Vonalkód &bull; 4. Excel &bull; 5. Gyártói Gyorsnézet",
+        dropTitle: "Kattints ide vagy húzd be a mérési TXT, Zeiss CALYPSO PDF vagy kész DFQ fájlokat",
+        dropSub: "Hardver-azonosított DFQ generálás, 5 mp-es időeltolás, közvetlen DFQ és PDF feldolgozás",
+        tabValidator: "🔍 1. Jegyzőkönyv Ellenőrző",
+        tabMatrix: "📊 2. Vonalkód Mátrix",
+        tabExcel: "📑 3. Excel Táblázat",
+        tabProduction: "🏭 4. Gyártói Gyorsnézet",
+        emptyMsg: "Kérlek tölts fel mérési jegyzőkönyveket (.pdf, .txt vagy .dfq) az ellenőrzéshez!",
+        btnDfqAll: "📊 Összes DFQ Letöltése (.ZIP)",
+        btnTxtAll: "📦 Összes TXT Letöltése (.ZIP)",
+        btnExportXlsx: "📥 Excel (.xlsx) Letöltése",
+        btnCopyClip: "📋 Másolás Vágólapra",
+        btnPrint: "🖨️ Nyomtatás (A4 Fekvő)",
+        barcodeTitle: "Vonalkód Mátrix (Code128)",
+        barcodeSub: "Mért értékek vonalkódjai fészkenként csoportosítva.",
+        excelTitle: "Mérési Adatmátrix (Névleges & Tűrések)",
+        excelSub: "Mért értékek eredeti vagy jóváhagyott állapotban fészkenként.",
+        prodTitle: "🏭 Gyártásközi Állapot & Gépbeállítói Gyorslista",
+        prodSub: "Azonnali fészek-státusz (OK/NOK), beállítói delta korrekciók és gyártási hőtérkép.",
+        lblClickToggle: "Kattintásra nyílik / csukódik",
+        btnCancel: "Mégsem",
+        btnApply: "💾 Módosítások Mentése",
+        thItem: "Tétel",
+        thNom: "Névleges",
+        thTolPlus: "Tűrés (+)",
+        thTolMinus: "Tűrés (-)",
+        thMin: "Min",
+        thMax: "Max",
+        thValid: "Érvényes érték (módosítható)",
+        thOrig: "Eredeti",
+        thTolField: "Tűrésmező",
+        thDesc: "Megnevezés",
+        statusOk: "✅ MEGFELELŐ",
+        statusNok: "❌ HIBA",
+        statusOver: "TÚLMÉRET",
+        statusUnder: "ALULMÉRET",
+        overMax: "a max felett",
+        underMin: "a min alatt",
+        previewBtn: "👁️ Előnézet",
+        editBtn: "✏️ Tételek & Javítás",
+        headerBtn: "⚙️ Fejléc",
+        txtBtn: "💾 TXT Letöltése",
+        dfqBtn: "📊 DFQ Letöltése",
+        fixBtn: "⚡ Javítás",
+        selFixBtn: "⚡ Kijelöltek javítása az ÖSSZES fájlban (a többi rossz marad)",
+        checkAll: "Mind pipál",
+        uncheckAll: "Mind töröl",
+        allFilesWarn: "⚠️ Figyelem! Tűrésen kívüli méretek találhatók",
+        inFiles: "jegyzőkönyvben, összesen",
+        errorsWord: "hiba",
+        allOkMsg: "✅ Minden méret megfelelő!",
+        allOkSub: "minden mért érték eredetileg is a tűrésmezőn belül volt.",
+        allFixedMsg: "✅ Minden hiba sikeresen jóváhagyva / javítva!",
+        allFixedSub: "A mérési jegyzőkönyvek és az export a jóváhagyott értékeket tartalmazzák."
+      },
+      de: {
+        appSubtitle: "1. Prüfung &bull; 2. Zeiss Calypso DFQ Export &bull; 3. Barcode &bull; 4. Excel &bull; 5. Fertigungs-Schnellansicht",
+        dropTitle: "Hier klicken oder TXT-, Zeiss CALYPSO PDF- oder DFQ-Dateien ablegen",
+        dropSub: "Hardware-identifizierte DFQ-Generierung, 5s-Zeitverschiebung, direkte DFQ- & PDF-Verarbeitung",
+        tabValidator: "🔍 1. Protokoll-Prüfung",
+        tabMatrix: "📊 2. Barcode-Matrix",
+        tabExcel: "📑 3. Excel-Tabelle",
+        tabProduction: "🏭 4. Fertigungs-Schnellansicht",
+        emptyMsg: "Bitte Messprotokolle (.pdf, .txt oder .dfq) zur Überprüfung hochladen!",
+        btnDfqAll: "📊 Alle DFQ herunterladen (.ZIP)",
+        btnTxtAll: "📦 Alle TXT herunterladen (.ZIP)",
+        btnExportXlsx: "📥 Excel (.xlsx) Export",
+        btnCopyClip: "📋 In Zwischenablage kopieren",
+        btnPrint: "🖨️ Drucken (A4 Querformat)",
+        barcodeTitle: "Barcode-Matrix (Code128)",
+        barcodeSub: "Messwert-Barcodes gruppiert nach Werkzeugnestern.",
+        excelTitle: "Messdaten-Matrix (Nennmaße & Toleranzen)",
+        excelSub: "Messwerte im Original- oder korrigierten Zustand nach Nestern.",
+        prodTitle: "🏭 Fertigungsstatus & Einrichter-Deltaliste",
+        prodSub: "Sofortiger Neststatus (OK/NOK), Einstellkorrekturen und Fertigungs-Heatmap.",
+        lblClickToggle: "Zum Öffnen / Schließen klicken",
+        btnCancel: "Abbrechen",
+        btnApply: "💾 Änderungen speichern",
+        thItem: "Merkmal",
+        thNom: "Nennmaß",
+        thTolPlus: "Toleranz (+)",
+        thTolMinus: "Toleranz (-)",
+        thMin: "Min",
+        thMax: "Max",
+        thValid: "Gültiger Wert (editierbar)",
+        thOrig: "Original",
+        thTolField: "Toleranzfeld",
+        thDesc: "Bezeichnung",
+        statusOk: "✅ IN ORDNUNG",
+        statusNok: "❌ FEHLER",
+        statusOver: "ÜBERMASS",
+        statusUnder: "UNTERMASS",
+        overMax: "über Max",
+        underMin: "unter Min",
+        previewBtn: "👁️ Vorschau",
+        editBtn: "✏️ Merkmale & Korrektur",
+        headerBtn: "⚙️ Kopfdaten",
+        txtBtn: "💾 TXT Download",
+        dfqBtn: "📊 DFQ Download",
+        fixBtn: "⚡ Korrektur",
+        selFixBtn: "⚡ Ausgewählte in ALLEN Dateien korrigieren (Rest bleibt Ausschuss)",
+        checkAll: "Alle an",
+        uncheckAll: "Alle ab",
+        allFilesWarn: "⚠️ Achtung! Maße außerhalb der Toleranz gefunden",
+        inFiles: "Messprotokollen, insgesamt",
+        errorsWord: "Fehler",
+        allOkMsg: "✅ Alle Maße liegen innerhalb der Toleranz!",
+        allOkSub: "alle Messwerte lagen ursprünglich im Toleranzbereich.",
+        allFixedMsg: "✅ Alle Merkmale erfolgreich genehmigt / korrigiert!",
+        allFixedSub: "Die Messprotokolle und Exporte enthalten die korrigierten Werte."
+      },
+      en: {
+        appSubtitle: "1. Inspection &bull; 2. Zeiss Calypso DFQ Export &bull; 3. Barcode &bull; 4. Excel &bull; 5. Production Quick View",
+        dropTitle: "Click here or drop measurement TXT, Zeiss CALYPSO PDF or DFQ files",
+        dropSub: "Hardware-identified DFQ export, 5s timestamp stepping, native DFQ & PDF parsing",
+        tabValidator: "🔍 1. Report Validator",
+        tabMatrix: "📊 2. Barcode Matrix",
+        tabExcel: "📑 3. Excel Spreadsheet",
+        tabProduction: "🏭 4. Production View",
+        emptyMsg: "Please upload measurement reports (.pdf, .txt, or .dfq) to validate!",
+        btnDfqAll: "📊 Download All DFQ (.ZIP)",
+        btnTxtAll: "📦 Download All TXT (.ZIP)",
+        btnExportXlsx: "📥 Download Excel (.xlsx)",
+        btnCopyClip: "📋 Copy to Clipboard",
+        btnPrint: "🖨️ Print (A4 Landscape)",
+        barcodeTitle: "Barcode Matrix (Code128)",
+        barcodeSub: "Measured values barcode sheet grouped by tooling cavity/nest.",
+        excelTitle: "Measurement Data Matrix (Nominals & Limits)",
+        excelSub: "Values in original or approved state per cavity.",
+        prodTitle: "🏭 In-Process Status & Setter Delta Quicklist",
+        prodSub: "Real-time cavity status (OK/NOK), machine delta offsets, and heatmap.",
+        lblClickToggle: "Click to expand / collapse",
+        btnCancel: "Cancel",
+        btnApply: "💾 Save Changes",
+        thItem: "Characteristic",
+        thNom: "Nominal",
+        thTolPlus: "Tol (+)",
+        thTolMinus: "Tol (-)",
+        thMin: "Min",
+        thMax: "Max",
+        thValid: "Valid Value (editable)",
+        thOrig: "Original",
+        thTolField: "Tolerance Range",
+        thDesc: "Description",
+        statusOk: "✅ PASSED",
+        statusNok: "❌ FAILED",
+        statusOver: "OVERSIZED",
+        statusUnder: "UNDERSIZED",
+        overMax: "above max",
+        underMin: "below min",
+        previewBtn: "👁️ Preview",
+        editBtn: "✏️ Items & Edit",
+        headerBtn: "⚙️ Header",
+        txtBtn: "💾 Download TXT",
+        dfqBtn: "📊 Download DFQ",
+        fixBtn: "⚡ Correct",
+        selFixBtn: "⚡ Correct Selected in ALL Files (others stay reject)",
+        checkAll: "Select All",
+        uncheckAll: "Deselect All",
+        allFilesWarn: "⚠️ Attention! Out-of-tolerance measurements found",
+        inFiles: "reports, total of",
+        errorsWord: "errors",
+        allOkMsg: "✅ All measurements are within tolerance!",
+        allOkSub: "all characteristics were originally within limits.",
+        allFixedMsg: "✅ All errors successfully approved / corrected!",
+        allFixedSub: "Inspection reports and exports now contain approved data."
+      }
+    };
+
+    let currentLang = localStorage.getItem('hp_metrology_lang') || 'hu';
+
+    function changeLanguage(lang) {
+      if (!i18n[lang]) return;
+      currentLang = lang;
+      localStorage.setItem('hp_metrology_lang', lang);
+
+      document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById(`lang-${lang}`);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      applyLanguage();
+      renderValidatorView();
+      renderMatrixViews();
+      renderProductionView();
+    }
+
+    function applyLanguage() {
+      const t = i18n[currentLang];
+      document.getElementById('appSubtitle').innerHTML = t.appSubtitle;
+      document.getElementById('txtDropTitle').textContent = t.dropTitle;
+      document.getElementById('txtDropSub').textContent = t.dropSub;
+      document.getElementById('btnTabValidator').textContent = t.tabValidator;
+      document.getElementById('btnTabMatrix').textContent = t.tabMatrix;
+      document.getElementById('btnTabExcel').textContent = t.tabExcel;
+      document.getElementById('btnTabProduction').textContent = t.tabProduction;
+
+      document.getElementById('matrixCardTitle').textContent = t.barcodeTitle;
+      document.getElementById('matrixCardSub').textContent = t.barcodeSub;
+      document.getElementById('btnPrintBarcode').textContent = t.btnPrint;
+
+      document.getElementById('excelCardTitle').textContent = t.excelTitle;
+      document.getElementById('excelCardSub').textContent = t.excelSub;
+      document.getElementById('btnExportExcel').textContent = t.btnExportXlsx;
+      document.getElementById('btnCopyClipboard').textContent = t.btnCopyClip;
+
+      document.getElementById('prodHeaderTitle').textContent = t.prodTitle;
+      document.getElementById('prodHeaderSub').textContent = t.prodSub;
+
+      document.getElementById('btnDownloadAllDfq').textContent = t.btnDfqAll;
+      document.getElementById('btnDownloadAllTxt').textContent = t.btnTxtAll;
+
+      document.getElementById('btnCorrCancel').textContent = t.btnCancel;
+      document.getElementById('btnCorrApply').textContent = t.btnApply;
+      document.getElementById('btnModalCancel').textContent = t.btnCancel;
+
+      document.querySelectorAll('.lblClickToggle').forEach(el => el.textContent = t.lblClickToggle);
+    }
+
     let loadedFiles = [];
     let pendingFileIdx = null;
     let editingFileIdx = null;
@@ -898,7 +1162,7 @@
       };
     }
 
-    // --- MEGBÍZHATÓ, KOORDINÁTA-ALAPÚ CALYPSO PDF FELDOLGOZÓ ---
+    // --- CALYPSO PDF FELDOLGOZÓ (5 MP-ES ELTOLÁSSAL) ---
     async function parseCalypsoPdf(fileName, arrayBuffer, fileOrderIndex) {
       try {
         const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -963,7 +1227,8 @@
           if (baseUhrzeit.length === 5) baseUhrzeit += ":00";
         }
 
-        const uhrzeit = addSecondsToTime(baseUhrzeit, fileOrderIndex * 5);
+        // VISSZAÁLLÍTVA: 5 másodperc eltolás!
+        const uhrzeit = addSecondsToTime(baseUhrzeit, fileOrderIndex * TIME_OFFSET_SECONDS);
 
         const headerData = {
           teileNr,
@@ -1091,7 +1356,7 @@
       }
     }
 
-    // --- TXT FELDOLGOZÓ MODUL ---
+    // --- TXT FELDOLGOZÓ (5 MP-ES ELTOLÁSSAL) ---
     function parseAndValidateTxt(fileName, rawText, fileOrderIndex) {
       const getVal = (regex) => {
         const m = rawText.match(regex);
@@ -1105,7 +1370,8 @@
       if (!datum) datum = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
       if (!rawUhrzeit) rawUhrzeit = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
 
-      const uhrzeit = addSecondsToTime(rawUhrzeit, fileOrderIndex * 5);
+      // VISSZAÁLLÍTVA: 5 másodperc eltolás!
+      const uhrzeit = addSecondsToTime(rawUhrzeit, fileOrderIndex * TIME_OFFSET_SECONDS);
 
       let teileBezRaw = getVal(/Teilebezeichnung\s*:\s*([^\n|]+)/).replace(/Uhrzeit\s*:.*$/i, '').trim();
       const bemerkungRaw = getVal(/Bemerkungen\s*:\s*([^\n|]+)/);
@@ -1278,7 +1544,7 @@
       return item.akt > maxTol || item.akt < minTol;
     }
 
-    // --- TÖBBSZÖRÖS / SZELEKTÍV JAVÍTÁS (CHECKBOXOK ALAPJÁN) ---
+    // --- SZELEKTÍV JAVÍTÁS (CHECKBOXOK ALAPJÁN) ---
     function setGlobalCheckboxes(state) {
       document.querySelectorAll('.chk-global-item').forEach(chk => {
         chk.checked = state;
@@ -1292,7 +1558,7 @@
       });
 
       if (selectedItems.length === 0) {
-        alert("Nincs egyetlen tétel sem bepipálva a javításhoz!");
+        alert(currentLang === 'hu' ? "Nincs egyetlen tétel sem bepipálva a javításhoz!" : (currentLang === 'de' ? "Kein Merkmal zur Korrektur ausgewählt!" : "No items selected for correction!"));
         return;
       }
 
@@ -1326,7 +1592,7 @@
       });
 
       if (selectedItems.length === 0) {
-        alert("Nincs egyetlen tétel sem bepipálva ennél a fájlnál!");
+        alert(currentLang === 'hu' ? "Nincs egyetlen tétel sem bepipálva ennél a fájlnál!" : (currentLang === 'de' ? "Kein Merkmal für diese Datei ausgewählt!" : "No items selected for this file!"));
         return;
       }
 
@@ -1350,6 +1616,7 @@
     }
 
     function renderValidatorView() {
+      const t = i18n[currentLang];
       const overview = document.getElementById('validatorOverview');
       const list = document.getElementById('validatorFilesList');
       const actions = document.getElementById('validatorActions');
@@ -1377,7 +1644,7 @@
           const currentErrors = f.validationErrors.filter(e => isStillError(e.itemRef));
           errHtml += `<div style="margin-top:8px;"><strong>📄 ${f.name}</strong> &bull; <span style="color:#0284c7; font-weight:bold;">${f.headerData.bemerkung}</span><ul style="padding-left:20px; font-family:monospace; font-size:12px; margin-top:3px;">`;
           currentErrors.forEach(e => {
-            errHtml += `<li>Tétel: <b>${e.megn}</b> | Eredeti mért: <span style="color:var(--danger); font-weight:bold;">${e.origAkt}</span> | Kiesés: ${e.diff} | Javaslat: <b style="color:var(--success)">${e.suggestedAkt}</b></li>`;
+            errHtml += `<li>${t.thItem}: <b>${e.megn}</b> | ${t.thOrig}: <span style="color:var(--danger); font-weight:bold;">${e.origAkt}</span> | ${e.diff} | &rarr; <b style="color:var(--success)">${e.suggestedAkt}</b></li>`;
           });
           errHtml += `</ul></div>`;
         });
@@ -1386,26 +1653,22 @@
           <div class="alert-box warning">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
               <div>
-                <h3 style="font-size: 16px;">⚠️ Figyelem! Tűrésen kívüli méretek találhatók (${unfixedFiles.length} jegyzőkönyvben, összesen ${totalRemainingCount} hiba)</h3>
-                <p style="font-size:13px; margin-top:2px;">
-                  Az adatok jelenleg az eredeti mért értékeket mutatják. A javítandó tételeket a lenti dobozban választhatod ki.
-                </p>
+                <h3 style="font-size: 16px;">${t.allFilesWarn} (${unfixedFiles.length} ${t.inFiles} ${totalRemainingCount} ${t.errorsWord})</h3>
               </div>
             </div>
 
-            <!-- LENYITHATÓ / ÖSSZECSUKHATÓ SÁV -->
-            <details class="error-accordion">
+            <details class="error-accordion" open>
               <summary>
-                <span>➕ Hibás méretek kijelölése és részletei (${globalErrorItems.length} különböző tétel) — kattints a lenyitáshoz</span>
-                <span style="font-size: 11px; font-weight: normal; background: #fef9c3; padding: 2px 8px; border-radius: 4px; border: 1px solid #fde047;">Kattintásra nyílik / csukódik</span>
+                <span>➕ ${globalErrorItems.length} ${currentLang === 'hu' ? 'különböző tétel kijelölése' : (currentLang === 'de' ? 'verschiedene Merkmale auswählen' : 'unique characteristics to select')}</span>
+                <span style="font-size: 11px; font-weight: normal; background: #fef9c3; padding: 2px 8px; border-radius: 4px; border: 1px solid #fde047;">${t.lblClickToggle}</span>
               </summary>
               <div class="error-accordion-content">
                 <div style="background: #fff; padding: 12px; border-radius: 6px; border: 1px solid #fde68a; margin-bottom: 12px;">
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px;">
-                    <span style="font-size: 12px; font-weight: 700; color: #78350f;">Válaszd ki a javítandó tételeket (amiből kiveszed a pipát, az selejt/hibás marad):</span>
+                    <span style="font-size: 12px; font-weight: 700; color: #78350f;">${currentLang === 'hu' ? 'Válaszd ki a javítandó tételeket:' : (currentLang === 'de' ? 'Zu korrigierende Merkmale wählen:' : 'Select characteristics to correct:')}</span>
                     <div style="display: flex; gap: 6px;">
-                      <button class="btn btn-outline" style="padding: 3px 8px; font-size: 11px;" onclick="setGlobalCheckboxes(true)" type="button">Mind pipál</button>
-                      <button class="btn btn-outline" style="padding: 3px 8px; font-size: 11px;" onclick="setGlobalCheckboxes(false)" type="button">Mind töröl</button>
+                      <button class="btn btn-outline" style="padding: 3px 8px; font-size: 11px;" onclick="setGlobalCheckboxes(true)" type="button">${t.checkAll}</button>
+                      <button class="btn btn-outline" style="padding: 3px 8px; font-size: 11px;" onclick="setGlobalCheckboxes(false)" type="button">${t.uncheckAll}</button>
                     </div>
                   </div>
                   <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
@@ -1417,11 +1680,11 @@
                     `).join('')}
                   </div>
                   <button class="btn btn-warning" style="width: 100%; justify-content: center; font-size: 13px; padding: 8px;" onclick="applyGlobalMultiFix()" type="button">
-                    ⚡ Kijelölt tételek javítása az ÖSSZES fájlban (a többi rossz marad)
+                    ${t.selFixBtn}
                   </button>
                 </div>
 
-                <div style="font-size: 13px; color: #475569; margin-bottom: 6px; font-weight: bold;">Részletes hibalista fájlonként:</div>
+                <div style="font-size: 13px; color: #475569; margin-bottom: 6px; font-weight: bold;">${currentLang === 'hu' ? 'Részletes lista fájlonként:' : (currentLang === 'de' ? 'Detaillierte Liste nach Dateien:' : 'Detailed list per file:')}</div>
                 ${errHtml}
               </div>
             </details>
@@ -1430,15 +1693,15 @@
       } else if (totalInitialErrors > 0) {
         overview.innerHTML = `
           <div class="alert-box success">
-            <h3>✅ Minden hiba sikeresen jóváhagyva / javítva!</h3>
-            <p>A mérési jegyzőkönyvek és az Excel export a jóváhagyott értékeket tartalmazzák.</p>
+            <h3>${t.allFixedMsg}</h3>
+            <p>${t.allFixedSub}</p>
           </div>
         `;
       } else {
         overview.innerHTML = `
           <div class="alert-box success">
-            <h3>✅ Minden méret megfelelő!</h3>
-            <p>A betöltött ${loadedFiles.length} jegyzőkönyvben minden mért érték eredetileg is a tűrésmezőn belül volt.</p>
+            <h3>${t.allOkMsg}</h3>
+            <p>${loadedFiles.length} ${t.inFiles} ${t.allOkSub}</p>
           </div>
         `;
       }
@@ -1449,11 +1712,11 @@
         let statusBadge = "";
 
         if (f.validationErrors.length === 0) {
-          statusBadge = `<span style="font-size:12px; margin-left:8px; font-weight:600; color:var(--success);">(Hibátlan)</span>`;
+          statusBadge = `<span style="font-size:12px; margin-left:8px; font-weight:600; color:var(--success);">(${t.statusOk})</span>`;
         } else if (remainingErrors.length === 0) {
-          statusBadge = `<span style="font-size:12px; margin-left:8px; font-weight:600; color:var(--success);">(✅ Minden hiba javítva)</span>`;
+          statusBadge = `<span style="font-size:12px; margin-left:8px; font-weight:600; color:var(--success);">(${t.allFixedMsg})</span>`;
         } else {
-          statusBadge = `<span style="font-size:12px; margin-left:8px; font-weight:600; color:var(--danger);">(⚠️ ${remainingErrors.length} aktív hiba)</span>`;
+          statusBadge = `<span style="font-size:12px; margin-left:8px; font-weight:600; color:var(--danger);">(⚠️ ${remainingErrors.length} ${t.errorsWord})</span>`;
         }
 
         cardsHtml += `
@@ -1463,32 +1726,32 @@
                 <strong>${f.name}</strong> &bull; <b style="color:#0284c7;">${f.headerData.bemerkung}</b>
                 ${statusBadge}
                 <div style="font-size:11px; color:#64748b; margin-top:2px;">
-                  Időpont: <b>${f.headerData.uhrzeit}</b> | Gép gyári: <b>${f.headerData.k2415 || '-'}</b> | Típus: <b>${f.headerData.k1202 || '-'}</b>
+                  ${currentLang === 'hu' ? 'Időpont' : (currentLang === 'de' ? 'Uhrzeit' : 'Time')}: <b>${f.headerData.uhrzeit}</b> | K2415: <b>${f.headerData.k2415 || '-'}</b> | K1202: <b>${f.headerData.k1202 || '-'}</b>
                 </div>
               </div>
               <div class="btn-group">
                 ${remainingErrors.length > 0 ? `
                   <details style="display: inline-block; position: relative;">
-                    <summary class="btn btn-warning" style="list-style: none;">⚡ Hibás tételek (${remainingErrors.length}) ▾</summary>
+                    <summary class="btn btn-warning" style="list-style: none;">⚡ ${t.fixBtn} (${remainingErrors.length}) ▾</summary>
                     <div style="position: absolute; right: 0; top: 100%; z-index: 100; background: #fff; border: 1px solid #fcd34d; border-radius: 6px; padding: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 220px; margin-top: 4px;">
-                      <div style="font-size: 11px; font-weight: bold; color: #78350f; margin-bottom: 6px;">Válaszd ki a javítandókat:</div>
+                      <div style="font-size: 11px; font-weight: bold; color: #78350f; margin-bottom: 6px;">${currentLang === 'hu' ? 'Válaszd ki a javítandókat:' : (currentLang === 'de' ? 'Merkmale wählen:' : 'Select to correct:')}</div>
                       <div style="display: flex; flex-direction: column; gap: 4px; max-height: 160px; overflow-y: auto; margin-bottom: 8px;">
                         ${remainingErrors.map(e => `
                           <label class="checkbox-pill" style="border-radius: 4px; padding: 2px 6px;">
                             <input type="checkbox" class="chk-file-${idx}" value="${e.megn}" checked>
-                            Tétel: ${e.megn}
+                            ${t.thItem}: ${e.megn}
                           </label>
                         `).join('')}
                       </div>
-                      <button class="btn btn-warning" style="width: 100%; justify-content: center;" onclick="applyFileMultiFix(${idx})">⚡ Kijelöltek javítása</button>
+                      <button class="btn btn-warning" style="width: 100%; justify-content: center;" onclick="applyFileMultiFix(${idx})">${t.fixBtn}</button>
                     </div>
                   </details>
                 ` : ''}
-                <button class="btn btn-primary" onclick="openManualCorrectionModal(${idx})">✏️ Tételek & Javítás</button>
-                <button class="btn btn-edit-hdr" onclick="openManualHeaderModal(${idx})">⚙️ Fejléc</button>
-                <button class="btn btn-outline" onclick="toggleFilePreview(${idx})">👁️ Előnézet</button>
-                <button class="btn btn-txt" onclick="downloadSingleTxt(${idx})">💾 TXT Letöltése</button>
-                <button class="btn btn-dfq" onclick="requestDfqExport(${idx})">📊 DFQ Letöltése</button>
+                <button class="btn btn-primary" onclick="openManualCorrectionModal(${idx})">${t.editBtn}</button>
+                <button class="btn btn-edit-hdr" onclick="openManualHeaderModal(${idx})">${t.headerBtn}</button>
+                <button class="btn btn-outline" onclick="toggleFilePreview(${idx})">${t.previewBtn}</button>
+                <button class="btn btn-txt" onclick="downloadSingleTxt(${idx})">${t.txtBtn}</button>
+                <button class="btn btn-dfq" onclick="requestDfqExport(${idx})">${t.dfqBtn}</button>
               </div>
             </div>
             <pre class="preview-code" id="previewBox_${idx}"></pre>
@@ -1514,6 +1777,7 @@
     }
 
     function openManualCorrectionModal(idx) {
+      const t = i18n[currentLang];
       editingFileIdx = idx;
       const f = loadedFiles[idx];
       if (!f) return;
@@ -1659,6 +1923,7 @@
       pendingFileIdx = null;
     });
 
+    // --- FEJLÉC MENTÉSE (5 MP-ES LÉPTETÉSSEL) ---
     function saveHeaderFromModal() {
       if (pendingFileIdx === null) return false;
 
@@ -1687,7 +1952,8 @@
 
         const offset = index - pendingFileIdx;
         file.headerData.bemerkung = (offset === 0) ? baseBemerkung : incrementNestCode(baseBemerkung, offset);
-        file.headerData.uhrzeit = addSecondsToTime(baseUhrzeit, offset * 5);
+        // VISSZAÁLLÍTVA: 5 másodperc eltolás!
+        file.headerData.uhrzeit = addSecondsToTime(baseUhrzeit, offset * TIME_OFFSET_SECONDS);
 
         const preEl = document.getElementById(`previewBox_${index}`);
         if (preEl && preEl.style.display === 'block') {
@@ -1927,6 +2193,7 @@
     let excelRowsGlobal = [];
 
     function renderMatrixViews() {
+      const t = i18n[currentLang];
       if (!loadedFiles.length) {
         document.getElementById('matrixBarcodeWrapper').style.display = 'none';
         document.getElementById('excelTableWrapper').style.display = 'none';
@@ -1942,16 +2209,16 @@
       const megnSet = new Set();
 
       loadedFiles.forEach(file => {
-        file.parsedItems.forEach(t => {
-          if (t.enabled !== false) {
-            megnSet.add(t.megn);
-            if (!metaData[t.megn]) {
-              const maxTol = t.maxTolAbs !== undefined ? t.maxTolAbs : +(t.nevl + t.ftur).toFixed(4);
-              const minTol = t.minTolAbs !== undefined ? t.minTolAbs : +(t.nevl + t.atur).toFixed(4);
-              metaData[t.megn] = {
-                nevl: t.nevl.toFixed(4),
-                ftur: (t.ftur >= 0 ? "+" : "") + t.ftur.toFixed(4),
-                atur: (t.atur >= 0 ? "+" : "") + t.atur.toFixed(4),
+        file.parsedItems.forEach(item => {
+          if (item.enabled !== false) {
+            megnSet.add(item.megn);
+            if (!metaData[item.megn]) {
+              const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
+              const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
+              metaData[item.megn] = {
+                nevl: item.nevl.toFixed(4),
+                ftur: (item.ftur >= 0 ? "+" : "") + item.ftur.toFixed(4),
+                atur: (item.atur >= 0 ? "+" : "") + item.atur.toFixed(4),
                 minTol: minTol.toFixed(4),
                 maxTol: maxTol.toFixed(4)
               };
@@ -1963,7 +2230,7 @@
       const megnLista = Array.from(megnSet).sort((a, b) => naturalCompare(a, b));
 
       // 1. FEJLÉC: VONALKÓD MÁTRIX
-      let bHeadHtml = `<tr><th class="megn-col">Megn.</th>`;
+      let bHeadHtml = `<tr><th class="megn-col">${t.thItem}</th>`;
       loadedFiles.forEach((file, i) => {
         const label = file.headerData.bemerkung || `F${i + 1}`;
         bHeadHtml += `<th>F${i + 1}<br><span style="font-size:10px; font-weight:normal; color:#475569;">${label}</span></th>`;
@@ -1973,12 +2240,12 @@
 
       // 2. FEJLÉC: EXCEL TÁBLÁZAT
       let eHeadHtml = `<tr>
-        <th class="megn-col">Tétel</th>
-        <th class="tol-col">Névleges</th>
-        <th class="tol-col">Tűrés (+)</th>
-        <th class="tol-col">Tűrés (-)</th>
-        <th class="tol-col">Min</th>
-        <th class="tol-col">Max</th>`;
+        <th class="megn-col">${t.thItem}</th>
+        <th class="tol-col">${t.thNom}</th>
+        <th class="tol-col">${t.thTolPlus}</th>
+        <th class="tol-col">${t.thTolMinus}</th>
+        <th class="tol-col">${t.thMin}</th>
+        <th class="tol-col">${t.thMax}</th>`;
       loadedFiles.forEach((file, i) => {
         const label = file.headerData.bemerkung || `F${i + 1}`;
         eHeadHtml += `<th>F${i + 1}<br><span style="font-size:10px; font-weight:normal; color:#475569;">${label}</span></th>`;
@@ -1986,7 +2253,7 @@
       eHeadHtml += `</tr>`;
       eHead.innerHTML = eHeadHtml;
 
-      excelHeadersGlobal = ["Tétel", "Névleges", "Tűrés (+)", "Tűrés (-)", "Min", "Max", ...loadedFiles.map((f, i) => f.headerData.bemerkung || `F${i + 1}`)];
+      excelHeadersGlobal = [t.thItem, t.thNom, t.thTolPlus, t.thTolMinus, t.thMin, t.thMax, ...loadedFiles.map((f, i) => f.headerData.bemerkung || `F${i + 1}`)];
       excelRowsGlobal = [];
 
       bBody.innerHTML = "";
@@ -2071,7 +2338,7 @@
     // EXCEL (.XLSX) FÁJL GENERÁLÁSA
     document.getElementById('btnExportExcel').addEventListener('click', () => {
       if (!excelRowsGlobal.length) {
-        alert("Nincsenek adatok az exportáláshoz!");
+        alert(currentLang === 'hu' ? "Nincsenek adatok az exportáláshoz!" : "No data to export!");
         return;
       }
 
@@ -2098,7 +2365,7 @@
     // VÁGÓLAPRA MÁSOLÁS
     document.getElementById('btnCopyClipboard').addEventListener('click', () => {
       if (!excelRowsGlobal.length) {
-        alert("Nincsenek adatok a másoláshoz!");
+        alert(currentLang === 'hu' ? "Nincsenek adatok a másoláshoz!" : "No data to copy!");
         return;
       }
 
@@ -2108,14 +2375,15 @@
       });
 
       navigator.clipboard.writeText(tsvText).then(() => {
-        alert("✅ A mérési táblázat a vágólapra másolva! Egy üres Excel munkalapon azonnal beillesztheted (Ctrl + V).");
+        alert(currentLang === 'hu' ? "✅ A mérési táblázat a vágólapra másolva! Egy üres Excel munkalapon azonnal beillesztheted (Ctrl + V)." : (currentLang === 'de' ? "✅ Daten in die Zwischenablage kopiert!" : "✅ Table copied to clipboard!"));
       }).catch(err => {
-        alert("Nem sikerült a vágólapra másolás: " + err);
+        alert("Hiba: " + err);
       });
     });
 
     // --- 4. TAB: GYÁRTÓI GYORSNÉZET MOTOR (ÖSSZECSUKHATÓ PANELEKKEL) ---
     function renderProductionView() {
+      const t = i18n[currentLang];
       const nestCardsContainer = document.getElementById('prodNestCards');
       const titleProdNest = document.getElementById('titleProdNest');
       const accProdDelta = document.getElementById('accProdDelta');
@@ -2126,7 +2394,7 @@
       const heatmapBody = document.getElementById('prodHeatmapBody');
 
       if (!loadedFiles.length) {
-        nestCardsContainer.innerHTML = "<div class='alert-box warning' style='grid-column: 1/-1;'>Nincsenek betöltött jegyzőkönyvek!</div>";
+        nestCardsContainer.innerHTML = `<div class='alert-box warning' style='grid-column: 1/-1;'>${t.emptyMsg}</div>`;
         accProdDelta.style.display = "none";
         heatmapWrapper.style.display = "none";
         return;
@@ -2141,13 +2409,13 @@
         const errors = file.parsedItems.filter(it => it.enabled !== false && isStillError(it));
         const isOk = errors.length === 0;
         if (isOk) okCount++; else nokCount++;
-        const nestName = file.headerData.bemerkung || `Fészek ${i + 1}`;
+        const nestName = file.headerData.bemerkung || `F${i + 1}`;
 
         nestCardsHtml += `
           <div class="nest-card ${isOk ? 'ok' : 'nok'}">
             <div class="nest-card-title">F${i + 1}</div>
             <div style="font-size:11px; color:#64748b; font-weight:bold; margin-top:2px;">${nestName}</div>
-            <div class="nest-card-badge">${isOk ? '✅ MEGFELELŐ' : `❌ ${errors.length} HIBA`}</div>
+            <div class="nest-card-badge">${isOk ? t.statusOk : `${t.statusNok} (${errors.length})`}</div>
           </div>
         `;
 
@@ -2164,13 +2432,13 @@
             akt: item.akt.toFixed(4),
             nevl: item.nevl.toFixed(4),
             delta: (delta >= 0 ? "+" : "") + delta.toFixed(4),
-            status: isOver ? "TÚLMÉRET" : "ALULMÉRET",
-            diff: isOver ? `+${(item.akt - maxTol).toFixed(4)} mm a max felett` : `${(item.akt - minTol).toFixed(4)} mm a min alatt`
+            status: isOver ? t.statusOver : t.statusUnder,
+            diff: isOver ? `+${(item.akt - maxTol).toFixed(4)} mm ${t.overMax}` : `${(item.akt - minTol).toFixed(4)} mm ${t.underMin}`
           });
         });
       });
       nestCardsContainer.innerHTML = nestCardsHtml;
-      titleProdNest.innerHTML = `📦 1. Fészek Státuszok (${loadedFiles.length} fészek &bull; <b style="color:var(--danger)">${nokCount} NOK</b>, <b style="color:var(--success)">${okCount} OK</b>)`;
+      titleProdNest.innerHTML = `📦 1. ${currentLang === 'hu' ? 'Fészek Státuszok' : (currentLang === 'de' ? 'Nest-Status' : 'Cavity Status')} (${loadedFiles.length} &bull; <b style="color:var(--danger)">${nokCount} NOK</b>, <b style="color:var(--success)">${okCount} OK</b>)`;
 
       if (deltaList.length > 0) {
         let deltaHtml = "";
@@ -2178,20 +2446,20 @@
           deltaHtml += `
             <div class="delta-card">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                <strong style="font-size:14px; color:#0f172a;">${d.nest} &bull; Tétel: ${d.megn}</strong>
+                <strong style="font-size:14px; color:#0f172a;">${d.nest} &bull; ${t.thItem}: ${d.megn}</strong>
                 <span style="font-size:11px; font-weight:bold; color:#ef4444; background:#fee2e2; padding:2px 6px; border-radius:4px;">${d.status}</span>
               </div>
               <div style="font-size:12px; color:#475569;">
-                Mért: <b>${d.akt}</b> | Névleges: <b>${d.nevl}</b> &rarr; Eltérés (&Delta;): <b style="color:#b91c1c;">${d.delta} mm</b>
+                ${t.thOrig}: <b>${d.akt}</b> | ${t.thNom}: <b>${d.nevl}</b> &rarr; &Delta;: <b style="color:#b91c1c;">${d.delta} mm</b>
               </div>
               <div style="font-size:12px; font-weight:bold; color:#b91c1c; margin-top:3px;">
-                Korrekciós irány: ${d.diff}
+                ${d.diff}
               </div>
             </div>
           `;
         });
         deltaCardsContainer.innerHTML = deltaHtml;
-        titleProdDelta.innerHTML = `⚠️ 2. Tűrésen Kívüli Méretek & Szükséges Gépbeállítási Eltérések (&Delta;) &bull; <b>${deltaList.length} mérethiba</b>`;
+        titleProdDelta.innerHTML = `⚠️ 2. ${currentLang === 'hu' ? 'Tűrésen Kívüli Méretek & Eltérések' : (currentLang === 'de' ? 'Maßabweichungen (&Delta;)' : 'Out-of-Tolerance Deltas (&Delta;)')} &bull; <b>${deltaList.length} ${t.errorsWord}</b>`;
         accProdDelta.style.display = "block";
       } else {
         accProdDelta.style.display = "none";
@@ -2201,7 +2469,7 @@
       loadedFiles.forEach(f => f.parsedItems.forEach(it => { if (it.enabled !== false) megnSet.add(it.megn); }));
       const megnLista = Array.from(megnSet).sort((a, b) => naturalCompare(a, b));
 
-      let hHeadHtml = `<tr><th class="megn-col">Tétel</th>`;
+      let hHeadHtml = `<tr><th class="megn-col">${t.thItem}</th>`;
       loadedFiles.forEach((f, i) => {
         hHeadHtml += `<th>F${i + 1}</th>`;
       });
@@ -2231,6 +2499,9 @@
       });
       heatmapWrapper.style.display = "block";
     }
+
+    // Induláskori inicializálás a mentett nyelvvel
+    applyLanguage();
   </script>
 </body>
 </html>
