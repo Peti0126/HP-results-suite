@@ -386,7 +386,7 @@
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt,.pdf,.dfq" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT, Zeiss CALYPSO PDF vagy kész DFQ fájlokat</h3>
-      <p>Összecsukható gyártói panelek, pontos DFQ adatsor-kiértékelés, szelektív tételkezelés</p>
+      <p>Darabonkénti 5 perces időeltolás a CAQ-hoz, összecsukható gyártói panelek, pontos DFQ kiértékelés</p>
     </div>
 
     <div class="tabs-nav no-print">
@@ -534,7 +534,7 @@
         <div>
           <h3 id="modalTitleText" style="color: #b45309;">⚙️ Paraméterbevitel (Zeiss Calypso / CAQ)</h3>
           <p style="font-size: 13px; color: #475569; margin-top: 4px;">
-            Fájl: <strong id="modalFileName"></strong>. Mentéskor a fészekkód léptetésre kerül, az időpontok pedig darabonként <strong>+5 másodperccel eltolódnak</strong>:
+            Fájl: <strong id="modalFileName"></strong>. Mentéskor a fészekkód léptetésre kerül, az időpontok pedig darabonként <strong>+5 perccel eltolódnak</strong>:
           </p>
         </div>
         <div style="font-size: 12px; font-weight: bold; color: #334155;">
@@ -590,18 +590,21 @@
       </div>
 
       <div style="margin-top: 15px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 10px 14px; font-size: 12px; color: #1e40af;">
-        ℹ️ <strong>Több jegyzőkönyv esetén:</strong> Mentéskor az adatok átöröklődnek, a fészekszám növekszik, és minden darab mérése <strong>5 másodperccel későbbi</strong> időbélyeget kap a fájlnevek ütközésének kizárására.
+        ℹ️ <strong>Több jegyzőkönyv esetén:</strong> Mentéskor az adatok átöröklődnek, a fészekszám növekszik, és minden darab mérése <strong>5 perccel későbbi</strong> időbélyeget kap a CAQ-ban való elkülönüléshez.
       </div>
 
       <div style="margin-top: 22px; display: flex; justify-content: flex-end; gap: 10px;">
         <button class="btn btn-outline" id="btnModalCancel" type="button">Mégsem</button>
-        <button class="btn btn-primary" id="btnModalSaveOnly" type="button">💾 Mentés & Másolás a többi fájlra (+5 mp/db)</button>
+        <button class="btn btn-primary" id="btnModalSaveOnly" type="button">💾 Mentés & Másolás a többi fájlra (+5 perc/db)</button>
         <button class="btn btn-success" id="btnModalSaveAndDownload" type="button">💾 Mentés & DFQ Letöltése</button>
       </div>
     </div>
   </div>
 
   <script>
+    // KÖZPONTI IDŐELTOLÁSI KONSTANSA: 5 perc = 300 másodperc
+    const TIME_OFFSET_SECONDS = 300;
+
     let loadedFiles = [];
     let pendingFileIdx = null;
     let editingFileIdx = null;
@@ -898,7 +901,7 @@
       };
     }
 
-    // --- MEGBÍZHATÓ, KOORDINÁTA-ALAPÚ CALYPSO PDF FELDOLGOZÓ ---
+    // --- 1. PONT: MEGBÍZHATÓ, KOORDINÁTA-ALAPÚ CALYPSO PDF FELDOLGOZÓ ---
     async function parseCalypsoPdf(fileName, arrayBuffer, fileOrderIndex) {
       try {
         const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -963,7 +966,8 @@
           if (baseUhrzeit.length === 5) baseUhrzeit += ":00";
         }
 
-        const uhrzeit = addSecondsToTime(baseUhrzeit, fileOrderIndex * 300);
+        // Itt adjuk hozzá a darabonkénti 5 percet (300 másodperc)
+        const uhrzeit = addSecondsToTime(baseUhrzeit, fileOrderIndex * TIME_OFFSET_SECONDS);
 
         const headerData = {
           teileNr,
@@ -1091,7 +1095,7 @@
       }
     }
 
-    // --- TXT FELDOLGOZÓ MODUL ---
+    // --- 2. PONT: TXT FELDOLGOZÓ MODUL ---
     function parseAndValidateTxt(fileName, rawText, fileOrderIndex) {
       const getVal = (regex) => {
         const m = rawText.match(regex);
@@ -1105,7 +1109,8 @@
       if (!datum) datum = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
       if (!rawUhrzeit) rawUhrzeit = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
 
-      const uhrzeit = addSecondsToTime(rawUhrzeit, fileOrderIndex * 5);
+      // Itt adjuk hozzá a darabonkénti 5 percet (300 másodperc)
+      const uhrzeit = addSecondsToTime(rawUhrzeit, fileOrderIndex * TIME_OFFSET_SECONDS);
 
       let teileBezRaw = getVal(/Teilebezeichnung\s*:\s*([^\n|]+)/).replace(/Uhrzeit\s*:.*$/i, '').trim();
       const bemerkungRaw = getVal(/Bemerkungen\s*:\s*([^\n|]+)/);
@@ -1194,7 +1199,7 @@
         }
       }
 
-      parsedItems.sort((a, b) => naturalCompare(a.megn, b.megn));
+      parsedItems.sort((a, b) => naturalCompare(a, b));
 
       const validationErrors = [];
       parsedItems.forEach(item => {
@@ -1659,6 +1664,7 @@
       pendingFileIdx = null;
     });
 
+    // --- 3. PONT: FEJLÉC MODAL MENTÉSE (SZINTÉN A 300 MP-ES ELTOLÁSSAL) ---
     function saveHeaderFromModal() {
       if (pendingFileIdx === null) return false;
 
@@ -1687,7 +1693,7 @@
 
         const offset = index - pendingFileIdx;
         file.headerData.bemerkung = (offset === 0) ? baseBemerkung : incrementNestCode(baseBemerkung, offset);
-        file.headerData.uhrzeit = addSecondsToTime(baseUhrzeit, offset * 5);
+        file.headerData.uhrzeit = addSecondsToTime(baseUhrzeit, offset * TIME_OFFSET_SECONDS);
 
         const preEl = document.getElementById(`previewBox_${index}`);
         if (preEl && preEl.style.display === 'block') {
