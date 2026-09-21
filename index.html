@@ -384,7 +384,7 @@
     <div class="upload-box no-print" id="uploadDropZone">
       <input type="file" id="fileSelector" multiple accept=".txt,.pdf,.dfq" style="display: none;">
       <h3>Kattints ide vagy húzd be a mérési TXT, Zeiss CALYPSO PDF vagy kész DFQ fájlokat</h3>
-      <p>Közvetlen DFQ beolvasás és javítás, fészek-státusz gyorsnézet, szelektív tételkezelés</p>
+      <p>Pontos DFQ adatsor-kiértékelés, fészek-státusz gyorsnézet, szelektív tételkezelés</p>
     </div>
 
     <div class="tabs-nav no-print">
@@ -727,7 +727,7 @@
       renderProductionView();
     }
 
-    // --- MEGLÉVŐ .DFQ FÁJLOK BEOLVASÓ MODULJA ---
+    // --- PONTOS ÉS MEGBÍZHATÓ .DFQ FÁJLOK BEOLVASÓ MODULJA ---
     function parseDfqFile(fileName, rawText, fileOrderIndex) {
       const lines = rawText.split(/\r?\n/);
       const tagMap = {};
@@ -741,35 +741,47 @@
           const key = line.slice(0, spaceIdx).trim();
           const val = line.slice(spaceIdx + 1).trim();
           tagMap[key] = val;
-        } else if (!line.startsWith('K') && (line.includes(String.fromCharCode(20)) || line.includes('/') || line.includes(':'))) {
+        } else if (!line.startsWith('K') && (line.includes(String.fromCharCode(20)) || line.includes(String.fromCharCode(15)) || line.includes('/'))) {
           dataLine = line;
         }
       }
 
+      // Valódi mért értékek kiolvasása a bináris adatsorból (DC4 és SI szerint)
+      const measuredValuesFromData = [];
       let datum = "09.09.2026";
       let uhrzeit = "08:41:01";
+
       if (dataLine) {
-        const parts = dataLine.split(String.fromCharCode(20));
-        if (parts.length >= 3) {
-          const dt = parts[2].split(String.fromCharCode(15))[0];
-          if (dt.includes('/')) {
-            datum = dt.split('/')[0];
-            uhrzeit = dt.split('/')[1];
+        const DC4 = String.fromCharCode(20);
+        const SI = String.fromCharCode(15);
+        // Szétbontás tételenként az SI (0x0F) zárókarakter alapján
+        const records = dataLine.split(SI).filter(r => r.trim().length > 0);
+        
+        records.forEach(rec => {
+          const parts = rec.split(DC4);
+          if (parts.length >= 1) {
+            const valNum = parseFloat(parts[0].trim());
+            if (!isNaN(valNum)) measuredValuesFromData.push(valNum);
           }
-        }
+          if (parts.length >= 3 && parts[2].includes('/')) {
+            const dt = parts[2].trim().split('/');
+            datum = dt[0];
+            uhrzeit = dt[1];
+          }
+        });
       }
 
       const headerData = {
-        teileNr: tagMap['K1001'] || "10197712",
+        teileNr: tagMap['K1001'] || "107938",
         bemerkung: tagMap['K1002'] || `N${fileOrderIndex + 1}-T1-M9621`,
-        teileBez: tagMap['K1003'] || "Krake",
+        teileBez: tagMap['K1003'] || "VUS 107938",
         rajzszam: tagMap['K1041'] || "1",
-        megrendelo: tagMap['K1053'] || "1118095",
-        maschine: tagMap['K1081'] || "KS-025",
+        megrendelo: tagMap['K1053'] || "1118161",
+        maschine: tagMap['K1081'] || "KS004",
         k2415: tagMap['K2415/0'] || tagMap['K1201'] || "143122070061",
         k1202: tagMap['K1202'] || tagMap['K2402/0'] || "OI543",
         k2406: tagMap['K2406/0'] || "Carl Zeiss Oberkochen",
-        kunde: "Schaeffler",
+        kunde: "Bosch",
         datum: datum,
         uhrzeit: uhrzeit
       };
@@ -783,9 +795,25 @@
 
         const desc = tagMap[`K2003/${i}`] || megn;
         const nevl = parseFloat(tagMap[`K2100/${i}`] || "0");
-        const atur = parseFloat(tagMap[`K2112/${i}`] || "0");
-        const ftur = parseFloat(tagMap[`K2113/${i}`] || "0");
-        const akt = parseFloat(tagMap[`K2213/${i}`] || tagMap[`K2100/${i}`] || "0");
+        
+        // Határok közvetlen beolvasása: K2110 (alsó határ), K2111 (felső határ)
+        let minTol = tagMap[`K2110/${i}`] !== undefined ? parseFloat(tagMap[`K2110/${i}`]) : undefined;
+        let maxTol = tagMap[`K2111/${i}`] !== undefined ? parseFloat(tagMap[`K2111/${i}`]) : undefined;
+        
+        // Relatív tűrések: K2112 (alsó tűrés), K2113 (felső tűrés)
+        let atur = parseFloat(tagMap[`K2112/${i}`] || "0");
+        let ftur = parseFloat(tagMap[`K2113/${i}`] || "0");
+
+        if (minTol === undefined) minTol = +(nevl + atur).toFixed(4);
+        if (maxTol === undefined) maxTol = +(nevl + ftur).toFixed(4);
+
+        // Mért érték kiválasztása: Elsőbbséget élvez az adatsorban lévő tényleges mérés!
+        let akt = measuredValuesFromData[i - 1];
+        if (akt === undefined && tagMap[`K2213/${i}`] !== undefined) {
+          akt = parseFloat(tagMap[`K2213/${i}`]);
+        }
+        if (akt === undefined) akt = nevl;
+
         const k2009 = tagMap[`K2009/${i}`] || "200";
         const k2120 = tagMap[`K2120/${i}`] || "1";
 
@@ -797,6 +825,8 @@
           nevl: nevl,
           ftur: ftur,
           atur: atur,
+          minTolAbs: minTol,
+          maxTolAbs: maxTol,
           megn: megn,
           desc: desc,
           k2009: k2009,
@@ -806,8 +836,8 @@
 
       const validationErrors = [];
       parsedItems.forEach(item => {
-        const maxTol = +(item.nevl + item.ftur).toFixed(4);
-        const minTol = +(item.nevl + item.atur).toFixed(4);
+        const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
+        const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
         const tolBand = Math.abs(maxTol - minTol);
         let hasErr = false;
         let diff = 0;
@@ -1225,8 +1255,8 @@
     }
 
     function isStillError(item) {
-      const maxTol = +(item.nevl + item.ftur).toFixed(4);
-      const minTol = +(item.nevl + item.atur).toFixed(4);
+      const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
+      const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
       return item.akt > maxTol || item.akt < minTol;
     }
 
@@ -1475,8 +1505,8 @@
       tbody.innerHTML = "";
 
       f.parsedItems.forEach((item, iIdx) => {
-        const maxTol = +(item.nevl + item.ftur).toFixed(4);
-        const minTol = +(item.nevl + item.atur).toFixed(4);
+        const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
+        const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
         const isErr = item.akt > maxTol || item.akt < minTol;
 
         const tr = document.createElement('tr');
@@ -1684,7 +1714,7 @@
       }
     });
 
-    // PONTOS BINÁRIS DFQ GENERÁLÁS
+    // PONTOS BINÁRIS DFQ GENERÁLÁS (DC4 ÉS SI VEZÉRLŐKKEL)
     function buildDfqString(file) {
       const h = file.headerData;
       
@@ -1745,9 +1775,9 @@
 
       activeItems.forEach((item, idx) => {
         const i = idx + 1;
-        const utolAbs = Math.abs(item.atur);
-        const otolAbs = Math.abs(item.ftur);
-        const tolRange = (otolAbs + utolAbs).toFixed(6);
+        const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(6);
+        const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(6);
+        const tolRange = Math.abs(maxTol - minTol).toFixed(6);
 
         lines.push(`K2001/${i} ${i}`);
         lines.push(`K2002/${i} ${item.megn}`);
@@ -1758,8 +1788,8 @@
         lines.push(`K2031/${i} `);
         lines.push(`K2100/${i} ${item.nevl.toFixed(6)}`);
         lines.push(`K2101/${i} ${item.nevl.toFixed(7)}`);
-        lines.push(`K2110/${i} ${(item.nevl + item.atur).toFixed(6)}`);
-        lines.push(`K2111/${i} ${(item.nevl + item.ftur).toFixed(6)}`);
+        lines.push(`K2110/${i} ${minTol.toFixed(6)}`);
+        lines.push(`K2111/${i} ${maxTol.toFixed(6)}`);
         lines.push(`K2112/${i} ${item.atur.toFixed(7)}`);
         lines.push(`K2113/${i} ${item.ftur.toFixed(7)}`);
         lines.push(`K2120/${i} ${item.k2120}`);
@@ -1898,8 +1928,8 @@
           if (t.enabled !== false) {
             megnSet.add(t.megn);
             if (!metaData[t.megn]) {
-              const maxTol = +(t.nevl + t.ftur).toFixed(4);
-              const minTol = +(t.nevl + t.atur).toFixed(4);
+              const maxTol = t.maxTolAbs !== undefined ? t.maxTolAbs : +(t.nevl + t.ftur).toFixed(4);
+              const minTol = t.minTolAbs !== undefined ? t.minTolAbs : +(t.nevl + t.atur).toFixed(4);
               metaData[t.megn] = {
                 nevl: t.nevl.toFixed(4),
                 ftur: (t.ftur >= 0 ? "+" : "") + t.ftur.toFixed(4),
@@ -2020,52 +2050,6 @@
       document.getElementById('excelTableWrapper').style.display = 'block';
     }
 
-    // EXCEL (.XLSX) FÁJL GENERÁLÁSA
-    document.getElementById('btnExportExcel').addEventListener('click', () => {
-      if (!excelRowsGlobal.length) {
-        alert("Nincsenek adatok az exportáláshoz!");
-        return;
-      }
-
-      const wsData = [excelHeadersGlobal, ...excelRowsGlobal];
-      const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-      ws['!cols'] = [
-        { wch: 14 },
-        { wch: 12 },
-        { wch: 12 },
-        { wch: 12 },
-        { wch: 14 },
-        { wch: 14 },
-        ...excelHeadersGlobal.slice(6).map(() => ({ wch: 16 }))
-      ];
-
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Mérési Mátrix");
-
-      const teileNr = loadedFiles[0]?.headerData?.teileNr || "Meresi_Adatok";
-      XLSX.writeFile(wb, `${teileNr}_Meresi_Matrix.xlsx`);
-    });
-
-    // VÁGÓLAPRA MÁSOLÁS
-    document.getElementById('btnCopyClipboard').addEventListener('click', () => {
-      if (!excelRowsGlobal.length) {
-        alert("Nincsenek adatok a másoláshoz!");
-        return;
-      }
-
-      let tsvText = excelHeadersGlobal.join("\t") + "\r\n";
-      excelRowsGlobal.forEach(row => {
-        tsvText += row.join("\t") + "\r\n";
-      });
-
-      navigator.clipboard.writeText(tsvText).then(() => {
-        alert("✅ A mérési táblázat a vágólapra másolva! Egy üres Excel munkalapon azonnal beillesztheted (Ctrl + V).");
-      }).catch(err => {
-        alert("Nem sikerült a vágólapra másolás: " + err);
-      });
-    });
-
     // --- 4. TAB: GYÁRTÓI GYORSNÉZET MOTOR ---
     function renderProductionView() {
       const nestCardsContainer = document.getElementById('prodNestCards');
@@ -2100,8 +2084,8 @@
 
         errors.forEach(item => {
           const delta = +(item.akt - item.nevl).toFixed(4);
-          const maxTol = +(item.nevl + item.ftur).toFixed(4);
-          const minTol = +(item.nevl + item.atur).toFixed(4);
+          const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
+          const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
           const isOver = item.akt > maxTol;
 
           deltaList.push({
