@@ -726,6 +726,10 @@
         excelSub: "Mért értékek eredeti vagy jóváhagyott állapotban fészkenként.",
         prodTitle: "🏭 Gyártásközi Állapot & Gépbeállítói Gyorslista",
         prodSub: "Azonnali fészek-státusz (OK/NOK), beállítói delta korrekciók és gyártási hőtérkép.",
+        btnSetterPrint: "🖨️ Gépbeállítói Munkalap Nyomtatása",
+        heatmapSearchPlh: "🔍 Keresés tételre (pl. 31, 35)...",
+        lblHeatmapNokOnly: "Csak hibás (NOK) tételek mutatása",
+        lblYellowTip: "Sárga cella: a felső tűréshatár szélső 15%-ában van!",
         titleHeatmap: "📊 1. Gyártási Hőtérkép: ",
         titleDelta: "⚠️ 2. Tűrésen Kívüli Méretek & Szükséges Gépbeállítási Eltérések (Δ)",
         titleNest: "📦 3. Fészek Státuszok (OK / NOK Blokkok)",
@@ -764,6 +768,25 @@
         allOkSub: "minden mért érték eredetileg is a tűrésmezőn belül volt.",
         allFixedMsg: "✅ Minden hiba sikeresen jóváhagyva / javítva!",
         allFixedSub: "A mérési jegyzőkönyvek és az export a jóváhagyott értékeket tartalmazzák.",
+        hdrModalTitle: "⚙️ Paraméterbevitel (Zeiss Calypso / CAQ)",
+        lblPresetText: "Mentett profil:",
+        optPresetDefault: "-- Válassz profilt --",
+        btnSavePreset: "💾 Mentés / Módosítás",
+        btnDeletePreset: "🗑️ Törlés",
+        lbl_m_teileNr: "Cikkszám (K1001) *:",
+        lbl_m_bemerkung: "Megjegyzés / Fészek kód (K1002) *:",
+        lbl_m_teileBez: "Munkadarab neve (K1003) *:",
+        lbl_m_rajzszam: "Rajzszám (K1041) *:",
+        lbl_m_megrendelo: "Megrendelő (K1053) *:",
+        lbl_m_maschine: "Gép száma (K1081) *:",
+        lbl_m_k2415: "Gép gyári száma (K2415 / K1201) *:",
+        lbl_m_k1202: "Mérőeszköz típusa / leírása (K1202 / K2402) *:",
+        lbl_m_k2406: "Mérőgép gyártója (K2406) *:",
+        lbl_m_datum: "Mérés Dátuma (DD.MM.YYYY) *:",
+        lbl_m_uhrzeit: "Mérés Kezdő Időpontja (HH:MM:SS) *:",
+        lblModalInfoBox: "ℹ️ <strong>Több jegyzőkönyv esetén:</strong> Mentéskor az adatok átöröklődnek, a fészekszám növekszik, és minden darab mérése <strong>5 másodperccel későbbi</strong> időbélyeget kap.",
+        btnModalSaveOnly: "💾 Mentés & Másolás a többi fájlra (+5 mp/db)",
+        btnModalSaveAndDownload: "💾 Mentés & DFQ Letöltése",
         printOkMsg: "✅ MINDEN MÉRET MEGFELELŐ! Nincs szükség gépkorrekcióra.",
         printSheetTitleText: "GÉPBEÁLLÍTÓI KORREKCIÓS MUNKALAP",
         printSheetSubText: "Mérési jegyzőkönyv alapján generált beállítási adatok",
@@ -794,6 +817,10 @@
         excelSub: "Messwerte im Original- oder korrigierten Zustand nach Nestern.",
         prodTitle: "🏭 Fertigungsstatus & Einrichter-Deltaliste",
         prodSub: "Sofortiger Neststatus (OK/NOK), Einstellkorrekturen und Fertigungs-Heatmap.",
+        btnSetterPrint: "🖨️ Einrichter-Arbeitsblatt drucken",
+        heatmapSearchPlh: "🔍 Merkmal suchen (z. B. 31, 35)...",
+        lblHeatmapNokOnly: "Nur fehlerhafte (NOK) Merkmale anzeigen",
+        lblYellowTip: "Gelbe Zelle: liegt in den äußeren 15% der oberen Toleranzgrenze!",
         titleHeatmap: "📊 1. Fertigungs-Heatmap: ",
         titleDelta: "⚠️ 2. Maßabweichungen & erforderliche Korrekturen (Δ)",
         titleNest: "📦 3. Nest-Status (OK / NOK Blöcke)",
@@ -832,6 +859,25 @@
         allOkSub: "alle Messwerte lagen ursprünglich im Toleranzbereich.",
         allFixedMsg: "✅ Alle Merkmale erfolgreich genehmigt / korrigiert!",
         allFixedSub: "Die Messprotokolle und Exporte enthalten die korrigierten Werte.",
+        hdrModalTitle: "⚙️ Parametereingabe (Zeiss Calypso / CAQ)",
+        lblPresetText: "Gespeichertes Profil:",
+        optPresetDefault: "-- Profil wählen --",
+        btnSavePreset: "💾 Speichern / Ändern",
+        btnDeletePreset: "🗑️ Löschen",
+        lbl_m_teileNr: "Sachnummer (K1001) *:",
+        lbl_m_bemerkung: "Bemerkung / Nestcode (K1002) *:",
+        lbl_m_teileBez: "Teilebezeichnung (K1003) *:",
+        lbl_m_rajzszam: "Zeichnungsnummer (K1041) *:",
+        lbl_m_megrendelo: "Auftragsnummer (K1053) *:",
+        lbl_m_maschine: "Maschinennummer (K1081) *:",
+        lbl_m_k2415: "Maschinenseriennr. (K2415 / K1201) *:",
+        lbl_m_k1202: "Messmitteltyp / Beschreibung (K1202 / K2402) *:",
+        lbl_m_k2406: "Messmittelhersteller (K2406) *:",
+        lbl_m_datum: "Messdatum (DD.MM.YYYY) *:",
+        lbl_m_uhrzeit: "Startuhrzeit (HH:MM:SS) *:",
+        lblModalInfoBox: "ℹ️ <strong>Bei mehreren Protokollen:</strong> Beim Speichern werden Daten vererbt, die Nestnummer erhöht sich und jedes Teil erhält einen um <strong>5 Sekunden späteren</strong> Zeitstempel.",
+        btnModalSaveOnly: "💾 Speichern & auf alle übertragen (+5 s/Stück)",
+        btnModalSaveAndDownload: "💾 Speichern & DFQ herunterladen",
         printOkMsg: "✅ ALLE MASSE IN ORDNUNG! Keine Maschinenkorrektur erforderlich.",
         printSheetTitleText: "EINRICHTER-KORREKTURBLATT",
         printSheetSubText: "Aus Messdaten automatisch generierte Einstelldaten",
@@ -853,7 +899,7 @@
         emptyMsg: "Please upload measurement reports (.pdf, .txt, or .dfq) to validate!",
         btnDfqAll: "📊 Download All DFQ (.ZIP)",
         btnTxtAll: "📦 Download All TXT (.ZIP)",
-        btnExportXlsx: "📥 Download Excel (.xlsx)",
+        btnExportXlsx: "📥 Excel (.xlsx) Download",
         btnCopyClip: "📋 Copy to Clipboard",
         btnPrint: "🖨️ Print (A4 Landscape)",
         barcodeTitle: "Barcode Matrix (Code128)",
@@ -862,6 +908,10 @@
         excelSub: "Values in original or approved state per cavity.",
         prodTitle: "🏭 In-Process Status & Setter Delta Quicklist",
         prodSub: "Real-time cavity status (OK/NOK), machine delta offsets, and heatmap.",
+        btnSetterPrint: "🖨️ Print Setter Worksheet",
+        heatmapSearchPlh: "🔍 Search characteristic (e.g. 31, 35)...",
+        lblHeatmapNokOnly: "Show out-of-tolerance (NOK) only",
+        lblYellowTip: "Yellow cell: value is within the outer 15% of the upper limit!",
         titleHeatmap: "📊 1. Production Heatmap: ",
         titleDelta: "⚠️ 2. Out-of-Tolerance Deltas & Offsets (Δ)",
         titleNest: "📦 3. Cavity Status (OK / NOK Blocks)",
@@ -900,6 +950,25 @@
         allOkSub: "all characteristics were originally within limits.",
         allFixedMsg: "✅ All errors successfully approved / corrected!",
         allFixedSub: "Inspection reports and exports now contain approved data.",
+        hdrModalTitle: "⚙️ Parameter Input (Zeiss Calypso / CAQ)",
+        lblPresetText: "Saved profile:",
+        optPresetDefault: "-- Select profile --",
+        btnSavePreset: "💾 Save / Update",
+        btnDeletePreset: "🗑️ Delete",
+        lbl_m_teileNr: "Part Number (K1001) *:",
+        lbl_m_bemerkung: "Cavity / Comment (K1002) *:",
+        lbl_m_teileBez: "Part Description (K1003) *:",
+        lbl_m_rajzszam: "Drawing Number (K1041) *:",
+        lbl_m_megrendelo: "Order Number (K1053) *:",
+        lbl_m_maschine: "Machine Number (K1081) *:",
+        lbl_m_k2415: "Machine Serial No. (K2415 / K1201) *:",
+        lbl_m_k1202: "Gage Type / Name (K1202 / K2402) *:",
+        lbl_m_k2406: "Gage Manufacturer (K2406) *:",
+        lbl_m_datum: "Inspection Date (DD.MM.YYYY) *:",
+        lbl_m_uhrzeit: "Start Time (HH:MM:SS) *:",
+        lblModalInfoBox: "ℹ️ <strong>Multiple files:</strong> Parameters will be copied to all files, cavity codes incremented, and each file gets a <strong>+5 seconds later</strong> timestamp.",
+        btnModalSaveOnly: "💾 Save & Apply to all (+5 s/pc)",
+        btnModalSaveAndDownload: "💾 Save & Download DFQ",
         printOkMsg: "✅ ALL MEASUREMENTS WITHIN TOLERANCE! No machine correction needed.",
         printSheetTitleText: "MACHINE SETTER CORRECTION SHEET",
         printSheetSubText: "Offset adjustment data generated from inspection reports",
@@ -950,6 +1019,10 @@
 
       document.getElementById('prodHeaderTitle').textContent = t.prodTitle;
       document.getElementById('prodHeaderSub').textContent = t.prodSub;
+      document.getElementById('btnPrintSetterSheet').textContent = t.btnSetterPrint;
+      document.getElementById('heatmapSearch').placeholder = t.heatmapSearchPlh;
+      document.getElementById('lblHeatmapNokOnly').textContent = t.lblHeatmapNokOnly;
+      document.getElementById('lblYellowTip').textContent = t.lblYellowTip;
 
       document.getElementById('btnDownloadAllDfq').textContent = t.btnDfqAll;
       document.getElementById('btnDownloadAllTxt').textContent = t.btnTxtAll;
@@ -957,6 +1030,26 @@
       document.getElementById('btnCorrCancel').textContent = t.btnCancel;
       document.getElementById('btnCorrApply').textContent = t.btnApply;
       document.getElementById('btnModalCancel').textContent = t.btnCancel;
+
+      document.getElementById('modalTitleText').textContent = t.hdrModalTitle;
+      document.getElementById('lblPresetText').textContent = t.lblPresetText;
+      document.getElementById('optPresetDefault').textContent = t.optPresetDefault;
+      document.getElementById('btnSavePreset').textContent = t.btnSavePreset;
+      document.getElementById('btnDeletePreset').textContent = t.btnDeletePreset;
+      document.getElementById('lbl_m_teileNr').textContent = t.lbl_m_teileNr;
+      document.getElementById('lbl_m_bemerkung').textContent = t.lbl_m_bemerkung;
+      document.getElementById('lbl_m_teileBez').textContent = t.lbl_m_teileBez;
+      document.getElementById('lbl_m_rajzszam').textContent = t.lbl_m_rajzszam;
+      document.getElementById('lbl_m_megrendelo').textContent = t.lbl_m_megrendelo;
+      document.getElementById('lbl_m_maschine').textContent = t.lbl_m_maschine;
+      document.getElementById('lbl_m_k2415').textContent = t.lbl_m_k2415;
+      document.getElementById('lbl_m_k1202').textContent = t.lbl_m_k1202;
+      document.getElementById('lbl_m_k2406').textContent = t.lbl_m_k2406;
+      document.getElementById('lbl_m_datum').textContent = t.lbl_m_datum;
+      document.getElementById('lbl_m_uhrzeit').textContent = t.lbl_m_uhrzeit;
+      document.getElementById('lblModalInfoBox').innerHTML = t.lblModalInfoBox;
+      document.getElementById('btnModalSaveOnly').textContent = t.btnModalSaveOnly;
+      document.getElementById('btnModalSaveAndDownload').textContent = t.btnModalSaveAndDownload;
 
       document.querySelectorAll('.lblClickToggle').forEach(el => el.textContent = t.lblClickToggle);
     }
@@ -1604,7 +1697,7 @@
         fileIndex: fileOrderIndex,
         headerData: headerData,
         parsedItems: parsedItems,
-        validationErrors: validationErrors,
+        validationErrors,
         isFixed: false
       };
     }
@@ -1984,7 +2077,7 @@
 
     function refreshPresetSelector() {
       const sel = document.getElementById('presetSelector');
-      sel.innerHTML = '<option value="">-- Válassz profilt --</option>';
+      sel.innerHTML = `<option value="">${i18n[currentLang].optPresetDefault}</option>`;
       try {
         const presets = JSON.parse(localStorage.getItem('hp_presets') || '{}');
         Object.keys(presets).sort().forEach(pName => {
@@ -1999,7 +2092,7 @@
     function saveCurrentAsPreset() {
       const teileNr = document.getElementById('m_teileNr').value.trim();
       if (!teileNr) {
-        alert("Adj meg egy cikkszámot a profil mentéséhez / módosításához!");
+        alert(currentLang === 'hu' ? "Adj meg egy cikkszámot a profil mentéséhez / módosításához!" : (currentLang === 'de' ? "Bitte Sachnummer zum Speichern/Ändern angeben!" : "Please provide a part number to save/update!"));
         return;
       }
       const profile = {
@@ -2019,7 +2112,7 @@
         localStorage.setItem('hp_presets', JSON.stringify(presets));
         refreshPresetSelector();
         document.getElementById('presetSelector').value = teileNr;
-        alert(isUpdate ? `✅ "${teileNr}" profil sikeresen módosítva!` : `✅ "${teileNr}" új profil sikeresen elmentve!`);
+        alert(isUpdate ? `✅ "${teileNr}" profil frissítve!` : `✅ "${teileNr}" új profil elmentve!`);
       } catch (e) {
         alert("Hiba a mentéskor: " + e);
       }
@@ -2029,10 +2122,10 @@
       const sel = document.getElementById('presetSelector');
       const pName = sel.value;
       if (!pName) {
-        alert("Kérlek válassz ki egy profilt a listából a törléshez!");
+        alert(currentLang === 'hu' ? "Kérlek válassz ki egy profilt a listából a törléshez!" : (currentLang === 'de' ? "Bitte ein Profil zum Löschen auswählen!" : "Please select a profile to delete!"));
         return;
       }
-      if (!confirm(`Biztosan törölni szeretnéd a(z) "${pName}" mentett profilt?`)) return;
+      if (!confirm(`Biztosan törölni szeretnéd a(z) "${pName}" profilt?`)) return;
 
       try {
         const presets = JSON.parse(localStorage.getItem('hp_presets') || '{}');
@@ -2068,7 +2161,7 @@
       const file = loadedFiles[idx];
       if (!file) return;
 
-      document.getElementById('modalTitleText').innerText = "⚙️ Paraméterbevitel (Zeiss Calypso / CAQ)";
+      document.getElementById('modalTitleText').innerText = i18n[currentLang].hdrModalTitle;
       document.getElementById('modalTitleText').style.color = "#0284c7";
       openHeaderModal(file);
     }
@@ -2183,7 +2276,7 @@
       const k2406 = document.getElementById('m_k2406').value.trim();
 
       if (!teileNr || !bemerkung || !teileBez || !rajzszam || !megrendelo || !maschine || !k2415 || !k1202 || !k2406) {
-        alert("Kérlek töltsd ki az összes kötelező mezőt a DFQ generáláshoz!");
+        alert(currentLang === 'hu' ? "Kérlek töltsd ki az összes kötelező mezőt a DFQ generáláshoz!" : "Please fill in all mandatory fields for DFQ generation!");
         return;
       }
 
@@ -2589,7 +2682,7 @@
 
     function printSetterWorksheet() {
       if (!loadedFiles.length) {
-        alert("Nincsenek betöltött fájlok a munkalaphoz!");
+        alert(i18n[currentLang].emptyMsg);
         return;
       }
 
@@ -2785,7 +2878,7 @@
               textColor = "#991b1b";
               titleTip = currentLang === 'hu' ? "Tűrésen kívül!" : (currentLang === 'de' ? "Außerhalb der Toleranz!" : "Out of tolerance!");
             } else if (isNear) {
-              bgColor = "#fef08a"; // Sárga figyelmeztetés a valós peremre
+              bgColor = "#fef08a";
               textColor = "#854d0e";
               titleTip = currentLang === 'hu' ? "Figyelem: Tűréshatár peremén!" : (currentLang === 'de' ? "Achtung: An der Toleranzgrenze!" : "Warning: Near tolerance limit!");
             }
