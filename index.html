@@ -449,7 +449,7 @@
       <p id="txtDropSub">Hardver-azonosított DFQ generálás, 5 mp-es időeltolás, közvetlen DFQ és PDF feldolgozás</p>
     </div>
 
-    <!-- FÜLEK: 1. Ellenőrző, 2. Gyártói, 3. Excel, 4. Vonalkód -->
+    <!-- FÜLEK -->
     <div class="tabs-nav no-print">
       <button class="tab-btn active" id="btnTabValidator" type="button">🔍 1. Jegyzőkönyv Ellenőrző</button>
       <button class="tab-btn" id="btnTabProduction" type="button" style="background: #fef3c7; color: #78350f;">🏭 2. Gyártói Nézet</button>
@@ -471,7 +471,7 @@
       <div id="validatorFilesList"></div>
     </div>
 
-    <!-- 2. TAB: GYÁRTÓI NÉZET (HŐTÉRKÉP ELÖL) -->
+    <!-- 2. TAB: GYÁRTÓI NÉZET -->
     <div id="tab-production" class="tab-pane">
       <div class="card no-print" style="background: #fff; padding: 14px 20px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
         <div>
@@ -495,7 +495,7 @@
             <label class="checkbox-pill">
               <input type="checkbox" id="heatmapNokOnly" onchange="filterHeatmap()"> Csak hibás (NOK) tételek mutatása
             </label>
-            <span style="font-size: 11px; color: var(--text-muted); margin-left: auto;">Sárga cella: a tűréshatár szélső 15%-ában van!</span>
+            <span style="font-size: 11px; color: var(--text-muted); margin-left: auto;">Sárga cella: a felső tűréshatár szélső 15%-ában van!</span>
           </div>
 
           <div class="table-container" id="prodHeatmapWrapper" style="display: none; margin-top:0;">
@@ -613,7 +613,6 @@
           </p>
         </div>
         
-        <!-- Cikkszám Profilkezelő (Mentés / Módosítás / Törlés) -->
         <div style="display: flex; gap: 6px; align-items: center; background: #f1f5f9; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); flex-wrap: wrap;">
           <span style="font-size: 11px; font-weight: bold; color: #334155;">Mentett profil:</span>
           <select id="presetSelector" onchange="loadPreset(this.value)" style="padding: 4px 8px; font-size: 12px;">
@@ -1605,14 +1604,26 @@
       return item.akt > maxTol || item.akt < minTol;
     }
 
+    // PONTOSÍTOTT CPK / HATÁRFIGYELÉS:
+    // Pozíciónál, szimmetriánál és alaktűréseknél (ahol a névleges 0) a 0 a tökéletes állapot, így CSAK a felső határ peremét figyeli!
     function isNearToleranceBorder(item) {
       if (isStillError(item)) return false;
       const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
       const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
       const band = Math.abs(maxTol - minTol);
       if (band <= 0) return false;
-      const margin = band * 0.15;
-      return (item.akt >= (maxTol - margin)) || (item.akt <= (minTol + margin));
+      const margin = band * 0.15; // Szélső 15%
+
+      // Ha a névleges méret 0 (pl. pozíció, szimmetria) vagy az alsó határ 0
+      const isOneSidedZero = (item.nevl === 0 || (minTol === 0 && maxTol > 0));
+
+      if (isOneSidedZero) {
+        // Csak akkor sárga, ha a felső határt közelíti! A 0 felé lévő értékek tökéletesen zöldek!
+        return item.akt >= (maxTol - margin);
+      } else {
+        // Hagyományos kétoldalas méretnél az alsó és felső perem is sárga
+        return (item.akt >= (maxTol - margin)) || (item.akt <= (minTol + margin));
+      }
     }
 
     function setGlobalCheckboxes(state) {
@@ -1935,7 +1946,6 @@
                 h.uhrzeit && h.uhrzeit.trim());
     }
 
-    // PROFILKEZELŐ (PRESETS): MENTÉS, MÓDOSÍTÁS, TÖRLÉS
     function refreshPresetSelector() {
       const sel = document.getElementById('presetSelector');
       sel.innerHTML = '<option value="">-- Válassz profilt --</option>';
@@ -2614,7 +2624,6 @@
       window.print();
     }
 
-    // GYÁRTÓI NÉZET: HŐTÉRKÉP ELÖL, KÖZÉPEN DELTA, ALUL BLOKKOK
     function renderProductionView() {
       const t = i18n[currentLang];
       const nestCardsContainer = document.getElementById('prodNestCards');
@@ -2732,7 +2741,7 @@
               textColor = "#991b1b";
               titleTip = "Tűrésen kívül!";
             } else if (isNear) {
-              bgColor = "#fef08a";
+              bgColor = "#fef08a"; // Sárga figyelmeztetés a valós peremre
               textColor = "#854d0e";
               titleTip = "Figyelem: Tűréshatár peremén!";
             }
