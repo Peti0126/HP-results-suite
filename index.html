@@ -568,7 +568,7 @@
       </div>
     </div>
 
-    <!-- LÁBLÉC A KÉRT SZÖVEGGEL -->
+    <!-- LÁBLÉC -->
     <footer class="no-print" style="text-align: center; margin-top: 35px; padding-top: 15px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 11px;">
       <span>&copy; 2026 Horváth Péter. Saját fejlesztésű mérési innováció. A szellemi tulajdon és forráskód védett.</span>
     </footer>
@@ -607,7 +607,7 @@
     </div>
   </div>
 
-  <!-- MODAL: ZEISS PARAMÉTERBEVITEL + MENTÉS / MÓDOSÍTÁS / TÖRLÉS -->
+  <!-- MODAL: ZEISS PARAMÉTERBEVITEL -->
   <div class="modal-backdrop" id="headerModal">
     <div class="modal-window">
       <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
@@ -619,12 +619,12 @@
         </div>
         
         <div style="display: flex; gap: 6px; align-items: center; background: #f1f5f9; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); flex-wrap: wrap;">
-          <span style="font-size: 11px; font-weight: bold; color: #334155;">Mentett profil:</span>
+          <span style="font-size: 11px; font-weight: bold; color: #334155;" id="lblPresetText">Mentett profil:</span>
           <select id="presetSelector" onchange="loadPreset(this.value)" style="padding: 4px 8px; font-size: 12px;">
-            <option value="">-- Válassz profilt --</option>
+            <option value="" id="optPresetDefault">-- Válassz profilt --</option>
           </select>
-          <button class="btn btn-primary" style="padding: 4px 8px; font-size: 11px;" onclick="saveCurrentAsPreset()" type="button" title="Aktuális adatok mentése vagy frissítése ehhez a cikkszámhoz">💾 Mentés / Módosítás</button>
-          <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteSelectedPreset()" type="button" title="Kijelölt profil végleges törlése">🗑️ Törlés</button>
+          <button class="btn btn-primary" style="padding: 4px 8px; font-size: 11px;" onclick="saveCurrentAsPreset()" type="button" id="btnSavePreset">💾 Mentés / Módosítás</button>
+          <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteSelectedPreset()" type="button" id="btnDeletePreset">🗑️ Törlés</button>
         </div>
       </div>
       
@@ -653,7 +653,7 @@
           <label id="lbl_m_maschine">Gép száma (K1081) *:</label>
           <input type="text" id="m_maschine" placeholder="pl. KS062 vagy KS004 vagy 9578">
         </div>
-        <div class="form-group">
+          <div class="form-group">
           <label id="lbl_m_k2415">Gép gyári száma (K2415 / K1201) *:</label>
           <input type="text" id="m_k2415" placeholder="pl. 143122070061 vagy 15-00027">
         </div>
@@ -691,39 +691,18 @@
   <div id="printableSetterSheet" style="display: none; padding: 25px; font-family: sans-serif;">
     <div style="border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: flex-end;">
       <div>
-        <h2 style="font-size: 20px; font-weight: bold; margin: 0;">GÉPBEÁLLÍTÓI KORREKCIÓS MUNKALAP</h2>
+        <h2 style="font-size: 20px; font-weight: bold; margin: 0;" id="printSheetTitle">GÉPBEÁLLÍTÓI KORREKCIÓS MUNKALAP</h2>
         <div style="font-size: 12px; color: #475569; margin-top: 4px;" id="printSheetSub">Mérési jegyzőkönyv alapján generált beállítási adatok</div>
       </div>
       <div style="text-align: right; font-size: 12px;">
-        <div><strong>Dátum:</strong> <span id="printDate"></span></div>
-        <div><strong>Cikkszám:</strong> <span id="printPartNr"></span></div>
+        <div><strong id="printDateLbl">Dátum:</strong> <span id="printDate"></span></div>
+        <div><strong id="printPartNrLbl">Cikkszám:</strong> <span id="printPartNr"></span></div>
       </div>
     </div>
     <div id="printDeltaTableWrapper"></div>
   </div>
 
   <script>
-    // --- GYORSBILLENTYŰK ÉS MENTÉSEK LETILTÁSA ---
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "F12" || e.keyCode === 123) {
-        e.preventDefault();
-        return false;
-      }
-      if (e.ctrlKey && (e.key === "u" || e.key === "U" || e.key === "s" || e.key === "S" || e.key === "c" || e.key === "C" || e.key === "a" || e.key === "A" || e.key === "p" || e.key === "P")) {
-        e.preventDefault();
-        return false;
-      }
-      if (e.ctrlKey && e.shiftKey && (e.key === "i" || e.key === "I" || e.key === "j" || e.key === "J" || e.key === "c" || e.key === "C" || e.key === "u" || e.key === "U")) {
-        e.preventDefault();
-        return false;
-      }
-    }, false);
-
-    document.addEventListener("contextmenu", (e) => {
-      e.preventDefault();
-      return false;
-    }, false);
-
     const TIME_OFFSET_SECONDS = 5;
 
     const i18n = {
@@ -781,7 +760,38 @@
         allOkMsg: "✅ Minden méret megfelelő!",
         allOkSub: "minden mért érték eredetileg is a tűrésmezőn belül volt.",
         allFixedMsg: "✅ Minden hiba sikeresen jóváhagyva / javítva!",
-        allFixedSub: "A mérési jegyzőkönyvek és az export a jóváhagyott értékeket tartalmazzák."
+        allFixedSub: "A mérési jegyzőkönyvek és az export a jóváhagyott értékeket tartalmazzák.",
+        hdrModalTitle: "⚙️ Paraméterbevitel (Zeiss Calypso / CAQ)",
+        lblPresetText: "Mentett profil:",
+        optPresetDefault: "-- Válassz profilt --",
+        btnSavePreset: "💾 Mentés / Módosítás",
+        btnDeletePreset: "🗑️ Törlés",
+        lbl_m_teileNr: "Cikkszám (K1001) *:",
+        lbl_m_bemerkung: "Megjegyzés / Fészek kód (K1002) *:",
+        lbl_m_teileBez: "Munkadarab neve (K1003) *:",
+        lbl_m_rajzszam: "Rajzszám (K1041) *:",
+        lbl_m_megrendelo: "Megrendelő (K1053) *:",
+        lbl_m_maschine: "Gép száma (K1081) *:",
+        lbl_m_k2415: "Gép gyári száma (K2415 / K1201) *:",
+        lbl_m_k1202: "Mérőeszköz típusa / leírása (K1202 / K2402) *:",
+        lbl_m_k2406: "Mérőgép gyártója (K2406) *:",
+        lbl_m_datum: "Mérés Dátuma (DD.MM.YYYY) *:",
+        lbl_m_uhrzeit: "Mérés Kezdő Időpontja (HH:MM:SS) *:",
+        lblModalInfoBox: "ℹ️ <strong>Több jegyzőkönyv esetén:</strong> Mentéskor az adatok átöröklődnek, a fészekszám növekszik, és minden darab mérése <strong>5 másodperccel későbbi</strong> időbélyeget kap.",
+        btnModalSaveOnly: "💾 Mentés & Másolás a többi fájlra (+5 mp/db)",
+        btnModalSaveAndDownload: "💾 Mentés & DFQ Letöltése",
+        printSheetTitle: "GÉPBEÁLLÍTÓI KORREKCIÓS MUNKALAP",
+        printSheetSub: "Mérési jegyzőkönyv alapján generált beállítási adatok",
+        printDateLbl: "Dátum:",
+        printPartNrLbl: "Cikkszám:",
+        thNestPrint: "Fészek",
+        thItemPrint: "Tétel",
+        thDescPrint: "Megnevezés",
+        thValPrint: "Mért érték",
+        thNomPrint: "Névleges",
+        thDeltaPrint: "Eltérés (Δ)",
+        thAdjPrint: "Szükséges beállítás",
+        footerText: "© 2026 Horváth Péter. Saját fejlesztésű mérési innováció. A szellemi tulajdon és forráskód védett."
       },
       de: {
         appSubtitle: "1. Prüfung &bull; 2. Fertigungs-Schnellansicht &bull; 3. Excel &bull; 4. Barcode-Matrix",
