@@ -7,9 +7,6 @@
   
   <!-- PDF.js motor Calypso PDF jegyzőkönyvekhez -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  </script>
 
   <!-- SheetJS az Excel (.xlsx) exportáláshoz -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -33,23 +30,8 @@
       --radius: 8px;
     }
 
-    * { 
-      box-sizing: border-box; 
-      margin: 0; 
-      padding: 0; 
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     
-    input, textarea, select {
-      -webkit-user-select: auto !important;
-      -moz-user-select: auto !important;
-      -ms-user-select: auto !important;
-      user-select: auto !important;
-    }
-
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       background: var(--bg);
@@ -80,7 +62,6 @@
       text-align: center;
       box-shadow: 0 20px 40px rgba(0,0,0,0.35);
       border: 1px solid var(--border);
-      position: relative;
     }
     .login-box-header {
       display: flex;
@@ -191,6 +172,7 @@
       cursor: pointer;
       margin-bottom: 20px;
       transition: 0.2s ease;
+      position: relative;
     }
     .upload-box:hover { background: #dbeafe; border-color: var(--primary); }
     .upload-box h3 { font-size: 16px; color: var(--primary); margin-bottom: 5px; }
@@ -510,7 +492,7 @@
     }
   </style>
 </head>
-<body oncontextmenu="return false;">
+<body>
 
   <!-- FELHASZNÁLÓNÉV + JELSZÓ BELÉPŐ ABLAK -->
   <div id="loginLockOverlay">
@@ -569,7 +551,8 @@
     </header>
 
     <div class="upload-box no-print" id="uploadDropZone">
-      <input type="file" id="fileSelector" multiple accept=".txt,.pdf,.dfq" style="display: none;">
+      <!-- Biztonságos, láthatatlan de aktív fájlinput a céges böngészőkhöz -->
+      <input type="file" id="fileSelector" multiple accept=".txt,.pdf,.dfq" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 5;">
       <h3 id="txtDropTitle">Kattints ide vagy húzd be a mérési TXT, Zeiss CALYPSO PDF vagy kész DFQ fájlokat</h3>
       <p id="txtDropSub">Hardver-azonosított DFQ generálás, 5 mp-es időeltolás, közvetlen DFQ és PDF feldolgozás</p>
     </div>
@@ -828,6 +811,13 @@
   </div>
 
   <script>
+    // --- BIZTONSÁGOS PDF.JS WORKER BEÁLLÍTÁS ---
+    if (window.pdfjsLib) {
+      try {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      } catch(e) {}
+    }
+
     // --- FELHASZNÁLÓNÉV + JELSZÓ ELLENŐRZŐ ---
     const AUTH_USER = "Admin";
     const AUTH_PASS = "Admin";
@@ -867,15 +857,6 @@
     document.getElementById("appUsernameInput").addEventListener("keypress", (e) => {
       if (e.key === "Enter") document.getElementById("appPasswordInput").focus();
     });
-
-    checkSessionAuth();
-
-    // Billentyűkombinációk blokkolása (F12, Ctrl+U, Ctrl+S)
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "F12" || e.keyCode === 123) { e.preventDefault(); return false; }
-      if (e.ctrlKey && (e.key === "u" || e.key === "U" || e.key === "s" || e.key === "S")) { e.preventDefault(); return false; }
-      if (e.ctrlKey && e.shiftKey && (e.key === "i" || e.key === "I" || e.key === "j" || e.key === "J" || e.key === "c" || e.key === "C")) { e.preventDefault(); return false; }
-    }, false);
 
     const TIME_OFFSET_SECONDS = 5;
 
@@ -1202,14 +1183,12 @@
     function applyLanguage() {
       const t = i18n[currentLang];
       
-      // Belépő ablak fordításai
       document.getElementById('lblLoginSub').innerHTML = t.loginSub;
       document.getElementById('lblUsername').textContent = t.lblUsername;
       document.getElementById('lblPassword').textContent = t.lblPassword;
       document.getElementById('btnLoginSubmit').textContent = t.btnLoginSubmit;
       document.getElementById('loginErrorMsg').textContent = t.loginErrorMsg;
 
-      // Főoldal & fülek
       document.getElementById('appSubtitle').innerHTML = t.appSubtitle;
       document.getElementById('txtDropTitle').textContent = t.dropTitle;
       document.getElementById('txtDropSub').textContent = t.dropSub;
@@ -1218,18 +1197,15 @@
       document.getElementById('btnTabExcel').textContent = t.tabExcel;
       document.getElementById('btnTabMatrix').textContent = t.tabMatrix;
 
-      // 4. Vonalkód fül
       document.getElementById('matrixCardTitle').textContent = t.barcodeTitle;
       document.getElementById('matrixCardSub').textContent = t.barcodeSub;
       document.getElementById('btnPrintBarcode').textContent = t.btnPrint;
 
-      // 3. Excel fül
       document.getElementById('excelCardTitle').textContent = t.excelTitle;
       document.getElementById('excelCardSub').textContent = t.excelSub;
       document.getElementById('btnExportExcel').textContent = t.btnExportXlsx;
       document.getElementById('btnCopyClipboard').textContent = t.btnCopyClip;
 
-      // 2. Gyártói nézet
       document.getElementById('prodHeaderTitle').textContent = t.prodTitle;
       document.getElementById('prodHeaderSub').textContent = t.prodSub;
       document.getElementById('btnPrintSetterSheet').textContent = t.btnSetterPrint;
@@ -1237,11 +1213,9 @@
       document.getElementById('lblHeatmapNokOnly').textContent = t.lblHeatmapNokOnly;
       document.getElementById('lblYellowTip').textContent = t.lblYellowTip;
 
-      // 1. Ellenőrző fül gombok
       document.getElementById('btnDownloadAllDfq').textContent = t.btnDfqAll;
       document.getElementById('btnDownloadAllTxt').textContent = t.btnTxtAll;
 
-      // Korrekció modal gombok
       document.getElementById('btnCorrCancel').textContent = t.btnCancel;
       document.getElementById('btnCorrApply').textContent = t.btnApply;
       document.getElementById('th_k2002').textContent = `${t.thItem} (K2002)`;
@@ -1251,7 +1225,6 @@
       document.getElementById('th_orig').textContent = t.thOrig;
       document.getElementById('th_valid').textContent = t.thValid;
 
-      // Fejléc Modal címkék & gombok
       document.getElementById('modalTitleText').textContent = t.hdrModalTitle;
       document.getElementById('lblPresetText').textContent = t.lblPresetText;
       document.getElementById('optPresetDefault').textContent = t.optPresetDefault;
@@ -1273,15 +1246,12 @@
       document.getElementById('btnModalSaveOnly').textContent = t.btnModalSaveOnly;
       document.getElementById('btnModalSaveAndDownload').textContent = t.btnModalSaveAndDownload;
 
-      // Munkalap nyomtatás elemek
       document.getElementById('printSheetTitle').textContent = t.printSheetTitle;
       document.getElementById('printSheetSub').textContent = t.printSheetSub;
       document.getElementById('printDateLbl').textContent = t.printDateLbl;
       document.getElementById('printPartNrLbl').textContent = t.printPartNrLbl;
 
-      // Lábléc szöveg
       document.getElementById('footerText').textContent = t.footerText;
-
       document.querySelectorAll('.lblClickToggle').forEach(el => el.textContent = t.lblClickToggle);
     }
 
@@ -1289,20 +1259,14 @@
     let pendingFileIdx = null;
     let editingFileIdx = null;
 
-    const dropZone = document.getElementById('uploadDropZone');
     const fileInput = document.getElementById('fileSelector');
 
-    dropZone.addEventListener('click', () => fileInput.click());
-    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = "var(--primary)"; });
-    dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = "#93c5fd"; });
-    dropZone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropZone.style.borderColor = "#93c5fd";
-      if (e.dataTransfer.files.length) handleIncomingFiles(Array.from(e.dataTransfer.files));
-    });
-
+    // FÁJLVÁLASZTÓ ESEMÉNYKEZELŐ (CÉGES BÖNGÉSZŐRE OPTIMALIZÁLVA)
     fileInput.addEventListener('change', (e) => {
-      if (e.target.files.length) handleIncomingFiles(Array.from(e.target.files));
+      if (e.target.files && e.target.files.length) {
+        handleIncomingFiles(Array.from(e.target.files));
+      }
+      fileInput.value = ''; // Azonnal nullázzuk, hogy újra kattintható és aktív legyen!
     });
 
     function activateTab(tabId) {
@@ -1417,31 +1381,35 @@
     }
 
     async function handleIncomingFiles(fileList) {
-      loadedFiles = [];
-      fileList.sort((a, b) => naturalCompare(a.name, b.name));
+      try {
+        loadedFiles = [];
+        fileList.sort((a, b) => naturalCompare(a.name, b.name));
 
-      for (let i = 0; i < fileList.length; i++) {
-        const file = fileList[i];
-        const buffer = await file.arrayBuffer();
-        const lowerName = file.name.toLowerCase();
-        
-        if (lowerName.endsWith('.pdf')) {
-          const parsedPdf = await parseCalypsoPdf(file.name, buffer, i);
-          if (parsedPdf) loadedFiles.push(parsedPdf);
-        } else if (lowerName.endsWith('.dfq')) {
-          const decoder = new TextDecoder('windows-1250');
-          const text = decoder.decode(buffer);
-          loadedFiles.push(parseDfqFile(file.name, text, i));
-        } else {
-          const decoder = new TextDecoder('windows-1250');
-          const text = decoder.decode(buffer);
-          loadedFiles.push(parseAndValidateTxt(file.name, text, i));
+        for (let i = 0; i < fileList.length; i++) {
+          const file = fileList[i];
+          const buffer = await file.arrayBuffer();
+          const lowerName = file.name.toLowerCase();
+          
+          if (lowerName.endsWith('.pdf')) {
+            const parsedPdf = await parseCalypsoPdf(file.name, buffer, i);
+            if (parsedPdf) loadedFiles.push(parsedPdf);
+          } else if (lowerName.endsWith('.dfq')) {
+            const decoder = new TextDecoder('windows-1250');
+            const text = decoder.decode(buffer);
+            loadedFiles.push(parseDfqFile(file.name, text, i));
+          } else {
+            const decoder = new TextDecoder('windows-1250');
+            const text = decoder.decode(buffer);
+            loadedFiles.push(parseAndValidateTxt(file.name, text, i));
+          }
         }
-      }
 
-      renderValidatorView();
-      renderMatrixViews();
-      renderProductionView();
+        renderValidatorView();
+        renderMatrixViews();
+        renderProductionView();
+      } catch (err) {
+        alert("Hiba a fájlok feldolgozásakor: " + err.message);
+      }
     }
 
     function parseDfqFile(fileName, rawText, fileOrderIndex) {
@@ -1969,6 +1937,7 @@
       return item.akt > maxTol || item.akt < minTol;
     }
 
+    // PONTOSÍTOTT CPK / HATÁRFIGYELÉS
     function isNearToleranceBorder(item) {
       if (isStillError(item)) return false;
       const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
@@ -3122,7 +3091,9 @@
       filterHeatmap();
     }
 
+    // Induláskori inicializálás
     applyLanguage();
+    checkSessionAuth();
   </script>
 </body>
 </html>
