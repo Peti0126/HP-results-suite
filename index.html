@@ -483,7 +483,7 @@
         </button>
       </div>
 
-      <!-- 1. PANEL: GYÁRTÁSI HŐTÉRKÉP (LEGELÖL) -->
+      <!-- 1. PANEL: GYÁRTÁSI HŐTÉRKÉP -->
       <details class="prod-accordion" id="accProdHeatmap" open>
         <summary>
           <span id="titleProdHeatmap">📊 1. Gyártási Hőtérkép: <span style="color:var(--success)">■ Tűrésen belül</span> | <span style="color:var(--warning)">■ Határon táncol (Cpk figy.)</span> | <span style="color:var(--danger)">■ Tűrésen kívül</span></span>
@@ -493,9 +493,9 @@
           <div class="filter-bar no-print">
             <input type="text" id="heatmapSearch" placeholder="🔍 Keresés tételre (pl. 31, 35)..." oninput="filterHeatmap()">
             <label class="checkbox-pill">
-              <input type="checkbox" id="heatmapNokOnly" onchange="filterHeatmap()"> Csak hibás (NOK) tételek mutatása
+              <input type="checkbox" id="heatmapNokOnly" onchange="filterHeatmap()"> <span id="lblHeatmapNokOnly">Csak hibás (NOK) tételek mutatása</span>
             </label>
-            <span style="font-size: 11px; color: var(--text-muted); margin-left: auto;">Sárga cella: a felső tűréshatár szélső 15%-ában van!</span>
+            <span style="font-size: 11px; color: var(--text-muted); margin-left: auto;" id="lblYellowTip">Sárga cella: a felső tűréshatár szélső 15%-ában van!</span>
           </div>
 
           <div class="table-container" id="prodHeatmapWrapper" style="display: none; margin-top:0;">
@@ -568,6 +568,11 @@
       </div>
     </div>
 
+    <!-- LÁBLÉC: DISZKRÉT INNOVÁCIÓS SZÖVEG -->
+    <footer class="no-print" style="text-align: center; margin-top: 35px; padding-top: 15px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 11px;">
+      <span id="footerText">&copy; 2026 Horváth Péter. Saját fejlesztésű mérési innováció. A szellemi tulajdon és forráskód védett.</span>
+    </footer>
+
   </div>
 
   <!-- MODAL: KORREKCIÓK & TÉTELEK -->
@@ -602,7 +607,7 @@
     </div>
   </div>
 
-  <!-- MODAL: ZEISS PARAMÉTERBEVITEL + MENTÉS / MÓDOSÍTÁS / TÖRLÉS -->
+  <!-- MODAL: ZEISS PARAMÉTERBEVITEL -->
   <div class="modal-backdrop" id="headerModal">
     <div class="modal-window">
       <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
@@ -613,13 +618,14 @@
           </p>
         </div>
         
+        <!-- Cikkszám Profilkezelő -->
         <div style="display: flex; gap: 6px; align-items: center; background: #f1f5f9; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); flex-wrap: wrap;">
-          <span style="font-size: 11px; font-weight: bold; color: #334155;">Mentett profil:</span>
+          <span style="font-size: 11px; font-weight: bold; color: #334155;" id="lblPresetText">Mentett profil:</span>
           <select id="presetSelector" onchange="loadPreset(this.value)" style="padding: 4px 8px; font-size: 12px;">
-            <option value="">-- Válassz profilt --</option>
+            <option value="" id="optPresetDefault">-- Válassz profilt --</option>
           </select>
-          <button class="btn btn-primary" style="padding: 4px 8px; font-size: 11px;" onclick="saveCurrentAsPreset()" type="button" title="Aktuális adatok mentése vagy frissítése ehhez a cikkszámhoz">💾 Mentés / Módosítás</button>
-          <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteSelectedPreset()" type="button" title="Kijelölt profil végleges törlése">🗑️ Törlés</button>
+          <button class="btn btn-primary" style="padding: 4px 8px; font-size: 11px;" onclick="saveCurrentAsPreset()" type="button" id="btnSavePreset">💾 Mentés / Módosítás</button>
+          <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteSelectedPreset()" type="button" id="btnDeletePreset">🗑️ Törlés</button>
         </div>
       </div>
       
@@ -686,12 +692,12 @@
   <div id="printableSetterSheet" style="display: none; padding: 25px; font-family: sans-serif;">
     <div style="border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: flex-end;">
       <div>
-        <h2 style="font-size: 20px; font-weight: bold; margin: 0;">GÉPBEÁLLÍTÓI KORREKCIÓS MUNKALAP</h2>
+        <h2 style="font-size: 20px; font-weight: bold; margin: 0;" id="printSheetTitle">GÉPBEÁLLÍTÓI KORREKCIÓS MUNKALAP</h2>
         <div style="font-size: 12px; color: #475569; margin-top: 4px;" id="printSheetSub">Mérési jegyzőkönyv alapján generált beállítási adatok</div>
       </div>
       <div style="text-align: right; font-size: 12px;">
-        <div><strong>Dátum:</strong> <span id="printDate"></span></div>
-        <div><strong>Cikkszám:</strong> <span id="printPartNr"></span></div>
+        <div><strong id="printDateLbl">Dátum:</strong> <span id="printDate"></span></div>
+        <div><strong id="printPartNrLbl">Cikkszám:</strong> <span id="printPartNr"></span></div>
       </div>
     </div>
     <div id="printDeltaTableWrapper"></div>
@@ -700,6 +706,7 @@
   <script>
     const TIME_OFFSET_SECONDS = 5;
 
+    // --- TELJES TÖBBNYELVŰ SZÓTÁR ---
     const i18n = {
       hu: {
         appSubtitle: "1. Ellenőrzés &bull; 2. Gyártói Gyorsnézet &bull; 3. Excel &bull; 4. Vonalkód Mátrix",
@@ -720,7 +727,14 @@
         excelTitle: "Mérési Adatmátrix (Névleges & Tűrések)",
         excelSub: "Mért értékek eredeti vagy jóváhagyott állapotban fészkenként.",
         prodTitle: "🏭 Gyártásközi Állapot & Gépbeállítói Gyorslista",
-        prodSub: "Azonnali fészek-státusz (OK/NOK), beállítói delta korrekciók és gyártási hőtérkép.",
+        prodSub: "Azonnali hőtérkép, beállítói delta korrekciók és fészek-státusz gyorsnézet.",
+        btnSetterPrint: "🖨️ Gépbeállítói Munkalap Nyomtatása",
+        heatmapSearchPlh: "🔍 Keresés tételre (pl. 31, 35)...",
+        lblHeatmapNokOnly: "Csak hibás (NOK) tételek mutatása",
+        lblYellowTip: "Sárga cella: a felső tűréshatár szélső 15%-ában van!",
+        titleHeatmap: "📊 1. Gyártási Hőtérkép: ",
+        titleDelta: "⚠️ 2. Tűrésen Kívüli Méretek & Szükséges Gépbeállítási Eltérések (Δ)",
+        titleNest: "📦 3. Fészek Státuszok (OK / NOK Blokkok)",
         lblClickToggle: "Kattintásra nyílik / csukódik",
         btnCancel: "Mégsem",
         btnApply: "💾 Módosítások Mentése",
@@ -755,7 +769,38 @@
         allOkMsg: "✅ Minden méret megfelelő!",
         allOkSub: "minden mért érték eredetileg is a tűrésmezőn belül volt.",
         allFixedMsg: "✅ Minden hiba sikeresen jóváhagyva / javítva!",
-        allFixedSub: "A mérési jegyzőkönyvek és az export a jóváhagyott értékeket tartalmazzák."
+        allFixedSub: "A mérési jegyzőkönyvek és az export a jóváhagyott értékeket tartalmazzák.",
+        hdrModalTitle: "⚙️ Paraméterbevitel (Zeiss Calypso / CAQ)",
+        lblPresetText: "Mentett profil:",
+        optPresetDefault: "-- Válassz profilt --",
+        btnSavePreset: "💾 Mentés / Módosítás",
+        btnDeletePreset: "🗑️ Törlés",
+        lbl_m_teileNr: "Cikkszám (K1001) *:",
+        lbl_m_bemerkung: "Megjegyzés / Fészek kód (K1002) *:",
+        lbl_m_teileBez: "Munkadarab neve (K1003) *:",
+        lbl_m_rajzszam: "Rajzszám (K1041) *:",
+        lbl_m_megrendelo: "Megrendelő (K1053) *:",
+        lbl_m_maschine: "Gép száma (K1081) *:",
+        lbl_m_k2415: "Gép gyári száma (K2415 / K1201) *:",
+        lbl_m_k1202: "Mérőeszköz típusa / leírása (K1202 / K2402) *:",
+        lbl_m_k2406: "Mérőgép gyártója (K2406) *:",
+        lbl_m_datum: "Mérés Dátuma (DD.MM.YYYY) *:",
+        lbl_m_uhrzeit: "Mérés Kezdő Időpontja (HH:MM:SS) *:",
+        lblModalInfoBox: "ℹ️ <strong>Több jegyzőkönyv esetén:</strong> Mentéskor az adatok átöröklődnek, a fészekszám növekszik, és minden darab mérése <strong>5 másodperccel későbbi</strong> időbélyeget kap.",
+        btnModalSaveOnly: "💾 Mentés & Másolás a többi fájlra (+5 mp/db)",
+        btnModalSaveAndDownload: "💾 Mentés & DFQ Letöltése",
+        printSheetTitle: "GÉPBEÁLLÍTÓI KORREKCIÓS MUNKALAP",
+        printSheetSub: "Mérési jegyzőkönyv alapján generált beállítási adatok",
+        printDateLbl: "Dátum:",
+        printPartNrLbl: "Cikkszám:",
+        thNestPrint: "Fészek",
+        thItemPrint: "Tétel",
+        thDescPrint: "Megnevezés",
+        thValPrint: "Mért érték",
+        thNomPrint: "Névleges",
+        thDeltaPrint: "Eltérés (Δ)",
+        thAdjPrint: "Szükséges beállítás",
+        footerText: "© 2026 Horváth Péter. Saját fejlesztésű mérési innováció. A szellemi tulajdon és forráskód védett."
       },
       de: {
         appSubtitle: "1. Prüfung &bull; 2. Fertigungs-Schnellansicht &bull; 3. Excel &bull; 4. Barcode-Matrix",
@@ -776,7 +821,14 @@
         excelTitle: "Messdaten-Matrix (Nennmaße & Toleranzen)",
         excelSub: "Messwerte im Original- oder korrigierten Zustand nach Nestern.",
         prodTitle: "🏭 Fertigungsstatus & Einrichter-Deltaliste",
-        prodSub: "Sofortiger Neststatus (OK/NOK), Einstellkorrekturen und Fertigungs-Heatmap.",
+        prodSub: "Sofortige Heatmap, Einstellkorrekturen und Kavitätsstatus-Schnellansicht.",
+        btnSetterPrint: "🖨️ Einrichter-Arbeitsblatt drucken",
+        heatmapSearchPlh: "🔍 Merkmal suchen (z. B. 31, 35)...",
+        lblHeatmapNokOnly: "Nur fehlerhafte (NOK) Merkmale anzeigen",
+        lblYellowTip: "Gelbe Zelle: liegt in den äußeren 15% der oberen Toleranzgrenze!",
+        titleHeatmap: "📊 1. Fertigungs-Heatmap: ",
+        titleDelta: "⚠️ 2. Maßabweichungen & erforderliche Korrekturen (Δ)",
+        titleNest: "📦 3. Nest-Status (OK / NOK Blöcke)",
         lblClickToggle: "Zum Öffnen / Schließen klicken",
         btnCancel: "Abbrechen",
         btnApply: "💾 Änderungen speichern",
@@ -811,7 +863,38 @@
         allOkMsg: "✅ Alle Maße liegen innerhalb der Toleranz!",
         allOkSub: "alle Messwerte lagen ursprünglich im Toleranzbereich.",
         allFixedMsg: "✅ Alle Merkmale erfolgreich genehmigt / korrigiert!",
-        allFixedSub: "Die Messprotokolle und Exporte enthalten die korrigierten Werte."
+        allFixedSub: "Die Messprotokolle und Exporte enthalten die korrigierten Werte.",
+        hdrModalTitle: "⚙️ Parametereingabe (Zeiss Calypso / CAQ)",
+        lblPresetText: "Gespeichertes Profil:",
+        optPresetDefault: "-- Profil wählen --",
+        btnSavePreset: "💾 Speichern / Ändern",
+        btnDeletePreset: "🗑️ Löschen",
+        lbl_m_teileNr: "Sachnummer (K1001) *:",
+        lbl_m_bemerkung: "Bemerkung / Nestcode (K1002) *:",
+        lbl_m_teileBez: "Teilebezeichnung (K1003) *:",
+        lbl_m_rajzszam: "Zeichnungsnummer (K1041) *:",
+        lbl_m_megrendelo: "Auftragsnummer (K1053) *:",
+        lbl_m_maschine: "Maschinennummer (K1081) *:",
+        lbl_m_k2415: "Maschinenseriennr. (K2415 / K1201) *:",
+        lbl_m_k1202: "Messmitteltyp / Beschreibung (K1202 / K2402) *:",
+        lbl_m_k2406: "Messmittelhersteller (K2406) *:",
+        lbl_m_datum: "Messdatum (DD.MM.YYYY) *:",
+        lbl_m_uhrzeit: "Startuhrzeit (HH:MM:SS) *:",
+        lblModalInfoBox: "ℹ️ <strong>Bei mehreren Protokollen:</strong> Beim Speichern werden Daten vererbt, die Nestnummer erhöht sich und jedes Teil erhält einen um <strong>5 Sekunden späteren</strong> Zeitstempel.",
+        btnModalSaveOnly: "💾 Speichern & auf alle übertragen (+5 s/Stück)",
+        btnModalSaveAndDownload: "💾 Speichern & DFQ herunterladen",
+        printSheetTitle: "EINRICHTER-KORREKTURBLATT",
+        printSheetSub: "Aus Messdaten automatisch generierte Einstelldaten",
+        printDateLbl: "Datum:",
+        printPartNrLbl: "Sachnummer:",
+        thNestPrint: "Kavität",
+        thItemPrint: "Merkmal",
+        thDescPrint: "Bezeichnung",
+        thValPrint: "Messwert",
+        thNomPrint: "Nennmaß",
+        thDeltaPrint: "Abweichung (Δ)",
+        thAdjPrint: "Erforderliche Korrektur",
+        footerText: "© 2026 Horváth Péter. Eigenentwickelte Messinnovation. Geistiges Eigentum und Quellcode geschützt."
       },
       en: {
         appSubtitle: "1. Inspection &bull; 2. Production View &bull; 3. Excel &bull; 4. Barcode Matrix",
@@ -832,7 +915,14 @@
         excelTitle: "Measurement Data Matrix (Nominals & Limits)",
         excelSub: "Values in original or approved state per cavity.",
         prodTitle: "🏭 In-Process Status & Setter Delta Quicklist",
-        prodSub: "Real-time cavity status (OK/NOK), machine delta offsets, and heatmap.",
+        prodSub: "Real-time heatmap, setter delta offsets, and cavity status overview.",
+        btnSetterPrint: "🖨️ Print Setter Worksheet",
+        heatmapSearchPlh: "🔍 Search characteristic (e.g. 31, 35)...",
+        lblHeatmapNokOnly: "Show out-of-tolerance (NOK) only",
+        lblYellowTip: "Yellow cell: value is within the outer 15% of the upper limit!",
+        titleHeatmap: "📊 1. Production Heatmap: ",
+        titleDelta: "⚠️ 2. Out-of-Tolerance Deltas & Offsets (Δ)",
+        titleNest: "📦 3. Cavity Status (OK / NOK Blocks)",
         lblClickToggle: "Click to expand / collapse",
         btnCancel: "Cancel",
         btnApply: "💾 Save Changes",
@@ -867,7 +957,38 @@
         allOkMsg: "✅ All measurements are within tolerance!",
         allOkSub: "all characteristics were originally within limits.",
         allFixedMsg: "✅ All errors successfully approved / corrected!",
-        allFixedSub: "Inspection reports and exports now contain approved data."
+        allFixedSub: "Inspection reports and exports now contain approved data.",
+        hdrModalTitle: "⚙️ Parameter Input (Zeiss Calypso / CAQ)",
+        lblPresetText: "Saved profile:",
+        optPresetDefault: "-- Select profile --",
+        btnSavePreset: "💾 Save / Update",
+        btnDeletePreset: "🗑️ Delete",
+        lbl_m_teileNr: "Part Number (K1001) *:",
+        lbl_m_bemerkung: "Cavity / Comment (K1002) *:",
+        lbl_m_teileBez: "Part Description (K1003) *:",
+        lbl_m_rajzszam: "Drawing Number (K1041) *:",
+        lbl_m_megrendelo: "Order Number (K1053) *:",
+        lbl_m_maschine: "Machine Number (K1081) *:",
+        lbl_m_k2415: "Machine Serial No. (K2415 / K1201) *:",
+        lbl_m_k1202: "Gage Type / Name (K1202 / K2402) *:",
+        lbl_m_k2406: "Gage Manufacturer (K2406) *:",
+        lbl_m_datum: "Inspection Date (DD.MM.YYYY) *:",
+        lbl_m_uhrzeit: "Start Time (HH:MM:SS) *:",
+        lblModalInfoBox: "ℹ️ <strong>Multiple files:</strong> Parameters will be copied to all files, cavity codes incremented, and each file gets a <strong>+5 seconds later</strong> timestamp.",
+        btnModalSaveOnly: "💾 Save & Apply to all (+5 s/pc)",
+        btnModalSaveAndDownload: "💾 Save & Download DFQ",
+        printSheetTitle: "MACHINE SETTER CORRECTION SHEET",
+        printSheetSub: "Offset adjustment data generated from inspection reports",
+        printDateLbl: "Date:",
+        printPartNrLbl: "Part Number:",
+        thNestPrint: "Cavity",
+        thItemPrint: "Item",
+        thDescPrint: "Description",
+        thValPrint: "Actual",
+        thNomPrint: "Nominal",
+        thDeltaPrint: "Offset (Δ)",
+        thAdjPrint: "Required Adjustment",
+        footerText: "© 2026 Horváth Péter. Proprietary metrology innovation. Intellectual property and source code protected."
       }
     };
 
@@ -890,6 +1011,8 @@
 
     function applyLanguage() {
       const t = i18n[currentLang];
+      
+      // Főoldal & fülek
       document.getElementById('appSubtitle').innerHTML = t.appSubtitle;
       document.getElementById('txtDropTitle').textContent = t.dropTitle;
       document.getElementById('txtDropSub').textContent = t.dropSub;
@@ -898,24 +1021,69 @@
       document.getElementById('btnTabExcel').textContent = t.tabExcel;
       document.getElementById('btnTabMatrix').textContent = t.tabMatrix;
 
+      // 4. Vonalkód fül
       document.getElementById('matrixCardTitle').textContent = t.barcodeTitle;
       document.getElementById('matrixCardSub').textContent = t.barcodeSub;
       document.getElementById('btnPrintBarcode').textContent = t.btnPrint;
 
+      // 3. Excel fül
       document.getElementById('excelCardTitle').textContent = t.excelTitle;
       document.getElementById('excelCardSub').textContent = t.excelSub;
       document.getElementById('btnExportExcel').textContent = t.btnExportXlsx;
       document.getElementById('btnCopyClipboard').textContent = t.btnCopyClip;
 
+      // 2. Gyártói nézet
       document.getElementById('prodHeaderTitle').textContent = t.prodTitle;
       document.getElementById('prodHeaderSub').textContent = t.prodSub;
+      document.getElementById('btnPrintSetterSheet').textContent = t.btnSetterPrint;
+      document.getElementById('heatmapSearch').placeholder = t.heatmapSearchPlh;
+      document.getElementById('lblHeatmapNokOnly').textContent = t.lblHeatmapNokOnly;
+      document.getElementById('lblYellowTip').textContent = t.lblYellowTip;
 
+      // 1. Ellenőrző fül gombok
       document.getElementById('btnDownloadAllDfq').textContent = t.btnDfqAll;
       document.getElementById('btnDownloadAllTxt').textContent = t.btnTxtAll;
 
+      // Korrekció modal gombok
       document.getElementById('btnCorrCancel').textContent = t.btnCancel;
       document.getElementById('btnCorrApply').textContent = t.btnApply;
+      document.getElementById('th_k2002').textContent = `${t.thItem} (K2002)`;
+      document.getElementById('th_k2003').textContent = `${t.thDesc} (K2003)`;
+      document.getElementById('th_nom').textContent = t.thNom;
+      document.getElementById('th_tol').textContent = t.thTolField;
+      document.getElementById('th_orig').textContent = t.thOrig;
+      document.getElementById('th_valid').textContent = t.thValid;
+
+      // Fejléc Modal címkék & gombok
+      document.getElementById('modalTitleText').textContent = t.hdrModalTitle;
+      document.getElementById('lblPresetText').textContent = t.lblPresetText;
+      document.getElementById('optPresetDefault').textContent = t.optPresetDefault;
+      document.getElementById('btnSavePreset').textContent = t.btnSavePreset;
+      document.getElementById('btnDeletePreset').textContent = t.btnDeletePreset;
+      document.getElementById('lbl_m_teileNr').textContent = t.lbl_m_teileNr;
+      document.getElementById('lbl_m_bemerkung').textContent = t.lbl_m_bemerkung;
+      document.getElementById('lbl_m_teileBez').textContent = t.lbl_m_teileBez;
+      document.getElementById('lbl_m_rajzszam').textContent = t.lbl_m_rajzszam;
+      document.getElementById('lbl_m_megrendelo').textContent = t.lbl_m_megrendelo;
+      document.getElementById('lbl_m_maschine').textContent = t.lbl_m_maschine;
+      document.getElementById('lbl_m_k2415').textContent = t.lbl_m_k2415;
+      document.getElementById('lbl_m_k1202').textContent = t.lbl_m_k1202;
+      document.getElementById('lbl_m_k2406').textContent = t.lbl_m_k2406;
+      document.getElementById('lbl_m_datum').textContent = t.lbl_m_datum;
+      document.getElementById('lbl_m_uhrzeit').textContent = t.lbl_m_uhrzeit;
+      document.getElementById('lblModalInfoBox').innerHTML = t.lblModalInfoBox;
       document.getElementById('btnModalCancel').textContent = t.btnCancel;
+      document.getElementById('btnModalSaveOnly').textContent = t.btnModalSaveOnly;
+      document.getElementById('btnModalSaveAndDownload').textContent = t.btnModalSaveAndDownload;
+
+      // Munkalap nyomtatás elemek
+      document.getElementById('printSheetTitle').textContent = t.printSheetTitle;
+      document.getElementById('printSheetSub').textContent = t.printSheetSub;
+      document.getElementById('printDateLbl').textContent = t.printDateLbl;
+      document.getElementById('printPartNrLbl').textContent = t.printPartNrLbl;
+
+      // Lábléc szöveg
+      document.getElementById('footerText').textContent = t.footerText;
 
       document.querySelectorAll('.lblClickToggle').forEach(el => el.textContent = t.lblClickToggle);
     }
@@ -1604,24 +1772,19 @@
       return item.akt > maxTol || item.akt < minTol;
     }
 
-    // PONTOSÍTOTT CPK / HATÁRFIGYELÉS:
-    // Pozíciónál, szimmetriánál és alaktűréseknél (ahol a névleges 0) a 0 a tökéletes állapot, így CSAK a felső határ peremét figyeli!
     function isNearToleranceBorder(item) {
       if (isStillError(item)) return false;
       const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
       const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
       const band = Math.abs(maxTol - minTol);
       if (band <= 0) return false;
-      const margin = band * 0.15; // Szélső 15%
+      const margin = band * 0.15;
 
-      // Ha a névleges méret 0 (pl. pozíció, szimmetria) vagy az alsó határ 0
       const isOneSidedZero = (item.nevl === 0 || (minTol === 0 && maxTol > 0));
 
       if (isOneSidedZero) {
-        // Csak akkor sárga, ha a felső határt közelíti! A 0 felé lévő értékek tökéletesen zöldek!
         return item.akt >= (maxTol - margin);
       } else {
-        // Hagyományos kétoldalas méretnél az alsó és felső perem is sárga
         return (item.akt >= (maxTol - margin)) || (item.akt <= (minTol + margin));
       }
     }
@@ -1948,7 +2111,7 @@
 
     function refreshPresetSelector() {
       const sel = document.getElementById('presetSelector');
-      sel.innerHTML = '<option value="">-- Válassz profilt --</option>';
+      sel.innerHTML = `<option value="">${i18n[currentLang].optPresetDefault}</option>`;
       try {
         const presets = JSON.parse(localStorage.getItem('hp_presets') || '{}');
         Object.keys(presets).sort().forEach(pName => {
@@ -1963,7 +2126,7 @@
     function saveCurrentAsPreset() {
       const teileNr = document.getElementById('m_teileNr').value.trim();
       if (!teileNr) {
-        alert("Adj meg egy cikkszámot a profil mentéséhez / módosításához!");
+        alert(currentLang === 'hu' ? "Adj meg egy cikkszámot a profil mentéséhez / módosításához!" : "Please provide a part number to save/update profile!");
         return;
       }
       const profile = {
@@ -1983,7 +2146,7 @@
         localStorage.setItem('hp_presets', JSON.stringify(presets));
         refreshPresetSelector();
         document.getElementById('presetSelector').value = teileNr;
-        alert(isUpdate ? `✅ "${teileNr}" profil sikeresen módosítva!` : `✅ "${teileNr}" új profil sikeresen elmentve!`);
+        alert(isUpdate ? `✅ "${teileNr}" profil frissítve!` : `✅ "${teileNr}" új profil elmentve!`);
       } catch (e) {
         alert("Hiba a mentéskor: " + e);
       }
@@ -1993,10 +2156,10 @@
       const sel = document.getElementById('presetSelector');
       const pName = sel.value;
       if (!pName) {
-        alert("Kérlek válassz ki egy profilt a listából a törléshez!");
+        alert(currentLang === 'hu' ? "Kérlek válassz ki egy profilt a listából a törléshez!" : "Please select a profile from the list to delete!");
         return;
       }
-      if (!confirm(`Biztosan törölni szeretnéd a(z) "${pName}" mentett profilt?`)) return;
+      if (!confirm(`Biztosan törölni szeretnéd a(z) "${pName}" profilt?`)) return;
 
       try {
         const presets = JSON.parse(localStorage.getItem('hp_presets') || '{}');
@@ -2032,7 +2195,7 @@
       const file = loadedFiles[idx];
       if (!file) return;
 
-      document.getElementById('modalTitleText').innerText = "⚙️ Paraméterbevitel (Zeiss Calypso / CAQ)";
+      document.getElementById('modalTitleText').innerText = i18n[currentLang].hdrModalTitle;
       document.getElementById('modalTitleText').style.color = "#0284c7";
       openHeaderModal(file);
     }
@@ -2147,7 +2310,7 @@
       const k2406 = document.getElementById('m_k2406').value.trim();
 
       if (!teileNr || !bemerkung || !teileBez || !rajzszam || !megrendelo || !maschine || !k2415 || !k1202 || !k2406) {
-        alert("Kérlek töltsd ki az összes kötelező mezőt a DFQ generáláshoz!");
+        alert(currentLang === 'hu' ? "Kérlek töltsd ki az összes kötelező mezőt a DFQ generáláshoz!" : "Please fill in all mandatory fields for DFQ generation!");
         return;
       }
 
@@ -2552,8 +2715,9 @@
     }
 
     function printSetterWorksheet() {
+      const t = i18n[currentLang];
       if (!loadedFiles.length) {
-        alert("Nincsenek betöltött fájlok a munkalaphoz!");
+        alert(t.emptyMsg);
         return;
       }
 
@@ -2578,8 +2742,8 @@
               akt: item.akt.toFixed(4),
               nevl: item.nevl.toFixed(4),
               delta: (delta >= 0 ? "+" : "") + delta.toFixed(4),
-              status: isOver ? "TÚLMÉRET" : "ALULMÉRET",
-              diff: isOver ? `+${(item.akt - maxTol).toFixed(4)} mm a max felett` : `${(item.akt - minTol).toFixed(4)} mm a min alatt`
+              status: isOver ? t.statusOver : t.statusUnder,
+              diff: isOver ? `+${(item.akt - maxTol).toFixed(4)} mm ${t.overMax}` : `${(item.akt - minTol).toFixed(4)} mm ${t.underMin}`
             });
           }
         });
@@ -2587,19 +2751,19 @@
 
       const wrapper = document.getElementById('printDeltaTableWrapper');
       if (deltaList.length === 0) {
-        wrapper.innerHTML = "<div style='padding:20px; font-weight:bold; color:green; border:2px solid green;'>✅ MINDEN MÉRET MEGFELELŐ! Nincs szükség gépkorrekcióra.</div>";
+        wrapper.innerHTML = `<div style='padding:20px; font-weight:bold; color:green; border:2px solid green;'>${t.allOkMsg}</div>`;
       } else {
         let tHtml = `
           <table style="width:100%; border-collapse:collapse; font-size:12px;">
             <thead>
               <tr style="background:#f1f5f9;">
-                <th style="border:1px solid #94a3b8; padding:8px;">Fészek</th>
-                <th style="border:1px solid #94a3b8; padding:8px;">Tétel</th>
-                <th style="border:1px solid #94a3b8; padding:8px;">Megnevezés</th>
-                <th style="border:1px solid #94a3b8; padding:8px;">Mért érték</th>
-                <th style="border:1px solid #94a3b8; padding:8px;">Névleges</th>
-                <th style="border:1px solid #94a3b8; padding:8px;">Eltérés (&Delta;)</th>
-                <th style="border:1px solid #94a3b8; padding:8px;">Szükséges beállítás</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${t.thNestPrint}</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${t.thItemPrint}</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${t.thDescPrint}</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${t.thValPrint}</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${t.thNomPrint}</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${t.thDeltaPrint}</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${t.thAdjPrint}</th>
               </tr>
             </thead>
             <tbody>
@@ -2741,7 +2905,7 @@
               textColor = "#991b1b";
               titleTip = "Tűrésen kívül!";
             } else if (isNear) {
-              bgColor = "#fef08a"; // Sárga figyelmeztetés a valós peremre
+              bgColor = "#fef08a";
               textColor = "#854d0e";
               titleTip = "Figyelem: Tűréshatár peremén!";
             }
