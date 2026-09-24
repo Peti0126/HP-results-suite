@@ -512,9 +512,9 @@
     }
   </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
-  <!-- BELÉPŐ PANEL (LOGIN) - OBFSUSZKÁLT LOGIKÁVAL -->
+  <!-- BELÉPŐ PANEL (LOGIN) -->
   <div id="loginLockOverlay">
     <div class="login-box">
       <div class="login-box-header">
@@ -830,6 +830,30 @@
   </div>
 
   <script>
+    // --- ERŐSÍTETT BILLENTYŰZET ÉS FEJLESZTŐI ESZKÖZ VÉDELEM ---
+    document.addEventListener("keydown", (e) => {
+      // F12 tiltása
+      if (e.key === "F12" || e.keyCode === 123) {
+        e.preventDefault();
+        return false;
+      }
+      // Ctrl + U, Ctrl + S, Ctrl + Shift + I / J / C / U tiltása
+      if (e.ctrlKey && (e.key === "u" || e.key === "U" || e.key === "s" || e.key === "S" || e.key === "c" || e.key === "C" || e.key === "a" || e.key === "A")) {
+        e.preventDefault();
+        return false;
+      }
+      if (e.ctrlKey && e.shiftKey && (e.key === "i" || e.key === "I" || e.key === "j" || e.key === "J" || e.key === "c" || e.key === "C")) {
+        e.preventDefault();
+        return false;
+      }
+    }, false);
+
+    // Jobb klikk tiltása az egész dokumentumon
+    document.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      return false;
+    }, false);
+
     if (window.pdfjsLib) {
       try {
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -874,8 +898,6 @@
     document.getElementById("appUsernameInput").addEventListener("keypress", (e) => {
       if (e.key === "Enter") document.getElementById("appPasswordInput").focus();
     });
-
-    _0x55c1();
 
     const _0x7788 = 5;
 
@@ -1739,8 +1761,8 @@
 
         const validationErrors = [];
         parsedItems.forEach(item => {
-          const maxTol = +(item.nevl + item.ftur).toFixed(4);
-          const minTol = +(item.nevl + item.atur).toFixed(4);
+          const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
+          const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
           const tolBand = Math.abs(maxTol - minTol);
           let hasErr = false;
           let diff = 0;
@@ -2625,474 +2647,6 @@
       a.href = URL.createObjectURL(blob);
       a.download = `${(file.headerData.teileNr || "106760").replace(/[^a-zA-Z0-9_-]/g, "")}_2026-9-9_84100.DFQ`;
       a.click();
-    }
-
-    function _0x5509(idx) {
-      const file = _0x192a[idx];
-      if (!file) return;
-
-      const fullTxt = _0x7722(file.headerData) + _0x9900(file);
-      const blob = new Blob([fullTxt], { type: 'text/plain;charset=windows-1250' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `JAVITOTT_${file.name.replace(/\.(pdf|dfq)$/i, '.txt')}`;
-      a.click();
-    }
-
-    document.getElementById('btnDownloadAllTxt').addEventListener('click', async () => {
-      if (!_0x192a.length) {
-        alert("Nincsenek betöltött fájlok!");
-        return;
-      }
-
-      const zip = new JSZip();
-      _0x192a.forEach(file => {
-        const fullTxt = _0x7722(file.headerData) + _0x9900(file);
-        zip.file(`JAVITOTT_${file.name.replace(/\.(pdf|dfq)$/i, '.txt')}`, fullTxt);
-      });
-
-      const content = await zip.generateAsync({ type: "blob" });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(content);
-      a.download = "JAVITOTT_TXT_Jegyzokonyvek.zip";
-      a.click();
-    });
-
-    document.getElementById('btnDownloadAllDfq').addEventListener('click', async () => {
-      const missingFiles = _0x192a.filter(f => !_0x3399(f.headerData));
-      if (missingFiles.length > 0) {
-        alert(`Figyelem! ${missingFiles.length} fájlnál hiányoznak a kötelező adatok.`);
-        return;
-      }
-
-      const zip = new JSZip();
-      _0x192a.forEach(file => {
-        const dfqText = _0x1199(file);
-        const bytes = new Uint8Array(dfqText.length);
-        for (let i = 0; i < dfqText.length; i++) {
-          bytes[i] = dfqText.charCodeAt(i) & 0xFF;
-        }
-        zip.file(`${(file.headerData.teileNr || "106760").replace(/[^a-zA-Z0-9_-]/g, "")}_2026-9-9_84100.DFQ`, bytes);
-      });
-      const content = await zip.generateAsync({ type: "blob" });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(content);
-      a.download = "DFQ_Jegyzokonyvek_Csomag.zip";
-      a.click();
-    });
-
-    let _0x87a1 = [];
-    let _0x99b2 = [];
-
-    function _0x8819() {
-      const t = i18n[_0x9812];
-      if (!_0x192a.length) {
-        document.getElementById('matrixBarcodeWrapper').style.display = 'none';
-        document.getElementById('excelTableWrapper').style.display = 'none';
-        return;
-      }
-
-      const bHead = document.getElementById('matrixBarcodeHead');
-      const bBody = document.getElementById('matrixBarcodeBody');
-      const eHead = document.getElementById('excelTableHead');
-      const eBody = document.getElementById('excelTableBody');
-
-      const metaData = {};
-      const megnSet = new Set();
-
-      _0x192a.forEach(file => {
-        file.parsedItems.forEach(item => {
-          if (item.enabled !== false) {
-            megnSet.add(item.megn);
-            if (!metaData[item.megn]) {
-              const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
-              const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
-              metaData[item.megn] = {
-                nevl: item.nevl.toFixed(4),
-                ftur: (item.ftur >= 0 ? "+" : "") + item.ftur.toFixed(4),
-                atur: (item.atur >= 0 ? "+" : "") + item.atur.toFixed(4),
-                minTol: minTol.toFixed(4),
-                maxTol: maxTol.toFixed(4)
-              };
-            }
-          }
-        });
-      });
-
-      const megnLista = Array.from(megnSet).sort((a, b) => _0x8822(a, b));
-
-      let bHeadHtml = `<tr><th class="megn-col">${t.thItem}</th>`;
-      _0x192a.forEach((file, i) => {
-        const label = file.headerData.bemerkung || `F${i + 1}`;
-        bHeadHtml += `<th>F${i + 1}<br><span style="font-size:10px; font-weight:normal; color:#475569;">${label}</span></th>`;
-      });
-      bHeadHtml += `</tr>`;
-      bHead.innerHTML = bHeadHtml;
-
-      let eHeadHtml = `<tr>
-        <th class="megn-col">${t.thItem}</th>
-        <th class="tol-col">${t.thNom}</th>
-        <th class="tol-col">${t.thTolPlus}</th>
-        <th class="tol-col">${t.thTolMinus}</th>
-        <th class="tol-col">${t.thMin}</th>
-        <th class="tol-col">${t.thMax}</th>`;
-      _0x192a.forEach((file, i) => {
-        const label = file.headerData.bemerkung || `F${i + 1}`;
-        eHeadHtml += `<th>F${i + 1}<br><span style="font-size:10px; font-weight:normal; color:#475569;">${label}</span></th>`;
-      });
-      eHeadHtml += `</tr>`;
-      eHead.innerHTML = eHeadHtml;
-
-      _0x87a1 = [t.thItem, t.thNom, t.thTolPlus, t.thTolMinus, t.thMin, t.thMax, ..._0x192a.map((f, i) => f.headerData.bemerkung || `F${i + 1}`)];
-      _0x99b2 = [];
-
-      bBody.innerHTML = "";
-      eBody.innerHTML = "";
-
-      megnLista.forEach(megn => {
-        const m = metaData[megn] || { nevl: "-", ftur: "-", atur: "-", minTol: "-", maxTol: "-" };
-        const rowExport = [megn, m.nevl, m.ftur, m.atur, m.minTol, m.maxTol];
-
-        const bTr = document.createElement('tr');
-        const bTdMegn = document.createElement('td');
-        bTdMegn.className = 'megn-col';
-        bTdMegn.textContent = megn;
-        bTr.appendChild(bTdMegn);
-
-        const eTr = document.createElement('tr');
-        eTr.innerHTML = `
-          <td class="megn-col">${megn}</td>
-          <td class="tol-col">${m.nevl}</td>
-          <td class="tol-col">${m.ftur}</td>
-          <td class="tol-col">${m.atur}</td>
-          <td class="tol-col">${m.minTol}</td>
-          <td class="tol-col">${m.maxTol}</td>
-        `;
-
-        _0x192a.forEach(file => {
-          const item = file.parsedItems.find(it => it.megn === megn && it.enabled !== false);
-          const val = item ? item.akt.toFixed(3) : null;
-          const isErr = item ? _0x9988(item) : false;
-
-          const bTd = document.createElement('td');
-          if (val && val !== "-") {
-            const card = document.createElement('div');
-            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            svg.className = 'barcode-svg';
-            card.appendChild(svg);
-
-            const meta = document.createElement('div');
-            meta.className = 'meta-text';
-            meta.innerHTML = `${megn} | <b style="${isErr ? 'color:var(--danger);' : ''}">${val}</b>`;
-            card.appendChild(meta);
-            bTd.appendChild(card);
-
-            try {
-              JsBarcode(svg, val, {
-                format: "CODE128",
-                width: 1.1,
-                height: 30,
-                displayValue: true,
-                fontSize: 10,
-                textMargin: 2,
-                margin: 2
-              });
-            } catch (err) {}
-          } else {
-            bTd.textContent = "-";
-          }
-          bTr.appendChild(bTd);
-
-          const eTd = document.createElement('td');
-          if (val && val !== "-") {
-            eTd.innerHTML = `<b style="${isErr ? 'color:var(--danger);' : ''}">${val}</b>`;
-            rowExport.push(parseFloat(val));
-          } else {
-            eTd.textContent = "-";
-            rowExport.push("");
-          }
-          eTr.appendChild(eTd);
-        });
-
-        bBody.appendChild(bTr);
-        eBody.appendChild(eTr);
-        _0x99b2.push(rowExport);
-      });
-
-      document.getElementById('matrixBarcodeWrapper').style.display = 'block';
-      document.getElementById('excelTableWrapper').style.display = 'block';
-    }
-
-    document.getElementById('btnExportExcel').addEventListener('click', () => {
-      if (!_0x99b2.length) {
-        alert("Nincsenek adatok az exportáláshoz!");
-        return;
-      }
-
-      const wsData = [_0x87a1, ..._0x99b2];
-      const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-      ws['!cols'] = [
-        { wch: 14 },
-        { wch: 12 },
-        { wch: 12 },
-        { wch: 12 },
-        { wch: 14 },
-        { wch: 14 },
-        ..._0x87a1.slice(6).map(() => ({ wch: 16 }))
-      ];
-
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Mérési Mátrix");
-
-      const teileNr = _0x192a[0]?.headerData?.teileNr || "Meresi_Adatok";
-      XLSX.writeFile(wb, `${teileNr}_Meresi_Matrix.xlsx`);
-    });
-
-    document.getElementById('btnCopyClipboard').addEventListener('click', () => {
-      if (!_0x99b2.length) {
-        alert("Nincsenek adatok a másoláshoz!");
-        return;
-      }
-
-      let tsvText = _0x87a1.join("\t") + "\r\n";
-      _0x99b2.forEach(row => {
-        tsvText += row.join("\t") + "\r\n";
-      });
-
-      navigator.clipboard.writeText(tsvText).then(() => {
-        alert("✅ A mérési táblázat a vágólapra másolva!");
-      }).catch(err => {
-        alert("Hiba: " + err);
-      });
-    });
-
-    function _0x1a8c() {
-      const q = document.getElementById('heatmapSearch').value.toLowerCase().trim();
-      const nokOnly = document.getElementById('heatmapNokOnly').checked;
-
-      const rows = document.querySelectorAll('#prodHeatmapBody tr');
-      rows.forEach(r => {
-        const itemText = r.querySelector('.megn-col')?.textContent.toLowerCase() || "";
-        const hasErr = r.getAttribute('data-has-error') === 'true';
-
-        let show = true;
-        if (q && !itemText.includes(q)) show = false;
-        if (nokOnly && !hasErr) show = false;
-
-        r.style.display = show ? "" : "none";
-      });
-    }
-
-    function _0x5e2f() {
-      const t = i18n[_0x9812];
-      if (!_0x192a.length) {
-        alert(t.emptyMsg);
-        return;
-      }
-
-      const firstHdr = _0x192a[0].headerData;
-      document.getElementById('printDate').textContent = `${firstHdr.datum || ''} ${firstHdr.uhrzeit || ''}`;
-      document.getElementById('printPartNr').textContent = `${firstHdr.teileNr || ''} (${firstHdr.teileBez || ''})`;
-
-      const deltaList = [];
-      _0x192a.forEach((file, i) => {
-        const nestName = file.headerData.bemerkung || `F${i + 1}`;
-        file.parsedItems.forEach(item => {
-          if (item.enabled !== false && _0x9988(item)) {
-            const delta = +(item.akt - item.nevl).toFixed(4);
-            const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
-            const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
-            const isOver = item.akt > maxTol;
-
-            deltaList.push({
-              nest: `F${i + 1} (${nestName})`,
-              megn: item.megn,
-              desc: item.desc,
-              akt: item.akt.toFixed(4),
-              nevl: item.nevl.toFixed(4),
-              delta: (delta >= 0 ? "+" : "") + delta.toFixed(4),
-              status: isOver ? t.statusOver : t.statusUnder,
-              diff: isOver ? `+${(item.akt - maxTol).toFixed(4)} mm ${t.overMax}` : `${(item.akt - minTol).toFixed(4)} mm ${t.underMin}`
-            });
-          }
-        });
-      });
-
-      const wrapper = document.getElementById('printDeltaTableWrapper');
-      if (deltaList.length === 0) {
-        wrapper.innerHTML = `<div style='padding:20px; font-weight:bold; color:green; border:2px solid green;'>${t.allOkMsg}</div>`;
-      } else {
-        let tHtml = `
-          <table style="width:100%; border-collapse:collapse; font-size:12px;">
-            <thead>
-              <tr style="background:#f1f5f9;">
-                <th style="border:1px solid #94a3b8; padding:8px;">${t.thNestPrint}</th>
-                <th style="border:1px solid #94a3b8; padding:8px;">${t.thItemPrint}</th>
-                <th style="border:1px solid #94a3b8; padding:8px;">${t.thDescPrint}</th>
-                <th style="border:1px solid #94a3b8; padding:8px;">${t.thValPrint}</th>
-                <th style="border:1px solid #94a3b8; padding:8px;">${t.thNomPrint}</th>
-                <th style="border:1px solid #94a3b8; padding:8px;">${t.thDeltaPrint}</th>
-                <th style="border:1px solid #94a3b8; padding:8px;">${t.thAdjPrint}</th>
-              </tr>
-            </thead>
-            <tbody>
-        `;
-        deltaList.forEach(d => {
-          tHtml += `
-            <tr>
-              <td style="border:1px solid #cbd5e1; padding:8px; font-weight:bold;">${d.nest}</td>
-              <td style="border:1px solid #cbd5e1; padding:8px; font-weight:bold; text-align:center;">${d.megn}</td>
-              <td style="border:1px solid #cbd5e1; padding:8px;">${d.desc}</td>
-              <td style="border:1px solid #cbd5e1; padding:8px; text-align:center; color:#b91c1c; font-weight:bold;">${d.akt}</td>
-              <td style="border:1px solid #cbd5e1; padding:8px; text-align:center;">${d.nevl}</td>
-              <td style="border:1px solid #cbd5e1; padding:8px; text-align:center; font-weight:bold;">${d.delta} mm</td>
-              <td style="border:1px solid #cbd5e1; padding:8px; font-weight:bold; color:#b91c1c;">${d.diff}</td>
-            </tr>
-          `;
-        });
-        tHtml += `</tbody></table>`;
-        wrapper.innerHTML = tHtml;
-      }
-
-      window.print();
-    }
-
-    function _0x4422() {
-      const t = i18n[_0x9812];
-      const nestCardsContainer = document.getElementById('prodNestCards');
-      const titleProdNest = document.getElementById('titleProdNest');
-      const accProdDelta = document.getElementById('accProdDelta');
-      const titleProdDelta = document.getElementById('titleProdDelta');
-      const deltaCardsContainer = document.getElementById('prodDeltaCards');
-      const heatmapWrapper = document.getElementById('prodHeatmapWrapper');
-      const heatmapHead = document.getElementById('prodHeatmapHead');
-      const heatmapBody = document.getElementById('prodHeatmapBody');
-
-      if (!_0x192a.length) {
-        nestCardsContainer.innerHTML = `<div class='alert-box warning' style='grid-column: 1/-1;'>${t.emptyMsg}</div>`;
-        accProdDelta.style.display = "none";
-        heatmapWrapper.style.display = "none";
-        return;
-      }
-
-      let nestCardsHtml = "";
-      const deltaList = [];
-      let okCount = 0;
-      let nokCount = 0;
-
-      _0x192a.forEach((file, i) => {
-        const errors = file.parsedItems.filter(it => it.enabled !== false && _0x9988(it));
-        const isOk = errors.length === 0;
-        if (isOk) okCount++; else nokCount++;
-        const nestName = file.headerData.bemerkung || `F${i + 1}`;
-
-        nestCardsHtml += `
-          <div class="nest-card ${isOk ? 'ok' : 'nok'}">
-            <div class="nest-card-title">F${i + 1}</div>
-            <div style="font-size:11px; color:#64748b; font-weight:bold; margin-top:2px;">${nestName}</div>
-            <div class="nest-card-badge">${isOk ? t.statusOk : `${t.statusNok} (${errors.length})`}</div>
-          </div>
-        `;
-
-        errors.forEach(item => {
-          const delta = +(item.akt - item.nevl).toFixed(4);
-          const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
-          const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
-          const isOver = item.akt > maxTol;
-
-          deltaList.push({
-            nest: `F${i + 1} (${nestName})`,
-            megn: item.megn,
-            desc: item.desc,
-            akt: item.akt.toFixed(4),
-            nevl: item.nevl.toFixed(4),
-            delta: (delta >= 0 ? "+" : "") + delta.toFixed(4),
-            status: isOver ? t.statusOver : t.statusUnder,
-            diff: isOver ? `+${(item.akt - maxTol).toFixed(4)} mm ${t.overMax}` : `${(item.akt - minTol).toFixed(4)} mm ${t.underMin}`
-          });
-        });
-      });
-      nestCardsContainer.innerHTML = nestCardsHtml;
-      titleProdNest.innerHTML = `📦 3. ${_0x9812 === 'hu' ? 'Fészek Státuszok' : 'Cavity Status'} (${_0x192a.length} &bull; <b style="color:var(--danger)">${nokCount} NOK</b>, <b style="color:var(--success)">${okCount} OK</b>)`;
-
-      if (deltaList.length > 0) {
-        let deltaHtml = "";
-        deltaList.forEach(d => {
-          deltaHtml += `
-            <div class="delta-card">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                <strong style="font-size:14px; color:#0f172a;">${d.nest} &bull; ${t.thItem}: ${d.megn}</strong>
-                <span style="font-size:11px; font-weight:bold; color:#ef4444; background:#fee2e2; padding:2px 6px; border-radius:4px;">${d.status}</span>
-              </div>
-              <div style="font-size:12px; color:#475569;">
-                ${t.thOrig}: <b>${d.akt}</b> | ${t.thNom}: <b>${d.nevl}</b> &rarr; &Delta;: <b style="color:#b91c1c;">${d.delta} mm</b>
-              </div>
-              <div style="font-size:12px; font-weight:bold; color:#b91c1c; margin-top:3px;">
-                ${d.diff}
-              </div>
-            </div>
-          `;
-        });
-        deltaCardsContainer.innerHTML = deltaHtml;
-        titleProdDelta.innerHTML = `⚠️ 2. ${_0x9812 === 'hu' ? 'Tűrésen Kívüli Méretek & Eltérések' : 'Out-of-Tolerance Deltas'} &bull; <b>${deltaList.length} ${t.errorsWord}</b>`;
-        accProdDelta.style.display = "block";
-      } else {
-        accProdDelta.style.display = "none";
-      }
-
-      const megnSet = new Set();
-      _0x192a.forEach(f => f.parsedItems.forEach(it => { if (it.enabled !== false) megnSet.add(it.megn); }));
-      const megnLista = Array.from(megnSet).sort((a, b) => _0x8822(a, b));
-
-      let hHeadHtml = `<tr><th class="megn-col">${t.thItem}</th>`;
-      _0x192a.forEach((f, i) => {
-        hHeadHtml += `<th>F${i + 1}</th>`;
-      });
-      hHeadHtml += `</tr>`;
-      heatmapHead.innerHTML = hHeadHtml;
-
-      heatmapBody.innerHTML = "";
-      megnLista.forEach(megn => {
-        const tr = document.createElement('tr');
-        let rowHasError = false;
-
-        let rowCells = `<td class="megn-col">${megn}</td>`;
-
-        _0x192a.forEach(file => {
-          const item = file.parsedItems.find(it => it.megn === megn && it.enabled !== false);
-          if (item) {
-            const isErr = _0x9988(item);
-            const isNear = _0x1122(item);
-            if (isErr) rowHasError = true;
-
-            let bgColor = "#dcfce7";
-            let textColor = "#166534";
-            let titleTip = "OK";
-
-            if (isErr) {
-              bgColor = "#fecaca";
-              textColor = "#991b1b";
-              titleTip = "Tűrésen kívül!";
-            } else if (isNear) {
-              bgColor = "#fef08a";
-              textColor = "#854d0e";
-              titleTip = "Figyelem: Tűréshatár peremén!";
-            }
-
-            rowCells += `<td style="background-color:${bgColor}; color:${textColor}; font-weight:bold;" title="${titleTip}">${item.akt.toFixed(3)}</td>`;
-          } else {
-            rowCells += `<td>-</td>`;
-          }
-        });
-
-        tr.innerHTML = rowCells;
-        tr.setAttribute('data-has-error', rowHasError ? 'true' : 'false');
-        heatmapBody.appendChild(tr);
-      });
-      heatmapWrapper.style.display = "block";
-
-      _0x1a8c();
     }
 
     _0x32ab();
