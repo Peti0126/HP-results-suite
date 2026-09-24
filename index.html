@@ -11,7 +11,7 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   </script>
 
-  <!-- SheetJS az Excel (.xlsx) exportáláshoz és sablonkitöltéshez -->
+  <!-- SheetJS az Excel (.xlsx) exportáláshoz -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
@@ -408,7 +408,7 @@
     <header class="no-print">
       <div class="app-title">
         <h1>HP Metrology Suite 2026</h1>
-        <p id="appSubtitle">1. Ellenőrzés &bull; 2. Zeiss Calypso DFQ Export &bull; 3. Vonalkód &bull; 4. Excel &bull; 5. Gyártói Gyorsnézet</p>
+        <p id="appSubtitle">1. Ellenőrzés &bull; 2. Gyártói Gyorsnézet &bull; 3. Excel &bull; 4. Vonalkód Mátrix</p>
       </div>
       <div class="header-right">
         <div class="lang-switcher">
@@ -428,14 +428,15 @@
       <p id="txtDropSub">Hardver-azonosított DFQ generálás, 5 mp-es időeltolás, közvetlen DFQ és PDF feldolgozás</p>
     </div>
 
+    <!-- ÚJ SORRENDŰ FÜLEK -->
     <div class="tabs-nav no-print">
       <button class="tab-btn active" id="btnTabValidator" type="button">🔍 1. Jegyzőkönyv Ellenőrző</button>
-      <button class="tab-btn" id="btnTabMatrix" type="button">📊 2. Vonalkód Mátrix</button>
+      <button class="tab-btn" id="btnTabProduction" type="button" style="background: #fef3c7; color: #78350f;">🏭 2. Gyártói Nézet</button>
       <button class="tab-btn" id="btnTabExcel" type="button">📑 3. Excel Táblázat</button>
-      <button class="tab-btn" id="btnTabProduction" type="button" style="background: #fef3c7; color: #78350f;">🏭 4. Gyártói Gyorsnézet</button>
+      <button class="tab-btn" id="btnTabMatrix" type="button">📊 4. Vonalkód Mátrix</button>
     </div>
 
-    <!-- 1. TAB -->
+    <!-- 1. TAB: JEGYZŐKÖNYV ELLENŐRZŐ -->
     <div id="tab-validator" class="tab-pane active">
       <div id="validatorOverview">
         <div class="alert-box warning" id="emptyValidatorMsg">Kérlek tölts fel mérési jegyzőkönyveket (.pdf, .txt vagy .dfq) az ellenőrzéshez!</div>
@@ -449,74 +450,7 @@
       <div id="validatorFilesList"></div>
     </div>
 
-    <!-- 2. TAB -->
-    <div id="tab-matrix" class="tab-pane">
-      <div class="card no-print" style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 14px 20px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 15px;">
-        <div>
-          <h3 style="font-size: 16px;" id="matrixCardTitle">Vonalkód Mátrix (Code128)</h3>
-          <p style="font-size: 13px; color: var(--text-muted);" id="matrixCardSub">Mért értékek vonalkódjai fészkenként csoportosítva.</p>
-        </div>
-        <button class="btn btn-secondary" onclick="window.print()" type="button" id="btnPrintBarcode">🖨️ Nyomtatás (A4 Fekvő)</button>
-      </div>
-      <div class="table-container" id="matrixBarcodeWrapper" style="display: none;">
-        <table>
-          <thead id="matrixBarcodeHead"></thead>
-          <tbody id="matrixBarcodeBody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- 3. TAB: EXCEL TÁBLÁZAT & CÉGES SABLONKITÖLTŐ -->
-    <div id="tab-excel" class="tab-pane">
-      
-      <!-- CÉGES EXCEL SABLON KITÖLTŐ PANEL -->
-      <div class="card no-print" style="background: #ffffff; border: 1px solid #bfdbfe; border-left: 5px solid var(--primary); padding: 16px 20px; border-radius: var(--radius); margin-bottom: 18px; box-shadow: 0 2px 5px rgba(0,0,0,0.03);">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
-          <div>
-            <h3 style="font-size: 16px; color: #0369a1;" id="lblTemplateTitle">📑 Céges Excel Sablon Kitöltése (pl. Tabelle.xlsx)</h3>
-            <p style="font-size: 13px; color: var(--text-muted);" id="lblTemplateSub">Töltsd fel a céges sablont, és a program automatikusan kitölti a mérésekkel, megtartva az összes képletet!</p>
-          </div>
-          <div style="display: flex; gap: 8px;">
-            <input type="file" id="companyTemplateFile" accept=".xlsx,.xls" style="display: none;">
-            <button class="btn btn-primary" onclick="document.getElementById('companyTemplateFile').click()" type="button" id="btnBrowseTemplate">📂 Céges Sablon Tallózása</button>
-            <button class="btn btn-success" id="btnFillAndDownloadTemplate" type="button" disabled>📥 Kitöltés & Letöltés (.xlsx)</button>
-          </div>
-        </div>
-
-        <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap; background: #f8fafc; padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border);">
-          <span style="font-size: 12px; font-weight: bold; color: #334155;" id="lblFillMode">Kitöltési mód:</span>
-          <label style="font-size: 12px; display: inline-flex; align-items: center; gap: 5px; cursor: pointer;">
-            <input type="radio" name="fillScope" value="results_only" checked>
-            <span id="optResultsOnly">Csak a mért eredmények beírása (meglévő mérési tervhez)</span>
-          </label>
-          <label style="font-size: 12px; display: inline-flex; align-items: center; gap: 5px; cursor: pointer;">
-            <input type="radio" name="fillScope" value="full">
-            <span id="optFull">Eredmények + Névleges méretek és tűrések kitöltése is</span>
-          </label>
-          <span id="selectedTemplateName" style="font-size: 12px; color: #0284c7; font-weight: bold; margin-left: auto;"></span>
-        </div>
-      </div>
-
-      <!-- NORMÁL EXCEL EXPORT SÁV -->
-      <div class="card no-print" style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 14px 20px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 15px;">
-        <div>
-          <h3 style="font-size: 16px;" id="excelCardTitle">Mérési Adatmátrix (Névleges & Tűrések)</h3>
-          <p style="font-size: 13px; color: var(--text-muted);" id="excelCardSub">Mért értékek eredeti vagy jóváhagyott állapotban fészkenként.</p>
-        </div>
-        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button class="btn btn-success" id="btnExportExcel" type="button">📥 Gyors Excel (.xlsx)</button>
-          <button class="btn btn-primary" id="btnCopyClipboard" type="button">📋 Másolás Vágólapra</button>
-        </div>
-      </div>
-      <div class="table-container" id="excelTableWrapper" style="display: none;">
-        <table>
-          <thead id="excelTableHead"></thead>
-          <tbody id="excelTableBody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- 4. TAB: GYÁRTÓI GYORSNÉZET (ÖSSZECSUKHATÓ PANELEKKEL) -->
+    <!-- 2. TAB: GYÁRTÓI NÉZET (ÖSSZECSUKHATÓ PANELEKKEL) -->
     <div id="tab-production" class="tab-pane">
       <div class="card no-print" style="background: #fff; padding: 14px 20px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 15px;">
         <h3 style="font-size: 16px; color: #78350f;" id="prodHeaderTitle">🏭 Gyártásközi Állapot & Gépbeállítói Gyorslista</h3>
@@ -560,6 +494,43 @@
           </div>
         </div>
       </details>
+    </div>
+
+    <!-- 3. TAB: EXCEL TÁBLÁZAT -->
+    <div id="tab-excel" class="tab-pane">
+      <div class="card no-print" style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 14px 20px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 15px;">
+        <div>
+          <h3 style="font-size: 16px;" id="excelCardTitle">Mérési Adatmátrix (Névleges & Tűrések)</h3>
+          <p style="font-size: 13px; color: var(--text-muted);" id="excelCardSub">Mért értékek eredeti vagy jóváhagyott állapotban fészkenként.</p>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn btn-success" id="btnExportExcel" type="button">📥 Excel (.xlsx) Letöltése</button>
+          <button class="btn btn-primary" id="btnCopyClipboard" type="button">📋 Másolás Vágólapra</button>
+        </div>
+      </div>
+      <div class="table-container" id="excelTableWrapper" style="display: none;">
+        <table>
+          <thead id="excelTableHead"></thead>
+          <tbody id="excelTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 4. TAB: VONALKÓD MÁTRIX -->
+    <div id="tab-matrix" class="tab-pane">
+      <div class="card no-print" style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 14px 20px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 15px;">
+        <div>
+          <h3 style="font-size: 16px;" id="matrixCardTitle">Vonalkód Mátrix (Code128)</h3>
+          <p style="font-size: 13px; color: var(--text-muted);" id="matrixCardSub">Mért értékek vonalkódjai fészkenként csoportosítva.</p>
+        </div>
+        <button class="btn btn-secondary" onclick="window.print()" type="button" id="btnPrintBarcode">🖨️ Nyomtatás (A4 Fekvő)</button>
+      </div>
+      <div class="table-container" id="matrixBarcodeWrapper" style="display: none;">
+        <table>
+          <thead id="matrixBarcodeHead"></thead>
+          <tbody id="matrixBarcodeBody"></tbody>
+        </table>
+      </div>
     </div>
 
   </div>
@@ -671,21 +642,23 @@
   </div>
 
   <script>
+    // BIZTONSÁGOS 5 MÁSODPERCES ELTOLÁS A FÁJLNÉV- ÉS SZERVERÜTKÖZÉSEK ELLEN
     const TIME_OFFSET_SECONDS = 5;
 
+    // --- TÖBBNYELVŰ NYELVI SZÓTÁR (HU / DE / EN) ---
     const i18n = {
       hu: {
-        appSubtitle: "1. Ellenőrzés &bull; 2. Zeiss Calypso DFQ Export &bull; 3. Vonalkód &bull; 4. Excel &bull; 5. Gyártói Gyorsnézet",
+        appSubtitle: "1. Ellenőrzés &bull; 2. Gyártói Gyorsnézet &bull; 3. Excel &bull; 4. Vonalkód Mátrix",
         dropTitle: "Kattints ide vagy húzd be a mérési TXT, Zeiss CALYPSO PDF vagy kész DFQ fájlokat",
         dropSub: "Hardver-azonosított DFQ generálás, 5 mp-es időeltolás, közvetlen DFQ és PDF feldolgozás",
         tabValidator: "🔍 1. Jegyzőkönyv Ellenőrző",
-        tabMatrix: "📊 2. Vonalkód Mátrix",
+        tabProduction: "🏭 2. Gyártói Nézet",
         tabExcel: "📑 3. Excel Táblázat",
-        tabProduction: "🏭 4. Gyártói Gyorsnézet",
+        tabMatrix: "📊 4. Vonalkód Mátrix",
         emptyMsg: "Kérlek tölts fel mérési jegyzőkönyveket (.pdf, .txt vagy .dfq) az ellenőrzéshez!",
         btnDfqAll: "📊 Összes DFQ Letöltése (.ZIP)",
         btnTxtAll: "📦 Összes TXT Letöltése (.ZIP)",
-        btnExportXlsx: "📥 Gyors Excel (.xlsx)",
+        btnExportXlsx: "📥 Excel (.xlsx) Letöltése",
         btnCopyClip: "📋 Másolás Vágólapra",
         btnPrint: "🖨️ Nyomtatás (A4 Fekvő)",
         barcodeTitle: "Vonalkód Mátrix (Code128)",
@@ -731,17 +704,17 @@
         allFixedSub: "A mérési jegyzőkönyvek és az export a jóváhagyott értékeket tartalmazzák."
       },
       de: {
-        appSubtitle: "1. Prüfung &bull; 2. Zeiss Calypso DFQ Export &bull; 3. Barcode &bull; 4. Excel &bull; 5. Fertigungs-Schnellansicht",
+        appSubtitle: "1. Prüfung &bull; 2. Fertigungs-Schnellansicht &bull; 3. Excel &bull; 4. Barcode-Matrix",
         dropTitle: "Hier klicken oder TXT-, Zeiss CALYPSO PDF- oder DFQ-Dateien ablegen",
         dropSub: "Hardware-identifizierte DFQ-Generierung, 5s-Zeitverschiebung, direkte DFQ- & PDF-Verarbeitung",
         tabValidator: "🔍 1. Protokoll-Prüfung",
-        tabMatrix: "📊 2. Barcode-Matrix",
+        tabProduction: "🏭 2. Fertigungs-Schnellansicht",
         tabExcel: "📑 3. Excel-Tabelle",
-        tabProduction: "🏭 4. Fertigungs-Schnellansicht",
+        tabMatrix: "📊 4. Barcode-Matrix",
         emptyMsg: "Bitte Messprotokolle (.pdf, .txt oder .dfq) zur Überprüfung hochladen!",
         btnDfqAll: "📊 Alle DFQ herunterladen (.ZIP)",
         btnTxtAll: "📦 Alle TXT herunterladen (.ZIP)",
-        btnExportXlsx: "📥 Schneller Excel (.xlsx) Export",
+        btnExportXlsx: "📥 Excel (.xlsx) Download",
         btnCopyClip: "📋 In Zwischenablage kopieren",
         btnPrint: "🖨️ Drucken (A4 Querformat)",
         barcodeTitle: "Barcode-Matrix (Code128)",
@@ -787,17 +760,17 @@
         allFixedSub: "Die Messprotokolle und Exporte enthalten die korrigierten Werte."
       },
       en: {
-        appSubtitle: "1. Inspection &bull; 2. Zeiss Calypso DFQ Export &bull; 3. Barcode &bull; 4. Excel &bull; 5. Production Quick View",
+        appSubtitle: "1. Inspection &bull; 2. Production View &bull; 3. Excel &bull; 4. Barcode Matrix",
         dropTitle: "Click here or drop measurement TXT, Zeiss CALYPSO PDF or DFQ files",
         dropSub: "Hardware-identified DFQ export, 5s timestamp stepping, native DFQ & PDF parsing",
         tabValidator: "🔍 1. Report Validator",
-        tabMatrix: "📊 2. Barcode Matrix",
+        tabProduction: "🏭 2. Production View",
         tabExcel: "📑 3. Excel Spreadsheet",
-        tabProduction: "🏭 4. Production View",
+        tabMatrix: "📊 4. Barcode Matrix",
         emptyMsg: "Please upload measurement reports (.pdf, .txt, or .dfq) to validate!",
         btnDfqAll: "📊 Download All DFQ (.ZIP)",
         btnTxtAll: "📦 Download All TXT (.ZIP)",
-        btnExportXlsx: "📥 Quick Excel (.xlsx)",
+        btnExportXlsx: "📥 Download Excel (.xlsx)",
         btnCopyClip: "📋 Copy to Clipboard",
         btnPrint: "🖨️ Print (A4 Landscape)",
         barcodeTitle: "Barcode Matrix (Code128)",
@@ -867,9 +840,9 @@
       document.getElementById('txtDropTitle').textContent = t.dropTitle;
       document.getElementById('txtDropSub').textContent = t.dropSub;
       document.getElementById('btnTabValidator').textContent = t.tabValidator;
-      document.getElementById('btnTabMatrix').textContent = t.tabMatrix;
-      document.getElementById('btnTabExcel').textContent = t.tabExcel;
       document.getElementById('btnTabProduction').textContent = t.tabProduction;
+      document.getElementById('btnTabExcel').textContent = t.tabExcel;
+      document.getElementById('btnTabMatrix').textContent = t.tabMatrix;
 
       document.getElementById('matrixCardTitle').textContent = t.barcodeTitle;
       document.getElementById('matrixCardSub').textContent = t.barcodeSub;
@@ -913,7 +886,7 @@
       if (e.target.files.length) handleIncomingFiles(Array.from(e.target.files));
     });
 
-    // --- BIZTOS ÉS MEGBÍZHATÓ FÜLVÁLTÓ FÜGGVÉNY ---
+    // --- FÜLVÁLTÓ FÜGGVÉNY AZ ÚJ SORRENDHEZ ---
     function activateTab(tabId) {
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.tab-pane').forEach(pane => {
@@ -926,9 +899,9 @@
         const p = document.getElementById('tab-validator');
         p.classList.add('active');
         p.style.display = 'block';
-      } else if (tabId === 'matrix') {
-        document.getElementById('btnTabMatrix').classList.add('active');
-        const p = document.getElementById('tab-matrix');
+      } else if (tabId === 'production') {
+        document.getElementById('btnTabProduction').classList.add('active');
+        const p = document.getElementById('tab-production');
         p.classList.add('active');
         p.style.display = 'block';
       } else if (tabId === 'excel') {
@@ -936,18 +909,18 @@
         const p = document.getElementById('tab-excel');
         p.classList.add('active');
         p.style.display = 'block';
-      } else if (tabId === 'production') {
-        document.getElementById('btnTabProduction').classList.add('active');
-        const p = document.getElementById('tab-production');
+      } else if (tabId === 'matrix') {
+        document.getElementById('btnTabMatrix').classList.add('active');
+        const p = document.getElementById('tab-matrix');
         p.classList.add('active');
         p.style.display = 'block';
       }
     }
 
     document.getElementById('btnTabValidator').addEventListener('click', () => activateTab('validator'));
-    document.getElementById('btnTabMatrix').addEventListener('click', () => activateTab('matrix'));
-    document.getElementById('btnTabExcel').addEventListener('click', () => activateTab('excel'));
     document.getElementById('btnTabProduction').addEventListener('click', () => activateTab('production'));
+    document.getElementById('btnTabExcel').addEventListener('click', () => activateTab('excel'));
+    document.getElementById('btnTabMatrix').addEventListener('click', () => activateTab('matrix'));
 
     function naturalCompare(a, b) {
       return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
@@ -2402,98 +2375,6 @@
       }).catch(err => {
         alert("Hiba: " + err);
       });
-    });
-
-    // --- CÉGES EXCEL SABLON BETÖLTŐ ÉS KITÖLTŐ MOTOR ---
-    let uploadedCompanyTemplateBuffer = null;
-    let uploadedCompanyTemplateName = "";
-
-    const templateFileInput = document.getElementById('companyTemplateFile');
-    const btnFillAndDownload = document.getElementById('btnFillAndDownloadTemplate');
-    const lblSelectedTemplate = document.getElementById('selectedTemplateName');
-
-    templateFileInput.addEventListener('change', async (e) => {
-      if (!e.target.files.length) return;
-      const file = e.target.files[0];
-      uploadedCompanyTemplateName = file.name;
-      uploadedCompanyTemplateBuffer = await file.arrayBuffer();
-
-      lblSelectedTemplate.textContent = `Betöltve: ${file.name}`;
-      btnFillAndDownload.disabled = false;
-    });
-
-    btnFillAndDownload.addEventListener('click', () => {
-      if (!uploadedCompanyTemplateBuffer) {
-        alert("Kérlek válassz ki egy céges Excel sablont!");
-        return;
-      }
-      if (!loadedFiles.length) {
-        alert("Nincsenek betöltött mérési jegyzőkönyvek!");
-        return;
-      }
-
-      try {
-        const fillScope = document.querySelector('input[name="fillScope"]:checked').value;
-        const wb = XLSX.read(uploadedCompanyTemplateBuffer, { type: 'array', cellFormula: true, cellStyles: true });
-
-        let targetSheetName = wb.SheetNames.find(n => n.toLowerCase().includes('measurement table')) || wb.SheetNames[0];
-        const ws = wb.Sheets[targetSheetName];
-
-        if (!ws) {
-          alert(`Nem található megfelelő munkalap a sablonban!`);
-          return;
-        }
-
-        const cavityColMap = [16, 28, 39, 50, 61, 72, 83, 94]; // Q, AC, AN, AY... oszlopok
-
-        const firstHdr = loadedFiles[0]?.headerData;
-        if (fillScope === 'full' && firstHdr) {
-          if (firstHdr.teileBez) ws['B4'] = { t: 's', v: firstHdr.teileBez };
-          if (firstHdr.teileNr) ws['B5'] = { t: 's', v: firstHdr.teileNr };
-          if (firstHdr.rajzszam) ws['B9'] = { t: 's', v: firstHdr.rajzszam };
-          if (firstHdr.datum) ws['B10'] = { t: 's', v: firstHdr.datum };
-        }
-
-        for (let r = 13; r <= 150; r++) {
-          const posCell = ws[XLSX.utils.encode_cell({ r: r - 1, c: 2 })]; // C oszlop (index 2)
-          if (!posCell || posCell.v === undefined || posCell.v === null || posCell.v === "") continue;
-
-          const itemCode = String(posCell.v).trim();
-
-          let itemMeta = null;
-          loadedFiles.forEach(f => {
-            const found = f.parsedItems.find(it => it.megn === itemCode);
-            if (found && !itemMeta) itemMeta = found;
-          });
-
-          if (fillScope === 'full' && itemMeta) {
-            ws[XLSX.utils.encode_cell({ r: r - 1, c: 6 })] = { t: 'n', v: itemMeta.nevl };
-            
-            const aturVal = itemMeta.atur !== undefined ? itemMeta.atur : (itemMeta.minTolAbs - itemMeta.nevl);
-            ws[XLSX.utils.encode_cell({ r: r - 1, c: 7 })] = { t: 'n', v: aturVal };
-
-            const fturVal = itemMeta.ftur !== undefined ? itemMeta.ftur : (itemMeta.maxTolAbs - itemMeta.nevl);
-            ws[XLSX.utils.encode_cell({ r: r - 1, c: 8 })] = { t: 'n', v: fturVal };
-          }
-
-          loadedFiles.forEach((file, fileIdx) => {
-            if (fileIdx < cavityColMap.length) {
-              const targetCol = cavityColMap[fileIdx];
-              const mItem = file.parsedItems.find(it => it.megn === itemCode);
-
-              if (mItem) {
-                ws[XLSX.utils.encode_cell({ r: r - 1, c: targetCol })] = { t: 'n', v: mItem.akt };
-              }
-            }
-          });
-        }
-
-        const outName = `KITOLTOTT_${uploadedCompanyTemplateName}`;
-        XLSX.writeFile(wb, outName);
-
-      } catch (err) {
-        alert("Hiba történt a sablon kitöltésekor: " + err.message);
-      }
     });
 
     function renderProductionView() {
