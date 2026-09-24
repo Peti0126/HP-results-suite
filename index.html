@@ -180,6 +180,26 @@
     .checkbox-pill:hover { background: #f1f5f9; border-color: #94a3b8; }
     .checkbox-pill input { cursor: pointer; }
 
+    /* Szűrő és kereső vezérlősáv */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: var(--radius);
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .filter-bar input[type="text"] {
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 12px;
+      width: 220px;
+    }
+
     details.error-accordion, details.prod-accordion {
       background: #fff;
       border: 1px solid var(--border);
@@ -333,7 +353,7 @@
     }
     .form-group { display: flex; flex-direction: column; gap: 4px; }
     .form-group label { font-size: 12px; font-weight: 700; color: #334155; }
-    .form-group input {
+    .form-group input, .form-group select {
       padding: 8px 10px;
       border: 1px solid #cbd5e1;
       border-radius: 4px;
@@ -393,11 +413,12 @@
     .barcode-svg { max-height: 38px; width: 100%; }
     .meta-text { font-size: 11px; color: #555; margin-top: 2px; }
 
+    /* Nyomtatási stíluslap */
     @media print {
-      .no-print, header, .upload-box, .tabs-nav { display: none !important; }
-      body { background: #fff; padding: 0; }
-      table { font-size: 10px; }
-      .barcode-svg { max-height: 26px !important; }
+      body * { visibility: hidden; }
+      #printableSetterSheet, #printableSetterSheet * { visibility: visible; }
+      #printableSetterSheet { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+      .no-print { display: none !important; }
     }
   </style>
 </head>
@@ -428,7 +449,7 @@
       <p id="txtDropSub">Hardver-azonosított DFQ generálás, 5 mp-es időeltolás, közvetlen DFQ és PDF feldolgozás</p>
     </div>
 
-    <!-- ÚJ SORRENDŰ FÜLEK -->
+    <!-- FÜLEK -->
     <div class="tabs-nav no-print">
       <button class="tab-btn active" id="btnTabValidator" type="button">🔍 1. Jegyzőkönyv Ellenőrző</button>
       <button class="tab-btn" id="btnTabProduction" type="button" style="background: #fef3c7; color: #78350f;">🏭 2. Gyártói Nézet</button>
@@ -450,11 +471,16 @@
       <div id="validatorFilesList"></div>
     </div>
 
-    <!-- 2. TAB: GYÁRTÓI NÉZET (ÖSSZECSUKHATÓ PANELEKKEL) -->
+    <!-- 2. TAB: GYÁRTÓI NÉZET -->
     <div id="tab-production" class="tab-pane">
-      <div class="card no-print" style="background: #fff; padding: 14px 20px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 15px;">
-        <h3 style="font-size: 16px; color: #78350f;" id="prodHeaderTitle">🏭 Gyártásközi Állapot & Gépbeállítói Gyorslista</h3>
-        <p style="font-size: 13px; color: var(--text-muted);" id="prodHeaderSub">Azonnali fészek-státusz (OK/NOK), beállítói delta korrekciók és gyártási hőtérkép.</p>
+      <div class="card no-print" style="background: #fff; padding: 14px 20px; border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <h3 style="font-size: 16px; color: #78350f;" id="prodHeaderTitle">🏭 Gyártásközi Állapot & Gépbeállítói Gyorslista</h3>
+          <p style="font-size: 13px; color: var(--text-muted);" id="prodHeaderSub">Azonnali fészek-státusz (OK/NOK), beállítói delta korrekciók és gyártási hőtérkép.</p>
+        </div>
+        <button class="btn btn-warning" onclick="printSetterWorksheet()" type="button" id="btnPrintSetterSheet" style="font-size: 13px; padding: 8px 14px;">
+          🖨️ Gépbeállítói Munkalap Nyomtatása
+        </button>
       </div>
 
       <!-- 1. PANEL: FÉSZEK STÁTUSZ KÁRTYÁK -->
@@ -479,13 +505,23 @@
         </div>
       </details>
 
-      <!-- 3. PANEL: GYÁRTÁSI HŐTÉRKÉP -->
+      <!-- 3. PANEL: GYÁRTÁSI HŐTÉRKÉP + KERESŐ & SZŰRŐ -->
       <details class="prod-accordion" id="accProdHeatmap" open>
         <summary>
-          <span id="titleProdHeatmap">📊 3. Gyártási Hőtérkép: <span style="color:var(--success)">■ Tűrésen belül</span> | <span style="color:var(--danger)">■ Tűrésen kívül (Kiesés)</span></span>
+          <span id="titleProdHeatmap">📊 3. Gyártási Hőtérkép: <span style="color:var(--success)">■ Tűrésen belül</span> | <span style="color:var(--warning)">■ Határon táncol (Cpk figy.)</span> | <span style="color:var(--danger)">■ Tűrésen kívül</span></span>
           <span style="font-size:11px; color:#64748b; font-weight:normal;" class="lblClickToggle">Kattintásra nyílik / csukódik</span>
         </summary>
         <div class="prod-accordion-content" style="padding-top: 6px;">
+          
+          <!-- Kereső és Csak NOK szűrő -->
+          <div class="filter-bar no-print">
+            <input type="text" id="heatmapSearch" placeholder="🔍 Keresés tételre (pl. 31, 35)..." oninput="filterHeatmap()">
+            <label class="checkbox-pill">
+              <input type="checkbox" id="heatmapNokOnly" onchange="filterHeatmap()"> Csak hibás (NOK) tételek mutatása
+            </label>
+            <span style="font-size: 11px; color: var(--text-muted); margin-left: auto;">Sárga cella: a tűréshatár szélső 15%-ában van!</span>
+          </div>
+
           <div class="table-container" id="prodHeatmapWrapper" style="display: none; margin-top:0;">
             <table>
               <thead id="prodHeatmapHead"></thead>
@@ -567,18 +603,24 @@
     </div>
   </div>
 
-  <!-- MODAL: ZEISS PARAMÉTERBEVITEL -->
+  <!-- MODAL: ZEISS PARAMÉTERBEVITEL + PRESETS -->
   <div class="modal-backdrop" id="headerModal">
     <div class="modal-window">
-      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
         <div>
           <h3 id="modalTitleText" style="color: #b45309;">⚙️ Paraméterbevitel (Zeiss Calypso / CAQ)</h3>
           <p style="font-size: 13px; color: #475569; margin-top: 4px;">
             <span id="lblModalFile">Fájl:</span> <strong id="modalFileName"></strong>. <span id="lblModalStep">Mentéskor a fészekkód léptetésre kerül, az időpontok pedig darabonként <strong>+5 másodperccel eltolódnak</strong>:</span>
           </p>
         </div>
-        <div style="font-size: 12px; font-weight: bold; color: #334155;">
-          <span id="lblUser">Felhasználók:</span> <span style="background: #e2e8f0; padding: 4px 10px; border-radius: 4px;">Master</span>
+        
+        <!-- Cikkszám Profilkezelő (Preset) -->
+        <div style="display: flex; gap: 6px; align-items: center; background: #f1f5f9; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border);">
+          <span style="font-size: 11px; font-weight: bold; color: #334155;">Mentett profil:</span>
+          <select id="presetSelector" onchange="loadPreset(this.value)" style="padding: 3px 6px; font-size: 12px;">
+            <option value="">-- Válassz profilt --</option>
+          </select>
+          <button class="btn btn-outline" style="padding: 3px 6px; font-size: 11px;" onclick="saveCurrentAsPreset()" type="button" title="Aktuális adatok elmentése ehhez a cikkszámhoz">💾 Mentés</button>
         </div>
       </div>
       
@@ -641,11 +683,24 @@
     </div>
   </div>
 
+  <!-- NYOMTATHATÓ GÉPBEÁLLÍTÓI MUNKALAP TÁROLÓ -->
+  <div id="printableSetterSheet" style="display: none; padding: 25px; font-family: sans-serif;">
+    <div style="border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: flex-end;">
+      <div>
+        <h2 style="font-size: 20px; font-weight: bold; margin: 0;">GÉPBEÁLLÍTÓI KORREKCIÓS MUNKALAP</h2>
+        <div style="font-size: 12px; color: #475569; margin-top: 4px;" id="printSheetSub">Mérési jegyzőkönyv alapján generált beállítási adatok</div>
+      </div>
+      <div style="text-align: right; font-size: 12px;">
+        <div><strong>Dátum:</strong> <span id="printDate"></span></div>
+        <div><strong>Cikkszám:</strong> <span id="printPartNr"></span></div>
+      </div>
+    </div>
+    <div id="printDeltaTableWrapper"></div>
+  </div>
+
   <script>
-    // BIZTONSÁGOS 5 MÁSODPERCES ELTOLÁS A FÁJLNÉV- ÉS SZERVERÜTKÖZÉSEK ELLEN
     const TIME_OFFSET_SECONDS = 5;
 
-    // --- TÖBBNYELVŰ NYELVI SZÓTÁR (HU / DE / EN) ---
     const i18n = {
       hu: {
         appSubtitle: "1. Ellenőrzés &bull; 2. Gyártói Gyorsnézet &bull; 3. Excel &bull; 4. Vonalkód Mátrix",
@@ -886,7 +941,6 @@
       if (e.target.files.length) handleIncomingFiles(Array.from(e.target.files));
     });
 
-    // --- FÜLVÁLTÓ FÜGGVÉNY AZ ÚJ SORRENDHEZ ---
     function activateTab(tabId) {
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.tab-pane').forEach(pane => {
@@ -1551,6 +1605,17 @@
       return item.akt > maxTol || item.akt < minTol;
     }
 
+    // 4. FUNKCIÓ: Tűrés peremének figyelése (Cpk / Trend figyelmeztetés a szélső 15%-ra)
+    function isNearToleranceBorder(item) {
+      if (isStillError(item)) return false;
+      const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
+      const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
+      const band = Math.abs(maxTol - minTol);
+      if (band <= 0) return false;
+      const margin = band * 0.15;
+      return (item.akt >= (maxTol - margin)) || (item.akt <= (minTol + margin));
+    }
+
     function setGlobalCheckboxes(state) {
       document.querySelectorAll('.chk-global-item').forEach(chk => {
         chk.checked = state;
@@ -1871,6 +1936,67 @@
                 h.uhrzeit && h.uhrzeit.trim());
     }
 
+    // 3. FUNKCIÓ: Mentett cikkszám-profilok kezelése (LocalStorage)
+    function refreshPresetSelector() {
+      const sel = document.getElementById('presetSelector');
+      sel.innerHTML = '<option value="">-- Válassz profilt --</option>';
+      try {
+        const presets = JSON.parse(localStorage.getItem('hp_presets') || '{}');
+        Object.keys(presets).sort().forEach(pName => {
+          const opt = document.createElement('option');
+          opt.value = pName;
+          opt.textContent = pName;
+          sel.appendChild(opt);
+        });
+      } catch (e) {}
+    }
+
+    function saveCurrentAsPreset() {
+      const teileNr = document.getElementById('m_teileNr').value.trim();
+      if (!teileNr) {
+        alert("Adj meg egy cikkszámot a profil mentéséhez!");
+        return;
+      }
+      const profile = {
+        teileNr: teileNr,
+        teileBez: document.getElementById('m_teileBez').value.trim(),
+        rajzszam: document.getElementById('m_rajzszam').value.trim(),
+        megrendelo: document.getElementById('m_megrendelo').value.trim(),
+        maschine: document.getElementById('m_maschine').value.trim(),
+        k2415: document.getElementById('m_k2415').value.trim(),
+        k1202: document.getElementById('m_k1202').value.trim(),
+        k2406: document.getElementById('m_k2406').value.trim()
+      };
+      try {
+        const presets = JSON.parse(localStorage.getItem('hp_presets') || '{}');
+        presets[teileNr] = profile;
+        localStorage.setItem('hp_presets', JSON.stringify(presets));
+        refreshPresetSelector();
+        document.getElementById('presetSelector').value = teileNr;
+        alert(`✅ "${teileNr}" profil sikeresen elmentve a böngésződben!`);
+      } catch (e) {
+        alert("Hiba a mentéskor: " + e);
+      }
+    }
+
+    function loadPreset(pName) {
+      if (!pName) return;
+      try {
+        const presets = JSON.parse(localStorage.getItem('hp_presets') || '{}');
+        const p = presets[pName];
+        if (p) {
+          if (p.teileNr) document.getElementById('m_teileNr').value = p.teileNr;
+          if (p.teileBez) document.getElementById('m_teileBez').value = p.teileBez;
+          if (p.rajzszam) document.getElementById('m_rajzszam').value = p.rajzszam;
+          if (p.megrendelo) document.getElementById('m_megrendelo').value = p.megrendelo;
+          if (p.maschine) document.getElementById('m_maschine').value = p.maschine;
+          if (p.k2415) document.getElementById('m_k2415').value = p.k2415;
+          if (p.k1202) document.getElementById('m_k1202').value = p.k1202;
+          if (p.k2406) document.getElementById('m_k2406').value = p.k2406;
+        }
+      } catch (e) {}
+    }
+
     function openManualHeaderModal(idx) {
       pendingFileIdx = idx;
       const file = loadedFiles[idx];
@@ -1898,6 +2024,7 @@
     function openHeaderModal(file) {
       const h = file.headerData;
       document.getElementById('modalFileName').innerText = file.name;
+      refreshPresetSelector();
 
       document.getElementById('m_teileNr').value = h.teileNr || "";
       document.getElementById('m_bemerkung').value = h.bemerkung || "";
@@ -2377,6 +2504,98 @@
       });
     });
 
+    // 2. FUNKCIÓ: ÉLŐ KERESŐ ÉS CSAK NOK SZŰRÉS A HŐTÉRKÉPEN
+    function filterHeatmap() {
+      const q = document.getElementById('heatmapSearch').value.toLowerCase().trim();
+      const nokOnly = document.getElementById('heatmapNokOnly').checked;
+
+      const rows = document.querySelectorAll('#prodHeatmapBody tr');
+      rows.forEach(r => {
+        const itemText = r.querySelector('.megn-col')?.textContent.toLowerCase() || "";
+        const hasErr = r.getAttribute('data-has-error') === 'true';
+
+        let show = true;
+        if (q && !itemText.includes(q)) show = false;
+        if (nokOnly && !hasErr) show = false;
+
+        r.style.display = show ? "" : "none";
+      });
+    }
+
+    // 1. FUNKCIÓ: GÉPBEÁLLÍTÓI MUNKALAP NYOMTATÁSA
+    function printSetterWorksheet() {
+      if (!loadedFiles.length) {
+        alert("Nincsenek betöltött fájlok a munkalaphoz!");
+        return;
+      }
+
+      const firstHdr = loadedFiles[0].headerData;
+      document.getElementById('printDate').textContent = `${firstHdr.datum || ''} ${firstHdr.uhrzeit || ''}`;
+      document.getElementById('printPartNr').textContent = `${firstHdr.teileNr || ''} (${firstHdr.teileBez || ''})`;
+
+      const deltaList = [];
+      loadedFiles.forEach((file, i) => {
+        const nestName = file.headerData.bemerkung || `F${i + 1}`;
+        file.parsedItems.forEach(item => {
+          if (item.enabled !== false && isStillError(item)) {
+            const delta = +(item.akt - item.nevl).toFixed(4);
+            const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
+            const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
+            const isOver = item.akt > maxTol;
+
+            deltaList.push({
+              nest: `F${i + 1} (${nestName})`,
+              megn: item.megn,
+              desc: item.desc,
+              akt: item.akt.toFixed(4),
+              nevl: item.nevl.toFixed(4),
+              delta: (delta >= 0 ? "+" : "") + delta.toFixed(4),
+              status: isOver ? "TÚLMÉRET" : "ALULMÉRET",
+              diff: isOver ? `+${(item.akt - maxTol).toFixed(4)} mm a max felett` : `${(item.akt - minTol).toFixed(4)} mm a min alatt`
+            });
+          }
+        });
+      });
+
+      const wrapper = document.getElementById('printDeltaTableWrapper');
+      if (deltaList.length === 0) {
+        wrapper.innerHTML = "<div style='padding:20px; font-weight:bold; color:green; border:2px solid green;'>✅ MINDEN MÉRET MEGFELELŐ! Nincs szükség gépkorrekcióra.</div>";
+      } else {
+        let tHtml = `
+          <table style="width:100%; border-collapse:collapse; font-size:12px;">
+            <thead>
+              <tr style="background:#f1f5f9;">
+                <th style="border:1px solid #94a3b8; padding:8px;">Fészek</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">Tétel</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">Megnevezés</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">Mért érték</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">Névleges</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">Eltérés (&Delta;)</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">Szükséges beállítás</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        deltaList.forEach(d => {
+          tHtml += `
+            <tr>
+              <td style="border:1px solid #cbd5e1; padding:8px; font-weight:bold;">${d.nest}</td>
+              <td style="border:1px solid #cbd5e1; padding:8px; font-weight:bold; text-align:center;">${d.megn}</td>
+              <td style="border:1px solid #cbd5e1; padding:8px;">${d.desc}</td>
+              <td style="border:1px solid #cbd5e1; padding:8px; text-align:center; color:#b91c1c; font-weight:bold;">${d.akt}</td>
+              <td style="border:1px solid #cbd5e1; padding:8px; text-align:center;">${d.nevl}</td>
+              <td style="border:1px solid #cbd5e1; padding:8px; text-align:center; font-weight:bold;">${d.delta} mm</td>
+              <td style="border:1px solid #cbd5e1; padding:8px; font-weight:bold; color:#b91c1c;">${d.diff}</td>
+            </tr>
+          `;
+        });
+        tHtml += `</tbody></table>`;
+        wrapper.innerHTML = tHtml;
+      }
+
+      window.print();
+    }
+
     function renderProductionView() {
       const t = i18n[currentLang];
       const nestCardsContainer = document.getElementById('prodNestCards');
@@ -2474,25 +2693,44 @@
       heatmapBody.innerHTML = "";
       megnLista.forEach(megn => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td class="megn-col">${megn}</td>`;
+        let rowHasError = false;
+
+        let rowCells = `<td class="megn-col">${megn}</td>`;
 
         loadedFiles.forEach(file => {
           const item = file.parsedItems.find(it => it.megn === megn && it.enabled !== false);
-          const td = document.createElement('td');
           if (item) {
             const isErr = isStillError(item);
-            td.style.backgroundColor = isErr ? "#fecaca" : "#dcfce7";
-            td.style.color = isErr ? "#991b1b" : "#166534";
-            td.style.fontWeight = "bold";
-            td.textContent = item.akt.toFixed(3);
+            const isNear = isNearToleranceBorder(item);
+            if (isErr) rowHasError = true;
+
+            let bgColor = "#dcfce7";
+            let textColor = "#166534";
+            let titleTip = "OK";
+
+            if (isErr) {
+              bgColor = "#fecaca";
+              textColor = "#991b1b";
+              titleTip = "Tűrésen kívül!";
+            } else if (isNear) {
+              bgColor = "#fef08a"; // Sárga figyelmeztetés a szélső 15%-ra!
+              textColor = "#854d0e";
+              titleTip = "Figyelem: Tűréshatár peremén!";
+            }
+
+            rowCells += `<td style="background-color:${bgColor}; color:${textColor}; font-weight:bold;" title="${titleTip}">${item.akt.toFixed(3)}</td>`;
           } else {
-            td.textContent = "-";
+            rowCells += `<td>-</td>`;
           }
-          tr.appendChild(td);
         });
+
+        tr.innerHTML = rowCells;
+        tr.setAttribute('data-has-error', rowHasError ? 'true' : 'false');
         heatmapBody.appendChild(tr);
       });
       heatmapWrapper.style.display = "block";
+
+      filterHeatmap();
     }
 
     applyLanguage();
