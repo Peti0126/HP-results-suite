@@ -568,7 +568,7 @@
       </div>
     </div>
 
-    <!-- LÁBLÉC -->
+    <!-- LÁBLÉC A KÉRT SZÖVEGGEL -->
     <footer class="no-print" style="text-align: center; margin-top: 35px; padding-top: 15px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 11px;">
       <span>&copy; 2026 Horváth Péter. Saját fejlesztésű mérési innováció. A szellemi tulajdon és forráskód védett.</span>
     </footer>
@@ -703,6 +703,27 @@
   </div>
 
   <script>
+    // --- GYORSBILLENTYŰK ÉS MENTÉSEK LETILTÁSA ---
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "F12" || e.keyCode === 123) {
+        e.preventDefault();
+        return false;
+      }
+      if (e.ctrlKey && (e.key === "u" || e.key === "U" || e.key === "s" || e.key === "S" || e.key === "c" || e.key === "C" || e.key === "a" || e.key === "A" || e.key === "p" || e.key === "P")) {
+        e.preventDefault();
+        return false;
+      }
+      if (e.ctrlKey && e.shiftKey && (e.key === "i" || e.key === "I" || e.key === "j" || e.key === "J" || e.key === "c" || e.key === "C" || e.key === "u" || e.key === "U")) {
+        e.preventDefault();
+        return false;
+      }
+    }, false);
+
+    document.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      return false;
+    }, false);
+
     const TIME_OFFSET_SECONDS = 5;
 
     const i18n = {
@@ -1609,24 +1630,19 @@
       return item.akt > maxTol || item.akt < minTol;
     }
 
-    // PONTOSÍTOTT CPK / HATÁRFIGYELÉS:
-    // Pozíciónál, szimmetriánál és alaktűréseknél (ahol a névleges 0) a 0 a tökéletes állapot, így CSAK a felső határ peremét figyeli!
     function isNearToleranceBorder(item) {
       if (isStillError(item)) return false;
       const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
       const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
       const band = Math.abs(maxTol - minTol);
       if (band <= 0) return false;
-      const margin = band * 0.15; // Szélső 15%
+      const margin = band * 0.15;
 
-      // Ha a névleges méret 0 (pl. pozíció, szimmetria) vagy az alsó határ 0
       const isOneSidedZero = (item.nevl === 0 || (minTol === 0 && maxTol > 0));
 
       if (isOneSidedZero) {
-        // Csak akkor sárga, ha a felső határt közelíti! A 0 felé lévő értékek tökéletesen zöldek!
         return item.akt >= (maxTol - margin);
       } else {
-        // Hagyományos kétoldalas méretnél az alsó és felső perem is sárga
         return (item.akt >= (maxTol - margin)) || (item.akt <= (minTol + margin));
       }
     }
