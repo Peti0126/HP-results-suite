@@ -33,7 +33,23 @@
       --radius: 8px;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    input, textarea, select {
+      -webkit-user-select: auto !important;
+      -moz-user-select: auto !important;
+      -ms-user-select: auto !important;
+      user-select: auto !important;
+    }
+
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       background: var(--bg);
@@ -103,6 +119,7 @@
       cursor: pointer;
       margin-bottom: 20px;
       transition: 0.2s ease;
+      position: relative;
     }
     .upload-box:hover { background: #dbeafe; border-color: var(--primary); }
     .upload-box h3 { font-size: 16px; color: var(--primary); margin-bottom: 5px; }
@@ -422,7 +439,7 @@
     }
   </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
   <div class="container">
     
@@ -703,6 +720,31 @@
   </div>
 
   <script>
+    // --- GYORSBILLENTYŰK ÉS FEJLESZTŐI ESZKÖZÖK KÖNYÖRTELEN BLOKKOLÁSA ---
+    document.addEventListener("keydown", (e) => {
+      // F12 tiltása
+      if (e.key === "F12" || e.keyCode === 123) {
+        e.preventDefault();
+        return false;
+      }
+      // Ctrl + U, S, P, C, A tiltása
+      if (e.ctrlKey && (e.key === "u" || e.key === "U" || e.key === "s" || e.key === "S" || e.key === "c" || e.key === "C" || e.key === "a" || e.key === "A" || e.key === "p" || e.key === "P")) {
+        e.preventDefault();
+        return false;
+      }
+      // Ctrl + Shift + I, J, C, U tiltása
+      if (e.ctrlKey && e.shiftKey && (e.key === "i" || e.key === "I" || e.key === "j" || e.key === "J" || e.key === "c" || e.key === "C" || e.key === "u" || e.key === "U")) {
+        e.preventDefault();
+        return false;
+      }
+    }, false);
+
+    // Jobb klikk azonnali megfogása az egész oldalon
+    document.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      return false;
+    }, false);
+
     const TIME_OFFSET_SECONDS = 5;
 
     const i18n = {
@@ -795,7 +837,8 @@
         thNestPrint: "Fészek",
         thValPrint: "Mért érték",
         thDeltaPrint: "Eltérés (Δ)",
-        thAdjPrint: "Szükséges beállítás"
+        thAdjPrint: "Szükséges beállítás",
+        footerText: "© 2026 Horváth Péter. Saját fejlesztésű mérési innováció. A szellemi tulajdon és forráskód védett."
       },
       de: {
         appSubtitle: "1. Prüfung &bull; 2. Fertigungs-Schnellansicht &bull; 3. Excel &bull; 4. Barcode-Matrix",
@@ -886,7 +929,8 @@
         thNestPrint: "Kavität",
         thValPrint: "Messwert",
         thDeltaPrint: "Abweichung (Δ)",
-        thAdjPrint: "Erforderliche Korrektur"
+        thAdjPrint: "Erforderliche Korrektur",
+        footerText: "© 2026 Horváth Péter. Eigenentwickelte Messinnovation. Geistiges Eigentum und Quellcode geschützt."
       },
       en: {
         appSubtitle: "1. Inspection &bull; 2. Production View &bull; 3. Excel &bull; 4. Barcode Matrix",
@@ -899,7 +943,7 @@
         emptyMsg: "Please upload measurement reports (.pdf, .txt, or .dfq) to validate!",
         btnDfqAll: "📊 Download All DFQ (.ZIP)",
         btnTxtAll: "📦 Download All TXT (.ZIP)",
-        btnExportXlsx: "📥 Excel (.xlsx) Download",
+        btnExportXlsx: "📥 Download Excel (.xlsx)",
         btnCopyClip: "📋 Copy to Clipboard",
         btnPrint: "🖨️ Print (A4 Landscape)",
         barcodeTitle: "Barcode Matrix (Code128)",
@@ -977,7 +1021,8 @@
         thNestPrint: "Cavity",
         thValPrint: "Actual",
         thDeltaPrint: "Offset (Δ)",
-        thAdjPrint: "Required Adjustment"
+        thAdjPrint: "Required Adjustment",
+        footerText: "© 2026 Horváth Péter. Proprietary metrology innovation. Intellectual property and source code protected."
       }
     };
 
@@ -1003,6 +1048,8 @@
       document.getElementById('appSubtitle').innerHTML = t.appSubtitle;
       document.getElementById('txtDropTitle').textContent = t.dropTitle;
       document.getElementById('txtDropSub').textContent = t.dropSub;
+      
+      // Fülek azonnali nyelvi frissítése
       document.getElementById('btnTabValidator').textContent = t.tabValidator;
       document.getElementById('btnTabProduction').textContent = t.tabProduction;
       document.getElementById('btnTabExcel').textContent = t.tabExcel;
@@ -1051,6 +1098,7 @@
       document.getElementById('btnModalSaveOnly').textContent = t.btnModalSaveOnly;
       document.getElementById('btnModalSaveAndDownload').textContent = t.btnModalSaveAndDownload;
 
+      document.getElementById('footerText').textContent = t.footerText;
       document.querySelectorAll('.lblClickToggle').forEach(el => el.textContent = t.lblClickToggle);
     }
 
@@ -1697,7 +1745,7 @@
         fileIndex: fileOrderIndex,
         headerData: headerData,
         parsedItems: parsedItems,
-        validationErrors,
+        validationErrors: validationErrors,
         isFixed: false
       };
     }
