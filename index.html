@@ -33,7 +33,23 @@
       --radius: 8px;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+    
+    input, textarea, select {
+      -webkit-user-select: auto !important;
+      -moz-user-select: auto !important;
+      -ms-user-select: auto !important;
+      user-select: auto !important;
+    }
+
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       background: var(--bg);
@@ -422,9 +438,22 @@
     }
   </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
-  <div class="container">
+  <!-- DOMAIN ÉS LICENCZÁR TÁROLÓ -->
+  <div id="licenseBlockOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#0f172a; color:#f8fafc; z-index:999999; justify-content:center; align-items:center; flex-direction:column; padding:25px; text-align:center;">
+    <div style="max-width:550px; background:#1e293b; padding:35px; border-radius:12px; border:2px solid #ef4444; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+      <h2 style="color:#ef4444; margin-bottom:12px; font-size:22px;">⚠️ Nem engedélyezett futtatási környezet!</h2>
+      <p style="font-size:14px; line-height:1.6; color:#cbd5e1; margin-bottom:15px;">
+        A <strong>HP Metrology Suite</strong> védett forráskódú szoftver. A program helyi másolása, pendrive-ról történő indítása vagy jogosulatlan szerveren való futtatása szerzői jogi korlátozás alá esik.
+      </p>
+      <div style="font-size:12px; color:#94a3b8; border-top:1px solid #334155; padding-top:12px;">
+        Kapcsolat: <strong>Horváth Péter</strong> (Fejlesztő & Szellemi tulajdonos)
+      </div>
+    </div>
+  </div>
+
+  <div class="container" id="appMainContainer">
     
     <header class="no-print">
       <div class="app-title">
@@ -568,7 +597,7 @@
       </div>
     </div>
 
-    <!-- LÁBLÉC: DISZKRÉT INNOVÁCIÓS SZÖVEG -->
+    <!-- LÁBLÉC -->
     <footer class="no-print" style="text-align: center; margin-top: 35px; padding-top: 15px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 11px;">
       <span id="footerText">&copy; 2026 Horváth Péter. Saját fejlesztésű mérési innováció. A szellemi tulajdon és forráskód védett.</span>
     </footer>
@@ -704,6 +733,48 @@
   </div>
 
   <script>
+    // --- 1. & 2. & 3. VÉDELMI MODUL (DOMAIN-ZÁR, BILLENTYŰ- ÉS MÁSOLÁSVÉDELEM) ---
+    (function enforceSecurityProtection() {
+      // 3. Domain-zár ellenőrzése
+      const allowedHosts = ["peti0126.github.io", "localhost", "127.0.0.1"];
+      const currentHost = window.location.hostname.toLowerCase();
+      const isProtocolAllowed = window.location.protocol === "http:" || window.location.protocol === "https:";
+
+      if (!isProtocolAllowed || (!allowedHosts.includes(currentHost) && !currentHost.endsWith("github.io"))) {
+        document.addEventListener("DOMContentLoaded", () => {
+          document.getElementById("appMainContainer").style.display = "none";
+          const overlay = document.getElementById("licenseBlockOverlay");
+          if (overlay) overlay.style.display = "flex";
+        });
+        window.stop();
+        return;
+      }
+
+      // 1. & 2. Billentyűkombinációk és vizsgálati eszközök blokkolása
+      document.addEventListener("keydown", (e) => {
+        // F12 letiltása
+        if (e.key === "F12" || e.keyCode === 123) {
+          e.preventDefault();
+          return false;
+        }
+        // Ctrl+U (forrás megtekintés), Ctrl+S (mentés), Ctrl+Shift+I / J / C (fejlesztői konzol)
+        if (e.ctrlKey && (e.key === "u" || e.key === "U" || e.key === "s" || e.key === "S")) {
+          e.preventDefault();
+          return false;
+        }
+        if (e.ctrlKey && e.shiftKey && (e.key === "i" || e.key === "I" || e.key === "j" || e.key === "J" || e.key === "c" || e.key === "C")) {
+          e.preventDefault();
+          return false;
+        }
+      }, false);
+
+      // Jobb egérgomb tiltása a felületen
+      document.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        return false;
+      }, false);
+    })();
+
     const TIME_OFFSET_SECONDS = 5;
 
     // --- TELJES TÖBBNYELVŰ SZÓTÁR ---
@@ -1012,7 +1083,6 @@
     function applyLanguage() {
       const t = i18n[currentLang];
       
-      // Főoldal & fülek
       document.getElementById('appSubtitle').innerHTML = t.appSubtitle;
       document.getElementById('txtDropTitle').textContent = t.dropTitle;
       document.getElementById('txtDropSub').textContent = t.dropSub;
@@ -1021,18 +1091,15 @@
       document.getElementById('btnTabExcel').textContent = t.tabExcel;
       document.getElementById('btnTabMatrix').textContent = t.tabMatrix;
 
-      // 4. Vonalkód fül
       document.getElementById('matrixCardTitle').textContent = t.barcodeTitle;
       document.getElementById('matrixCardSub').textContent = t.barcodeSub;
       document.getElementById('btnPrintBarcode').textContent = t.btnPrint;
 
-      // 3. Excel fül
       document.getElementById('excelCardTitle').textContent = t.excelTitle;
       document.getElementById('excelCardSub').textContent = t.excelSub;
       document.getElementById('btnExportExcel').textContent = t.btnExportXlsx;
       document.getElementById('btnCopyClipboard').textContent = t.btnCopyClip;
 
-      // 2. Gyártói nézet
       document.getElementById('prodHeaderTitle').textContent = t.prodTitle;
       document.getElementById('prodHeaderSub').textContent = t.prodSub;
       document.getElementById('btnPrintSetterSheet').textContent = t.btnSetterPrint;
@@ -1040,11 +1107,9 @@
       document.getElementById('lblHeatmapNokOnly').textContent = t.lblHeatmapNokOnly;
       document.getElementById('lblYellowTip').textContent = t.lblYellowTip;
 
-      // 1. Ellenőrző fül gombok
       document.getElementById('btnDownloadAllDfq').textContent = t.btnDfqAll;
       document.getElementById('btnDownloadAllTxt').textContent = t.btnTxtAll;
 
-      // Korrekció modal gombok
       document.getElementById('btnCorrCancel').textContent = t.btnCancel;
       document.getElementById('btnCorrApply').textContent = t.btnApply;
       document.getElementById('th_k2002').textContent = `${t.thItem} (K2002)`;
@@ -1054,7 +1119,6 @@
       document.getElementById('th_orig').textContent = t.thOrig;
       document.getElementById('th_valid').textContent = t.thValid;
 
-      // Fejléc Modal címkék & gombok
       document.getElementById('modalTitleText').textContent = t.hdrModalTitle;
       document.getElementById('lblPresetText').textContent = t.lblPresetText;
       document.getElementById('optPresetDefault').textContent = t.optPresetDefault;
@@ -1076,13 +1140,11 @@
       document.getElementById('btnModalSaveOnly').textContent = t.btnModalSaveOnly;
       document.getElementById('btnModalSaveAndDownload').textContent = t.btnModalSaveAndDownload;
 
-      // Munkalap nyomtatás elemek
       document.getElementById('printSheetTitle').textContent = t.printSheetTitle;
       document.getElementById('printSheetSub').textContent = t.printSheetSub;
       document.getElementById('printDateLbl').textContent = t.printDateLbl;
       document.getElementById('printPartNrLbl').textContent = t.printPartNrLbl;
 
-      // Lábléc szöveg
       document.getElementById('footerText').textContent = t.footerText;
 
       document.querySelectorAll('.lblClickToggle').forEach(el => el.textContent = t.lblClickToggle);
@@ -1688,7 +1750,7 @@
         }
       }
 
-      parsedItems.sort((a, b) => naturalCompare(a.megn, b.megn));
+      parsedItems.sort((a, b) => naturalCompare(a, b));
 
       const validationErrors = [];
       parsedItems.forEach(item => {
