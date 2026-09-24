@@ -832,12 +832,10 @@
   <script>
     // --- ERŐSÍTETT BILLENTYŰZET ÉS FEJLESZTŐI ESZKÖZ VÉDELEM ---
     document.addEventListener("keydown", (e) => {
-      // F12 tiltása
       if (e.key === "F12" || e.keyCode === 123) {
         e.preventDefault();
         return false;
       }
-      // Ctrl + U, Ctrl + S, Ctrl + Shift + I / J / C / U tiltása
       if (e.ctrlKey && (e.key === "u" || e.key === "U" || e.key === "s" || e.key === "S" || e.key === "c" || e.key === "C" || e.key === "a" || e.key === "A")) {
         e.preventDefault();
         return false;
@@ -848,7 +846,6 @@
       }
     }, false);
 
-    // Jobb klikk tiltása az egész dokumentumon
     document.addEventListener("contextmenu", (e) => {
       e.preventDefault();
       return false;
