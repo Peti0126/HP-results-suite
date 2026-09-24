@@ -570,7 +570,7 @@
 
     <!-- LÁBLÉC -->
     <footer class="no-print" style="text-align: center; margin-top: 35px; padding-top: 15px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 11px;">
-      <span>&copy; 2026 Horváth Péter. Saját fejlesztésű mérési innováció. A szellemi tulajdon és forráskód védett.</span>
+      <span id="footerText">&copy; 2026 Horváth Péter. Saját fejlesztésű mérési innováció. A szellemi tulajdon és forráskód védett.</span>
     </footer>
 
   </div>
@@ -764,7 +764,15 @@
         allOkSub: "minden mért érték eredetileg is a tűrésmezőn belül volt.",
         allFixedMsg: "✅ Minden hiba sikeresen jóváhagyva / javítva!",
         allFixedSub: "A mérési jegyzőkönyvek és az export a jóváhagyott értékeket tartalmazzák.",
-        printOkMsg: "✅ MINDEN MÉRET MEGFELELŐ! Nincs szükség gépkorrekcióra."
+        printOkMsg: "✅ MINDEN MÉRET MEGFELELŐ! Nincs szükség gépkorrekcióra.",
+        printSheetTitleText: "GÉPBEÁLLÍTÓI KORREKCIÓS MUNKALAP",
+        printSheetSubText: "Mérési jegyzőkönyv alapján generált beállítási adatok",
+        printDateLabel: "Dátum:",
+        printPartLabel: "Cikkszám:",
+        thNestPrint: "Fészek",
+        thValPrint: "Mért érték",
+        thDeltaPrint: "Eltérés (Δ)",
+        thAdjPrint: "Szükséges beállítás"
       },
       de: {
         appSubtitle: "1. Prüfung &bull; 2. Fertigungs-Schnellansicht &bull; 3. Excel &bull; 4. Barcode-Matrix",
@@ -824,7 +832,15 @@
         allOkSub: "alle Messwerte lagen ursprünglich im Toleranzbereich.",
         allFixedMsg: "✅ Alle Merkmale erfolgreich genehmigt / korrigiert!",
         allFixedSub: "Die Messprotokolle und Exporte enthalten die korrigierten Werte.",
-        printOkMsg: "✅ ALLE MASSE IN ORDNUNG! Keine Maschinenkorrektur erforderlich."
+        printOkMsg: "✅ ALLE MASSE IN ORDNUNG! Keine Maschinenkorrektur erforderlich.",
+        printSheetTitleText: "EINRICHTER-KORREKTURBLATT",
+        printSheetSubText: "Aus Messdaten automatisch generierte Einstelldaten",
+        printDateLabel: "Datum:",
+        printPartLabel: "Sachnummer:",
+        thNestPrint: "Kavität",
+        thValPrint: "Messwert",
+        thDeltaPrint: "Abweichung (Δ)",
+        thAdjPrint: "Erforderliche Korrektur"
       },
       en: {
         appSubtitle: "1. Inspection &bull; 2. Production View &bull; 3. Excel &bull; 4. Barcode Matrix",
@@ -884,7 +900,15 @@
         allOkSub: "all characteristics were originally within limits.",
         allFixedMsg: "✅ All errors successfully approved / corrected!",
         allFixedSub: "Inspection reports and exports now contain approved data.",
-        printOkMsg: "✅ ALL MEASUREMENTS WITHIN TOLERANCE! No machine correction needed."
+        printOkMsg: "✅ ALL MEASUREMENTS WITHIN TOLERANCE! No machine correction needed.",
+        printSheetTitleText: "MACHINE SETTER CORRECTION SHEET",
+        printSheetSubText: "Offset adjustment data generated from inspection reports",
+        printDateLabel: "Date:",
+        printPartLabel: "Part Number:",
+        thNestPrint: "Cavity",
+        thValPrint: "Actual",
+        thDeltaPrint: "Offset (Δ)",
+        thAdjPrint: "Required Adjustment"
       }
     };
 
@@ -2571,6 +2595,11 @@
 
       const t = i18n[currentLang];
       const firstHdr = loadedFiles[0].headerData;
+      document.getElementById('printDateLbl').textContent = t.printDateLabel;
+      document.getElementById('printPartNrLbl').textContent = t.printPartLabel;
+      document.getElementById('printSheetTitle').textContent = t.printSheetTitleText;
+      document.getElementById('printSheetSub').textContent = t.printSheetSubText;
+
       document.getElementById('printDate').textContent = `${firstHdr.datum || ''} ${firstHdr.uhrzeit || ''}`;
       document.getElementById('printPartNr').textContent = `${firstHdr.teileNr || ''} (${firstHdr.teileBez || ''})`;
 
@@ -2606,13 +2635,13 @@
           <table style="width:100%; border-collapse:collapse; font-size:12px;">
             <thead>
               <tr style="background:#f1f5f9;">
-                <th style="border:1px solid #94a3b8; padding:8px;">${currentLang === 'hu' ? 'Fészek' : (currentLang === 'de' ? 'Kavität' : 'Cavity')}</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${t.thNestPrint}</th>
                 <th style="border:1px solid #94a3b8; padding:8px;">${t.thItem}</th>
                 <th style="border:1px solid #94a3b8; padding:8px;">${t.thDesc}</th>
-                <th style="border:1px solid #94a3b8; padding:8px;">${currentLang === 'hu' ? 'Mért érték' : (currentLang === 'de' ? 'Messwert' : 'Actual')}</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${t.thValPrint}</th>
                 <th style="border:1px solid #94a3b8; padding:8px;">${t.thNom}</th>
-                <th style="border:1px solid #94a3b8; padding:8px;">${currentLang === 'hu' ? 'Eltérés (Δ)' : (currentLang === 'de' ? 'Abweichung (Δ)' : 'Offset (Δ)')}</th>
-                <th style="border:1px solid #94a3b8; padding:8px;">${currentLang === 'hu' ? 'Szükséges beállítás' : (currentLang === 'de' ? 'Erforderliche Korrektur' : 'Required Adjustment')}</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${t.thDeltaPrint}</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${t.thAdjPrint}</th>
               </tr>
             </thead>
             <tbody>
@@ -2648,7 +2677,6 @@
       const heatmapHead = document.getElementById('prodHeatmapHead');
       const heatmapBody = document.getElementById('prodHeatmapBody');
 
-      // Frissítjük a panel címeket is nyelv szerint
       document.getElementById('titleProdHeatmap').innerHTML = `${t.titleHeatmap} <span style="color:var(--success)">■ ${currentLang === 'hu' ? 'Tűrésen belül' : (currentLang === 'de' ? 'In Toleranz' : 'Within tolerance')}</span> | <span style="color:var(--warning)">■ ${currentLang === 'hu' ? 'Határon táncol' : (currentLang === 'de' ? 'Grenzbereich' : 'Borderline')}</span> | <span style="color:var(--danger)">■ ${currentLang === 'hu' ? 'Tűrésen kívül' : (currentLang === 'de' ? 'Außerhalb' : 'Out of tol')}</span>`;
       document.getElementById('titleProdDelta').innerHTML = t.titleDelta;
       document.getElementById('titleProdNest').innerHTML = t.titleNest;
