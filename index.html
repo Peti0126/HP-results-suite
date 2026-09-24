@@ -8,9 +8,7 @@
   <!-- PDF.js motor Calypso PDF jegyzőkönyvekhez -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
-    try {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    } catch(e) {}
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   </script>
 
   <!-- SheetJS az Excel (.xlsx) exportáláshoz -->
@@ -35,23 +33,7 @@
       --radius: 8px;
     }
 
-    * { 
-      box-sizing: border-box; 
-      margin: 0; 
-      padding: 0; 
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-    }
-    
-    input, textarea, select {
-      -webkit-user-select: auto !important;
-      -moz-user-select: auto !important;
-      -ms-user-select: auto !important;
-      user-select: auto !important;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       background: var(--bg);
@@ -61,77 +43,6 @@
     }
 
     .container { max-width: 1450px; margin: 0 auto; }
-
-    /* BELÉPŐ PANEL (LOGIN) */
-    #loginLockOverlay {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: #0f172a;
-      z-index: 99999;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
-    .login-box {
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 32px 28px;
-      max-width: 400px;
-      width: 100%;
-      text-align: center;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.35);
-      border: 1px solid var(--border);
-    }
-    .login-box-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 18px;
-      border-bottom: 1px solid #f1f5f9;
-      padding-bottom: 12px;
-    }
-    .login-box h2 { font-size: 19px; color: #0f172a; margin-bottom: 4px; text-align: left; }
-    .login-box p { font-size: 12px; color: var(--text-muted); text-align: left; }
-    
-    .login-form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      text-align: left;
-      margin-bottom: 14px;
-    }
-    .login-form-group label {
-      font-size: 12px;
-      font-weight: 700;
-      color: #334155;
-    }
-    .login-input {
-      width: 100%;
-      padding: 10px 12px;
-      font-size: 14px;
-      border: 1.5px solid #cbd5e1;
-      border-radius: 6px;
-      outline: none;
-      transition: 0.2s;
-    }
-    .login-input:focus { border-color: var(--primary); }
-    .login-input.error { border-color: var(--danger); background: #fef2f2; }
-    
-    .login-btn {
-      width: 100%;
-      padding: 11px;
-      background: var(--primary);
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.2s;
-      margin-top: 5px;
-    }
-    .login-btn:hover { background: var(--primary-hover); }
 
     header {
       background: var(--surface);
@@ -192,7 +103,6 @@
       cursor: pointer;
       margin-bottom: 20px;
       transition: 0.2s ease;
-      position: relative;
     }
     .upload-box:hover { background: #dbeafe; border-color: var(--primary); }
     .upload-box h3 { font-size: 16px; color: var(--primary); margin-bottom: 5px; }
@@ -512,46 +422,9 @@
     }
   </style>
 </head>
-<body oncontextmenu="return false;">
+<body>
 
-  <!-- BELÉPŐ PANEL (LOGIN) -->
-  <div id="loginLockOverlay">
-    <div class="login-box">
-      <div class="login-box-header">
-        <div>
-          <h2>🔐 HP Suite</h2>
-          <p id="lblLoginSub">Mérési innováció &bull; Belépés</p>
-        </div>
-        <div class="lang-switcher">
-          <button class="lang-btn active" id="login-lang-hu" onclick="_0x9a2b('hu')">HU</button>
-          <button class="lang-btn" id="login-lang-de" onclick="_0x9a2b('de')">DE</button>
-          <button class="lang-btn" id="login-lang-en" onclick="_0x9a2b('en')">EN</button>
-        </div>
-      </div>
-
-      <div class="login-form-group">
-        <label id="lblUsername">Felhasználónév:</label>
-        <input type="text" id="appUsernameInput" class="login-input" placeholder="Admin" autofocus>
-      </div>
-
-      <div class="login-form-group">
-        <label id="lblPassword">Jelszó:</label>
-        <input type="password" id="appPasswordInput" class="login-input" placeholder="••••">
-      </div>
-
-      <button class="login-btn" id="btnLoginSubmit" onclick="_0x4c1e()">Belépés</button>
-
-      <div id="loginErrorMsg" style="color:var(--danger); font-size:12px; font-weight:bold; margin-top:12px; display:none;">
-        Hibás felhasználónév vagy jelszó!
-      </div>
-
-      <div style="font-size:11px; color:#94a3b8; margin-top:18px; border-top:1px solid #f1f5f9; padding-top:10px;">
-        Fejlesztő: <strong>Horváth Péter &copy; 2026</strong>
-      </div>
-    </div>
-  </div>
-
-  <div class="container" id="appMainContainer" style="display: none;">
+  <div class="container">
     
     <header class="no-print">
       <div class="app-title">
@@ -560,9 +433,9 @@
       </div>
       <div class="header-right">
         <div class="lang-switcher">
-          <button class="lang-btn active" id="lang-hu" onclick="_0x9a2b('hu')">HU 🇭🇺</button>
-          <button class="lang-btn" id="lang-de" onclick="_0x9a2b('de')">DE 🇩🇪</button>
-          <button class="lang-btn" id="lang-en" onclick="_0x9a2b('en')">EN 🇬🇧</button>
+          <button class="lang-btn active" id="lang-hu" onclick="changeLanguage('hu')">HU 🇭🇺</button>
+          <button class="lang-btn" id="lang-de" onclick="changeLanguage('de')">DE 🇩🇪</button>
+          <button class="lang-btn" id="lang-en" onclick="changeLanguage('en')">EN 🇬🇧</button>
         </div>
         <div style="font-size: 12px; color: var(--text-muted); text-align: right;">
           <strong>Fejlesztő:</strong> Horváth Péter &copy; 2026
@@ -571,7 +444,7 @@
     </header>
 
     <div class="upload-box no-print" id="uploadDropZone">
-      <input type="file" id="fileSelector" multiple accept=".txt,.pdf,.dfq" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 5;">
+      <input type="file" id="fileSelector" multiple accept=".txt,.pdf,.dfq" style="display: none;">
       <h3 id="txtDropTitle">Kattints ide vagy húzd be a mérési TXT, Zeiss CALYPSO PDF vagy kész DFQ fájlokat</h3>
       <p id="txtDropSub">Hardver-azonosított DFQ generálás, 5 mp-es időeltolás, közvetlen DFQ és PDF feldolgozás</p>
     </div>
@@ -605,7 +478,7 @@
           <h3 style="font-size: 16px; color: #78350f;" id="prodHeaderTitle">🏭 Gyártásközi Állapot & Gépbeállítói Gyorslista</h3>
           <p style="font-size: 13px; color: var(--text-muted);" id="prodHeaderSub">Azonnali hőtérkép, beállítói delta korrekciók és fészek-státusz gyorsnézet.</p>
         </div>
-        <button class="btn btn-warning" onclick="_0x5e2f()" type="button" id="btnPrintSetterSheet" style="font-size: 13px; padding: 8px 14px;">
+        <button class="btn btn-warning" onclick="printSetterWorksheet()" type="button" id="btnPrintSetterSheet" style="font-size: 13px; padding: 8px 14px;">
           🖨️ Gépbeállítói Munkalap Nyomtatása
         </button>
       </div>
@@ -618,9 +491,9 @@
         </summary>
         <div class="prod-accordion-content" style="padding-top: 6px;">
           <div class="filter-bar no-print">
-            <input type="text" id="heatmapSearch" placeholder="🔍 Keresés tételre (pl. 31, 35)..." oninput="_0x1a8c()">
+            <input type="text" id="heatmapSearch" placeholder="🔍 Keresés tételre (pl. 31, 35)..." oninput="filterHeatmap()">
             <label class="checkbox-pill">
-              <input type="checkbox" id="heatmapNokOnly" onchange="_0x1a8c()"> <span id="lblHeatmapNokOnly">Csak hibás (NOK) tételek mutatása</span>
+              <input type="checkbox" id="heatmapNokOnly" onchange="filterHeatmap()"> <span id="lblHeatmapNokOnly">Csak hibás (NOK) tételek mutatása</span>
             </label>
             <span style="font-size: 11px; color: var(--text-muted); margin-left: auto;" id="lblYellowTip">Sárga cella: a felső tűréshatár szélső 15%-ában van!</span>
           </div>
@@ -695,7 +568,7 @@
       </div>
     </div>
 
-    <!-- LÁBLÉC -->
+    <!-- LÁBLÉC: DISZKRÉT INNOVÁCIÓS SZÖVEG -->
     <footer class="no-print" style="text-align: center; margin-top: 35px; padding-top: 15px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 11px;">
       <span id="footerText">&copy; 2026 Horváth Péter. Saját fejlesztésű mérési innováció. A szellemi tulajdon és forráskód védett.</span>
     </footer>
@@ -745,13 +618,14 @@
           </p>
         </div>
         
+        <!-- Cikkszám Profilkezelő -->
         <div style="display: flex; gap: 6px; align-items: center; background: #f1f5f9; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); flex-wrap: wrap;">
           <span style="font-size: 11px; font-weight: bold; color: #334155;" id="lblPresetText">Mentett profil:</span>
-          <select id="presetSelector" onchange="_0x7c3d(this.value)" style="padding: 4px 8px; font-size: 12px;">
+          <select id="presetSelector" onchange="loadPreset(this.value)" style="padding: 4px 8px; font-size: 12px;">
             <option value="" id="optPresetDefault">-- Válassz profilt --</option>
           </select>
-          <button class="btn btn-primary" style="padding: 4px 8px; font-size: 11px;" onclick="_0x8b4e()" type="button" id="btnSavePreset">💾 Mentés / Módosítás</button>
-          <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="_0x2f9a()" type="button" id="btnDeletePreset">🗑️ Törlés</button>
+          <button class="btn btn-primary" style="padding: 4px 8px; font-size: 11px;" onclick="saveCurrentAsPreset()" type="button" id="btnSavePreset">💾 Mentés / Módosítás</button>
+          <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteSelectedPreset()" type="button" id="btnDeletePreset">🗑️ Törlés</button>
         </div>
       </div>
       
@@ -830,80 +704,11 @@
   </div>
 
   <script>
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "F12" || e.keyCode === 123) {
-        e.preventDefault();
-        return false;
-      }
-      if (e.ctrlKey && (e.key === "u" || e.key === "U" || e.key === "s" || e.key === "S" || e.key === "c" || e.key === "C" || e.key === "a" || e.key === "A")) {
-        e.preventDefault();
-        return false;
-      }
-      if (e.ctrlKey && e.shiftKey && (e.key === "i" || e.key === "I" || e.key === "j" || e.key === "J" || e.key === "c" || e.key === "C")) {
-        e.preventDefault();
-        return false;
-      }
-    }, false);
+    const TIME_OFFSET_SECONDS = 5;
 
-    document.addEventListener("contextmenu", (e) => {
-      e.preventDefault();
-      return false;
-    }, false);
-
-    if (window.pdfjsLib) {
-      try {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-      } catch(e) {}
-    }
-
-    const _0x11a2 = "Admin";
-    const _0x33b4 = "Admin";
-
-    function _0x55c1() {
-      if (sessionStorage.getItem("hp_auth_ok") === "true") {
-        document.getElementById("loginLockOverlay").style.display = "none";
-        document.getElementById("appMainContainer").style.display = "block";
-      } else {
-        document.getElementById("loginLockOverlay").style.display = "flex";
-        document.getElementById("appMainContainer").style.display = "none";
-      }
-    }
-
-    function _0x4c1e() {
-      const _0x1 = document.getElementById("appUsernameInput");
-      const _0x2 = document.getElementById("appPasswordInput");
-      const _0x3 = document.getElementById("loginErrorMsg");
-
-      if (_0x1.value.trim() === _0x11a2 && _0x2.value === _0x33b4) {
-        sessionStorage.setItem("hp_auth_ok", "true");
-        document.getElementById("loginLockOverlay").style.display = "none";
-        document.getElementById("appMainContainer").style.display = "block";
-        _0x3.style.display = "none";
-      } else {
-        _0x1.classList.add("error");
-        _0x2.classList.add("error");
-        _0x3.style.display = "block";
-        _0x2.value = "";
-        _0x2.focus();
-      }
-    }
-
-    document.getElementById("appPasswordInput").addEventListener("keypress", (e) => {
-      if (e.key === "Enter") _0x4c1e();
-    });
-    document.getElementById("appUsernameInput").addEventListener("keypress", (e) => {
-      if (e.key === "Enter") document.getElementById("appPasswordInput").focus();
-    });
-
-    const _0x7788 = 5;
-
+    // --- TELJES TÖBBNYELVŰ SZÓTÁR ---
     const i18n = {
       hu: {
-        loginSub: "Mérési innováció &bull; Belépés",
-        lblUsername: "Felhasználónév:",
-        lblPassword: "Jelszó:",
-        btnLoginSubmit: "Belépés",
-        loginErrorMsg: "Hibás felhasználónév vagy jelszó!",
         appSubtitle: "1. Ellenőrzés &bull; 2. Gyártói Gyorsnézet &bull; 3. Excel &bull; 4. Vonalkód Mátrix",
         dropTitle: "Kattints ide vagy húzd be a mérési TXT, Zeiss CALYPSO PDF vagy kész DFQ fájlokat",
         dropSub: "Hardver-azonosított DFQ generálás, 5 mp-es időeltolás, közvetlen DFQ és PDF feldolgozás",
@@ -998,11 +803,6 @@
         footerText: "© 2026 Horváth Péter. Saját fejlesztésű mérési innováció. A szellemi tulajdon és forráskód védett."
       },
       de: {
-        loginSub: "Messinnovation &bull; Anmeldung",
-        lblUsername: "Benutzername:",
-        lblPassword: "Passwort:",
-        btnLoginSubmit: "Anmelden",
-        loginErrorMsg: "Falscher Benutzername oder Passwort!",
         appSubtitle: "1. Prüfung &bull; 2. Fertigungs-Schnellansicht &bull; 3. Excel &bull; 4. Barcode-Matrix",
         dropTitle: "Hier klicken oder TXT-, Zeiss CALYPSO PDF- oder DFQ-Dateien ablegen",
         dropSub: "Hardware-identifizierte DFQ-Generierung, 5s-Zeitverschiebung, direkte DFQ- & PDF-Verarbeitung",
@@ -1097,11 +897,6 @@
         footerText: "© 2026 Horváth Péter. Eigenentwickelte Messinnovation. Geistiges Eigentum und Quellcode geschützt."
       },
       en: {
-        loginSub: "Metrology Innovation &bull; Sign in",
-        lblUsername: "Username:",
-        lblPassword: "Password:",
-        btnLoginSubmit: "Login",
-        loginErrorMsg: "Invalid username or password!",
         appSubtitle: "1. Inspection &bull; 2. Production View &bull; 3. Excel &bull; 4. Barcode Matrix",
         dropTitle: "Click here or drop measurement TXT, Zeiss CALYPSO PDF or DFQ files",
         dropSub: "Hardware-identified DFQ export, 5s timestamp stepping, native DFQ & PDF parsing",
@@ -1197,34 +992,27 @@
       }
     };
 
-    let _0x9812 = localStorage.getItem('hp_metrology_lang') || 'hu';
+    let currentLang = localStorage.getItem('hp_metrology_lang') || 'hu';
 
-    function _0x9a2b(lang) {
+    function changeLanguage(lang) {
       if (!i18n[lang]) return;
-      _0x9812 = lang;
+      currentLang = lang;
       localStorage.setItem('hp_metrology_lang', lang);
 
       document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
       const activeBtn = document.getElementById(`lang-${lang}`);
       if (activeBtn) activeBtn.classList.add('active');
-      const activeLoginBtn = document.getElementById(`login-lang-${lang}`);
-      if (activeLoginBtn) activeLoginBtn.classList.add('active');
 
-      _0x32ab();
-      _0x6641();
-      _0x8819();
-      _0x4422();
+      applyLanguage();
+      renderValidatorView();
+      renderMatrixViews();
+      renderProductionView();
     }
 
-    function _0x32ab() {
-      const t = i18n[_0x9812];
+    function applyLanguage() {
+      const t = i18n[currentLang];
       
-      document.getElementById('lblLoginSub').innerHTML = t.loginSub;
-      document.getElementById('lblUsername').textContent = t.lblUsername;
-      document.getElementById('lblPassword').textContent = t.lblPassword;
-      document.getElementById('btnLoginSubmit').textContent = t.btnLoginSubmit;
-      document.getElementById('loginErrorMsg').textContent = t.loginErrorMsg;
-
+      // Főoldal & fülek
       document.getElementById('appSubtitle').innerHTML = t.appSubtitle;
       document.getElementById('txtDropTitle').textContent = t.dropTitle;
       document.getElementById('txtDropSub').textContent = t.dropSub;
@@ -1233,15 +1021,18 @@
       document.getElementById('btnTabExcel').textContent = t.tabExcel;
       document.getElementById('btnTabMatrix').textContent = t.tabMatrix;
 
+      // 4. Vonalkód fül
       document.getElementById('matrixCardTitle').textContent = t.barcodeTitle;
       document.getElementById('matrixCardSub').textContent = t.barcodeSub;
       document.getElementById('btnPrintBarcode').textContent = t.btnPrint;
 
+      // 3. Excel fül
       document.getElementById('excelCardTitle').textContent = t.excelTitle;
       document.getElementById('excelCardSub').textContent = t.excelSub;
       document.getElementById('btnExportExcel').textContent = t.btnExportXlsx;
       document.getElementById('btnCopyClipboard').textContent = t.btnCopyClip;
 
+      // 2. Gyártói nézet
       document.getElementById('prodHeaderTitle').textContent = t.prodTitle;
       document.getElementById('prodHeaderSub').textContent = t.prodSub;
       document.getElementById('btnPrintSetterSheet').textContent = t.btnSetterPrint;
@@ -1249,9 +1040,11 @@
       document.getElementById('lblHeatmapNokOnly').textContent = t.lblHeatmapNokOnly;
       document.getElementById('lblYellowTip').textContent = t.lblYellowTip;
 
+      // 1. Ellenőrző fül gombok
       document.getElementById('btnDownloadAllDfq').textContent = t.btnDfqAll;
       document.getElementById('btnDownloadAllTxt').textContent = t.btnTxtAll;
 
+      // Korrekció modal gombok
       document.getElementById('btnCorrCancel').textContent = t.btnCancel;
       document.getElementById('btnCorrApply').textContent = t.btnApply;
       document.getElementById('th_k2002').textContent = `${t.thItem} (K2002)`;
@@ -1261,6 +1054,7 @@
       document.getElementById('th_orig').textContent = t.thOrig;
       document.getElementById('th_valid').textContent = t.thValid;
 
+      // Fejléc Modal címkék & gombok
       document.getElementById('modalTitleText').textContent = t.hdrModalTitle;
       document.getElementById('lblPresetText').textContent = t.lblPresetText;
       document.getElementById('optPresetDefault').textContent = t.optPresetDefault;
@@ -1282,29 +1076,39 @@
       document.getElementById('btnModalSaveOnly').textContent = t.btnModalSaveOnly;
       document.getElementById('btnModalSaveAndDownload').textContent = t.btnModalSaveAndDownload;
 
+      // Munkalap nyomtatás elemek
       document.getElementById('printSheetTitle').textContent = t.printSheetTitle;
       document.getElementById('printSheetSub').textContent = t.printSheetSub;
       document.getElementById('printDateLbl').textContent = t.printDateLbl;
       document.getElementById('printPartNrLbl').textContent = t.printPartNrLbl;
 
+      // Lábléc szöveg
       document.getElementById('footerText').textContent = t.footerText;
+
       document.querySelectorAll('.lblClickToggle').forEach(el => el.textContent = t.lblClickToggle);
     }
 
-    let _0x192a = [];
-    let _0x3b81 = null;
-    let _0x4d2e = null;
+    let loadedFiles = [];
+    let pendingFileIdx = null;
+    let editingFileIdx = null;
 
-    const _0x5501 = document.getElementById('fileSelector');
+    const dropZone = document.getElementById('uploadDropZone');
+    const fileInput = document.getElementById('fileSelector');
 
-    _0x5501.addEventListener('change', (e) => {
-      if (e.target.files && e.target.files.length) {
-        _0x7711(Array.from(e.target.files));
-      }
-      _0x5501.value = '';
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = "var(--primary)"; });
+    dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = "#93c5fd"; });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = "#93c5fd";
+      if (e.dataTransfer.files.length) handleIncomingFiles(Array.from(e.dataTransfer.files));
     });
 
-    function _0x1133(tabId) {
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) handleIncomingFiles(Array.from(e.target.files));
+    });
+
+    function activateTab(tabId) {
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.tab-pane').forEach(pane => {
         pane.classList.remove('active');
@@ -1334,22 +1138,22 @@
       }
     }
 
-    document.getElementById('btnTabValidator').addEventListener('click', () => _0x1133('validator'));
-    document.getElementById('btnTabProduction').addEventListener('click', () => _0x1133('production'));
-    document.getElementById('btnTabExcel').addEventListener('click', () => _0x1133('excel'));
-    document.getElementById('btnTabMatrix').addEventListener('click', () => _0x1133('matrix'));
+    document.getElementById('btnTabValidator').addEventListener('click', () => activateTab('validator'));
+    document.getElementById('btnTabProduction').addEventListener('click', () => activateTab('production'));
+    document.getElementById('btnTabExcel').addEventListener('click', () => activateTab('excel'));
+    document.getElementById('btnTabMatrix').addEventListener('click', () => activateTab('matrix'));
 
-    function _0x8822(a, b) {
+    function naturalCompare(a, b) {
       return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
     }
 
-    function _0x9911(name) {
+    function formatMegnevezes(name) {
       if (!name) return "";
       if (/^\d+_[A-Za-z]/.test(name)) return name.replace(/^(\d+)_([A-Za-z].*)$/, '$1__$2');
       return name.replace(/^(\d+)([A-Za-z].*)$/, '$1__$2');
     }
 
-    function _0x4455(toleranceBand) {
+    function generateNaturalOffset(toleranceBand) {
       const minVal = 0.0050;
       const maxVal = Math.min(0.0200, Math.max(0.0080, toleranceBand * 0.40));
       let rand = minVal + Math.random() * (maxVal - minVal);
@@ -1360,7 +1164,7 @@
       return offset;
     }
 
-    function _0x3344(baseCode, stepOffset) {
+    function incrementNestCode(baseCode, stepOffset) {
       if (!baseCode) return `N${stepOffset + 1}-T1-M9621`;
       let replaced = false;
       return baseCode.replace(/([A-Za-z]+)?(\d+)/, (match, prefix, numStr) => {
@@ -1373,7 +1177,7 @@
       });
     }
 
-    function _0x5566(timeStr, secondsToAdd) {
+    function addSecondsToTime(timeStr, secondsToAdd) {
       if (!timeStr) return "08:41:01";
       const parts = timeStr.split(':').map(p => parseInt(p, 10));
       let h = parts[0] || 0;
@@ -1390,7 +1194,7 @@
       return `${String(nh).padStart(2, '0')}:${String(nm).padStart(2, '0')}:${String(ns).padStart(2, '0')}`;
     }
 
-    function _0x7722(h) {
+    function buildHeaderString(h) {
       const padRight = (str, len) => {
         str = (str === undefined || str === null) ? "" : String(str);
         if (str.length >= len) return str.slice(0, len);
@@ -1415,54 +1219,35 @@
 `;
     }
 
-    async function _0x7711(fileList) {
-      try {
-        _0x192a = [];
-        fileList.sort((a, b) => _0x8822(a.name, b.name));
+    async function handleIncomingFiles(fileList) {
+      loadedFiles = [];
+      fileList.sort((a, b) => naturalCompare(a.name, b.name));
 
-        for (let i = 0; i < fileList.length; i++) {
-          const file = fileList[i];
-          const buffer = await file.arrayBuffer();
-          const lowerName = file.name.toLowerCase();
-          
-          if (lowerName.endsWith('.pdf')) {
-            const parsedPdf = await _0x2211(file.name, buffer, i);
-            if (parsedPdf) _0x192a.push(parsedPdf);
-          } else if (lowerName.endsWith('.dfq')) {
-            const decoder = new TextDecoder('windows-1250');
-            const text = decoder.decode(buffer);
-            _0x192a.push(_0x3322(file.name, text, i));
-          } else {
-            const text = _0x4433(buffer);
-            _0x192a.push(_0x5544(file.name, text, i));
-          }
+      for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i];
+        const buffer = await file.arrayBuffer();
+        const lowerName = file.name.toLowerCase();
+        
+        if (lowerName.endsWith('.pdf')) {
+          const parsedPdf = await parseCalypsoPdf(file.name, buffer, i);
+          if (parsedPdf) loadedFiles.push(parsedPdf);
+        } else if (lowerName.endsWith('.dfq')) {
+          const decoder = new TextDecoder('windows-1250');
+          const text = decoder.decode(buffer);
+          loadedFiles.push(parseDfqFile(file.name, text, i));
+        } else {
+          const decoder = new TextDecoder('windows-1250');
+          const text = decoder.decode(buffer);
+          loadedFiles.push(parseAndValidateTxt(file.name, text, i));
         }
-
-        _0x6641();
-        _0x8819();
-        _0x4422();
-      } catch (err) {
-        alert("Hiba a fájlok feldolgozásakor: " + err.message);
       }
+
+      renderValidatorView();
+      renderMatrixViews();
+      renderProductionView();
     }
 
-    function _0x4433(buffer) {
-      const bytes = new Uint8Array(buffer);
-      if (bytes.length >= 2 && bytes[0] === 0xFF && bytes[1] === 0xFE) {
-        return new TextDecoder('utf-16le').decode(buffer);
-      }
-      if (bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
-        return new TextDecoder('utf-8').decode(buffer);
-      }
-      try {
-        const utf8Decoder = new TextDecoder('utf-8', { fatal: true });
-        return utf8Decoder.decode(buffer);
-      } catch(e) {
-        return new TextDecoder('windows-1250').decode(buffer);
-      }
-    }
-
-    function _0x3322(fileName, rawText, fileOrderIndex) {
+    function parseDfqFile(fileName, rawText, fileOrderIndex) {
       const lines = rawText.split(/\r?\n/);
       const tagMap = {};
       let dataLine = "";
@@ -1575,12 +1360,12 @@
         if (item.origAkt > maxTol) {
           hasErr = true;
           diff = +(item.origAkt - maxTol).toFixed(4);
-          const offset = _0x4455(tolBand);
+          const offset = generateNaturalOffset(tolBand);
           suggestedAkt = +(maxTol - offset).toFixed(4);
         } else if (item.origAkt < minTol) {
           hasErr = true;
           diff = +(item.origAkt - minTol).toFixed(4);
-          const offset = _0x4455(tolBand);
+          const offset = generateNaturalOffset(tolBand);
           suggestedAkt = +(minTol + offset).toFixed(4);
         }
 
@@ -1609,7 +1394,7 @@
       };
     }
 
-    async function _0x2211(fileName, arrayBuffer, fileOrderIndex) {
+    async function parseCalypsoPdf(fileName, arrayBuffer, fileOrderIndex) {
       try {
         const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
         let fullPlainText = "";
@@ -1673,7 +1458,7 @@
           if (baseUhrzeit.length === 5) baseUhrzeit += ":00";
         }
 
-        const uhrzeit = _0x5566(baseUhrzeit, fileOrderIndex * _0x7788);
+        const uhrzeit = addSecondsToTime(baseUhrzeit, fileOrderIndex * TIME_OFFSET_SECONDS);
 
         const headerData = {
           teileNr,
@@ -1697,7 +1482,7 @@
           const items = allRows[r];
           const lineStr = items.map(it => it.text).join(" ");
 
-          if (/Minden jellemző|No\s*measured|Mérés időtartama|Measured value|Time\/Date|Part name|Page\s*\d+|Kunde|Teilebezeichnung|Teile-Nummer|Auftragsnummer|Chargennummer|Masch\.Nummer|Pruefer|Bemerkungen|Pruefungsinfo/i.test(lineStr)) {
+          if (/Minden jellemző|No\.\s*measured|Mérés időtartama|Measured value|Time\/Date|Part name|Page \d+/i.test(lineStr)) {
             continue;
           }
 
@@ -1735,10 +1520,6 @@
               cleanMegn = `P${parsedItems.length + 1}`;
             }
 
-            if (/Minden|No\.|measured|Mérés|Time|Date|Part|Page|Kunde|Teilebezeichnung/i.test(cleanMegn)) {
-              continue;
-            }
-
             parsedItems.push({
               enabled: true,
               szi: "LT",
@@ -1757,8 +1538,8 @@
 
         const validationErrors = [];
         parsedItems.forEach(item => {
-          const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
-          const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
+          const maxTol = +(item.nevl + item.ftur).toFixed(4);
+          const minTol = +(item.nevl + item.atur).toFixed(4);
           const tolBand = Math.abs(maxTol - minTol);
           let hasErr = false;
           let diff = 0;
@@ -1767,12 +1548,12 @@
           if (item.origAkt > maxTol) {
             hasErr = true;
             diff = +(item.origAkt - maxTol).toFixed(4);
-            const offset = _0x4455(tolBand);
+            const offset = generateNaturalOffset(tolBand);
             suggestedAkt = +(maxTol - offset).toFixed(4);
           } else if (item.origAkt < minTol) {
             hasErr = true;
             diff = +(item.origAkt - minTol).toFixed(4);
-            const offset = _0x4455(tolBand);
+            const offset = generateNaturalOffset(tolBand);
             suggestedAkt = +(minTol + offset).toFixed(4);
           }
 
@@ -1805,7 +1586,7 @@
       }
     }
 
-    function _0x5544(fileName, rawText, fileOrderIndex) {
+    function parseAndValidateTxt(fileName, rawText, fileOrderIndex) {
       const getVal = (regex) => {
         const m = rawText.match(regex);
         return m ? m[1].trim() : "";
@@ -1818,7 +1599,7 @@
       if (!datum) datum = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`;
       if (!rawUhrzeit) rawUhrzeit = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
 
-      const uhrzeit = _0x5566(rawUhrzeit, fileOrderIndex * _0x7788);
+      const uhrzeit = addSecondsToTime(rawUhrzeit, fileOrderIndex * TIME_OFFSET_SECONDS);
 
       let teileBezRaw = getVal(/Teilebezeichnung\s*:\s*([^\n|]+)/).replace(/Uhrzeit\s*:.*$/i, '').trim();
       const bemerkungRaw = getVal(/Bemerkungen\s*:\s*([^\n|]+)/);
@@ -1850,13 +1631,12 @@
       const parsedItems = [];
 
       for (let line of lines) {
-        if (line.includes("------") || line.includes("======")) { isTable = true; continue; }
-        if (isTable || !rawText.includes("------")) {
-          if (!line.trim()) continue;
-          if (line.match(/Oldal:|Seite:|SZI|SYM|AKT|IST|Kunde|Teilebezeichnung|Teile-Nummer|Auftragsnummer|Chargennummer|Masch/i)) continue;
+        if (line.includes("------")) { isTable = true; continue; }
+        if (isTable && line.trim()) {
+          if (line.match(/Oldal:|Seite:|SZI|SYM|AKT|IST/i)) continue;
 
           let cleanedLine = line.replace(/(\s+)(\d+_?[A-Za-z][^\s]*)$/, (m, sp, name) => {
-            const formatted = _0x9911(name);
+            const formatted = formatMegnevezes(name);
             const diff = formatted.length - name.length;
             const newSp = sp.length > diff ? sp.slice(0, sp.length - diff) : sp;
             return newSp + formatted;
@@ -1866,15 +1646,13 @@
           if (negMatch) cleanedLine = `${negMatch[1]} ${negMatch[2]}${negMatch[3]}`;
 
           const tokens = cleanedLine.trim().split(/\s+/);
-          if (tokens.length >= 5) {
-            const szi = isNaN(parseFloat(tokens[0])) ? tokens[0] : "LT";
-            const numIdx = isNaN(parseFloat(tokens[0])) ? 1 : 0;
-            
-            const akt = Math.abs(parseFloat(tokens[numIdx]));
-            const nevl = parseFloat(tokens[numIdx + 1]);
-            const ftur = parseFloat(tokens[numIdx + 2] || "0");
-            const atur = parseFloat(tokens[numIdx + 3] || "0");
-            const megn = _0x9911(tokens[tokens.length - 1]);
+          if (tokens.length >= 6) {
+            const szi = tokens[0];
+            const akt = Math.abs(parseFloat(tokens[1]));
+            const nevl = parseFloat(tokens[2]);
+            const ftur = parseFloat(tokens[3]);
+            const atur = parseFloat(tokens[4]);
+            const megn = formatMegnevezes(tokens[tokens.length - 1]);
 
             if (!isNaN(akt) && !isNaN(nevl)) {
               let desc = "Tolóm.táv.";
@@ -1910,12 +1688,12 @@
         }
       }
 
-      parsedItems.sort((a, b) => _0x8822(a.megn, b.megn));
+      parsedItems.sort((a, b) => naturalCompare(a.megn, b.megn));
 
       const validationErrors = [];
       parsedItems.forEach(item => {
-        const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
-        const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
+        const maxTol = +(item.nevl + item.ftur).toFixed(4);
+        const minTol = +(item.nevl + item.atur).toFixed(4);
         const tolBand = Math.abs(maxTol - minTol);
         let hasErr = false;
         let diff = 0;
@@ -1924,12 +1702,12 @@
         if (item.origAkt > maxTol) {
           hasErr = true;
           diff = +(item.origAkt - maxTol).toFixed(4);
-          const offset = _0x4455(tolBand);
+          const offset = generateNaturalOffset(tolBand);
           suggestedAkt = +(maxTol - offset).toFixed(4);
         } else if (item.origAkt < minTol) {
           hasErr = true;
           diff = +(item.origAkt - minTol).toFixed(4);
-          const offset = _0x4455(tolBand);
+          const offset = generateNaturalOffset(tolBand);
           suggestedAkt = +(minTol + offset).toFixed(4);
         }
 
@@ -1958,67 +1736,7 @@
       };
     }
 
-    function _0x9988(item) {
-      const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
-      const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
-      return item.akt > maxTol || item.akt < minTol;
-    }
-
-    function _0x1122(item) {
-      if (_0x9988(item)) return false;
-      const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
-      const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
-      const band = Math.abs(maxTol - minTol);
-      if (band <= 0) return false;
-      const margin = band * 0.15;
-
-      const isOneSidedZero = (item.nevl === 0 || (minTol === 0 && maxTol > 0));
-
-      if (isOneSidedZero) {
-        return item.akt >= (maxTol - margin);
-      } else {
-        return (item.akt >= (maxTol - margin)) || (item.akt <= (minTol + margin));
-      }
-    }
-
-    function _0x3355(state) {
-      document.querySelectorAll('.chk-global-item').forEach(chk => {
-        chk.checked = state;
-      });
-    }
-
-    function _0x6677() {
-      const selectedItems = [];
-      document.querySelectorAll('.chk-global-item:checked').forEach(chk => {
-        selectedItems.push(chk.value);
-      });
-
-      if (selectedItems.length === 0) {
-        alert(_0x9812 === 'hu' ? "Nincs egyetlen tétel sem bepipálva a javításhoz!" : "No items selected for correction!");
-        return;
-      }
-
-      _0x192a.forEach((f, idx) => {
-        f.validationErrors.forEach(err => {
-          if (selectedItems.includes(err.megn)) {
-            err.itemRef.akt = parseFloat(err.suggestedAkt);
-          }
-        });
-        const hasAnyRemaining = f.parsedItems.some(it => it.enabled !== false && _0x9988(it));
-        f.isFixed = !hasAnyRemaining;
-
-        const box = document.getElementById(`previewBox_${idx}`);
-        if (box && box.style.display === 'block') {
-          box.textContent = _0x7722(f.headerData) + _0x9900(f);
-        }
-      });
-
-      _0x6641();
-      _0x8819();
-      _0x4422();
-    }
-
-    function _0x9900(file) {
+    function buildFileBody(file) {
       const datum = file.headerData.datum;
       const uhrzeit = file.headerData.uhrzeit;
       const lines = [];
@@ -2048,8 +1766,68 @@
       return "\n" + lines.join("\r\n");
     }
 
-    function _0x2233(fileIdx) {
-      const f = _0x192a[fileIdx];
+    function isStillError(item) {
+      const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
+      const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
+      return item.akt > maxTol || item.akt < minTol;
+    }
+
+    function isNearToleranceBorder(item) {
+      if (isStillError(item)) return false;
+      const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
+      const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
+      const band = Math.abs(maxTol - minTol);
+      if (band <= 0) return false;
+      const margin = band * 0.15;
+
+      const isOneSidedZero = (item.nevl === 0 || (minTol === 0 && maxTol > 0));
+
+      if (isOneSidedZero) {
+        return item.akt >= (maxTol - margin);
+      } else {
+        return (item.akt >= (maxTol - margin)) || (item.akt <= (minTol + margin));
+      }
+    }
+
+    function setGlobalCheckboxes(state) {
+      document.querySelectorAll('.chk-global-item').forEach(chk => {
+        chk.checked = state;
+      });
+    }
+
+    function applyGlobalMultiFix() {
+      const selectedItems = [];
+      document.querySelectorAll('.chk-global-item:checked').forEach(chk => {
+        selectedItems.push(chk.value);
+      });
+
+      if (selectedItems.length === 0) {
+        alert(currentLang === 'hu' ? "Nincs egyetlen tétel sem bepipálva a javításhoz!" : (currentLang === 'de' ? "Kein Merkmal zur Korrektur ausgewählt!" : "No items selected for correction!"));
+        return;
+      }
+
+      loadedFiles.forEach((f, idx) => {
+        f.validationErrors.forEach(err => {
+          if (selectedItems.includes(err.megn)) {
+            err.itemRef.akt = parseFloat(err.suggestedAkt);
+          }
+        });
+        const hasAnyRemaining = f.parsedItems.some(it => it.enabled !== false && isStillError(it));
+        f.isFixed = !hasAnyRemaining;
+
+        const box = document.getElementById(`previewBox_${idx}`);
+        if (box && box.style.display === 'block') {
+          box.textContent = buildHeaderString(f.headerData) + buildFileBody(f);
+        }
+      });
+
+      renderValidatorView();
+      renderMatrixViews();
+      renderProductionView();
+    }
+
+    function applyFileMultiFix(fileIdx) {
+      const f = loadedFiles[fileIdx];
       if (!f) return;
 
       const selectedItems = [];
@@ -2058,7 +1836,7 @@
       });
 
       if (selectedItems.length === 0) {
-        alert(_0x9812 === 'hu' ? "Nincs egyetlen tétel sem bepipálva ennél a fájlnál!" : "No items selected for this file!");
+        alert(currentLang === 'hu' ? "Nincs egyetlen tétel sem bepipálva ennél a fájlnál!" : (currentLang === 'de' ? "Kein Merkmal für diese Datei ausgewählt!" : "No items selected for this file!"));
         return;
       }
 
@@ -2068,46 +1846,46 @@
         }
       });
 
-      const hasAnyRemaining = f.parsedItems.some(it => it.enabled !== false && _0x9988(it));
+      const hasAnyRemaining = f.parsedItems.some(it => it.enabled !== false && isStillError(it));
       f.isFixed = !hasAnyRemaining;
 
-      _0x6641();
-      _0x8819();
-      _0x4422();
+      renderValidatorView();
+      renderMatrixViews();
+      renderProductionView();
 
       const box = document.getElementById(`previewBox_${fileIdx}`);
       if (box && box.style.display === 'block') {
-        box.textContent = _0x7722(f.headerData) + _0x9900(f);
+        box.textContent = buildHeaderString(f.headerData) + buildFileBody(f);
       }
     }
 
-    function _0x6641() {
-      const t = i18n[_0x9812];
+    function renderValidatorView() {
+      const t = i18n[currentLang];
       const overview = document.getElementById('validatorOverview');
       const list = document.getElementById('validatorFilesList');
       const actions = document.getElementById('validatorActions');
       
-      actions.style.display = _0x192a.length > 0 ? "flex" : "none";
+      actions.style.display = loadedFiles.length > 0 ? "flex" : "none";
 
-      const unfixedFiles = _0x192a.filter(f => f.parsedItems.some(it => it.enabled !== false && _0x9988(it)));
-      const totalInitialErrors = _0x192a.reduce((sum, f) => sum + f.validationErrors.length, 0);
+      const unfixedFiles = loadedFiles.filter(f => f.parsedItems.some(it => it.enabled !== false && isStillError(it)));
+      const totalInitialErrors = loadedFiles.reduce((sum, f) => sum + f.validationErrors.length, 0);
 
       const globalErrorItemsSet = new Set();
       let totalRemainingCount = 0;
-      _0x192a.forEach(f => {
+      loadedFiles.forEach(f => {
         f.validationErrors.forEach(e => {
-          if (_0x9988(e.itemRef)) {
+          if (isStillError(e.itemRef)) {
             globalErrorItemsSet.add(e.megn);
             totalRemainingCount++;
           }
         });
       });
-      const globalErrorItems = Array.from(globalErrorItemsSet).sort((a, b) => _0x8822(a, b));
+      const globalErrorItems = Array.from(globalErrorItemsSet).sort((a, b) => naturalCompare(a, b));
 
       if (unfixedFiles.length > 0) {
         let errHtml = "";
         unfixedFiles.forEach(f => {
-          const currentErrors = f.validationErrors.filter(e => _0x9988(e.itemRef));
+          const currentErrors = f.validationErrors.filter(e => isStillError(e.itemRef));
           errHtml += `<div style="margin-top:8px;"><strong>📄 ${f.name}</strong> &bull; <span style="color:#0284c7; font-weight:bold;">${f.headerData.bemerkung}</span><ul style="padding-left:20px; font-family:monospace; font-size:12px; margin-top:3px;">`;
           currentErrors.forEach(e => {
             errHtml += `<li>${t.thItem}: <b>${e.megn}</b> | ${t.thOrig}: <span style="color:var(--danger); font-weight:bold;">${e.origAkt}</span> | ${e.diff} | &rarr; <b style="color:var(--success)">${e.suggestedAkt}</b></li>`;
@@ -2125,16 +1903,16 @@
 
             <details class="error-accordion" open>
               <summary>
-                <span>➕ ${globalErrorItems.length} ${_0x9812 === 'hu' ? 'különböző tétel kijelölése' : 'unique characteristics to select'}</span>
+                <span>➕ ${globalErrorItems.length} ${currentLang === 'hu' ? 'különböző tétel kijelölése' : (currentLang === 'de' ? 'verschiedene Merkmale auswählen' : 'unique characteristics to select')}</span>
                 <span style="font-size: 11px; font-weight: normal; background: #fef9c3; padding: 2px 8px; border-radius: 4px; border: 1px solid #fde047;">${t.lblClickToggle}</span>
               </summary>
               <div class="error-accordion-content">
                 <div style="background: #fff; padding: 12px; border-radius: 6px; border: 1px solid #fde68a; margin-bottom: 12px;">
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 10px;">
-                    <span style="font-size: 12px; font-weight: 700; color: #78350f;">${_0x9812 === 'hu' ? 'Válaszd ki a javítandó tételeket:' : 'Select characteristics to correct:'}</span>
+                    <span style="font-size: 12px; font-weight: 700; color: #78350f;">${currentLang === 'hu' ? 'Válaszd ki a javítandó tételeket:' : (currentLang === 'de' ? 'Zu korrigierende Merkmale wählen:' : 'Select characteristics to correct:')}</span>
                     <div style="display: flex; gap: 6px;">
-                      <button class="btn btn-outline" style="padding: 3px 8px; font-size: 11px;" onclick="_0x3355(true)" type="button">${t.checkAll}</button>
-                      <button class="btn btn-outline" style="padding: 3px 8px; font-size: 11px;" onclick="_0x3355(false)" type="button">${t.uncheckAll}</button>
+                      <button class="btn btn-outline" style="padding: 3px 8px; font-size: 11px;" onclick="setGlobalCheckboxes(true)" type="button">${t.checkAll}</button>
+                      <button class="btn btn-outline" style="padding: 3px 8px; font-size: 11px;" onclick="setGlobalCheckboxes(false)" type="button">${t.uncheckAll}</button>
                     </div>
                   </div>
                   <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
@@ -2145,12 +1923,12 @@
                       </label>
                     `).join('')}
                   </div>
-                  <button class="btn btn-warning" style="width: 100%; justify-content: center; font-size: 13px; padding: 8px;" onclick="_0x6677()" type="button">
+                  <button class="btn btn-warning" style="width: 100%; justify-content: center; font-size: 13px; padding: 8px;" onclick="applyGlobalMultiFix()" type="button">
                     ${t.selFixBtn}
                   </button>
                 </div>
 
-                <div style="font-size: 13px; color: #475569; margin-bottom: 6px; font-weight: bold;">${_0x9812 === 'hu' ? 'Részletes lista fájlonként:' : 'Detailed list per file:'}</div>
+                <div style="font-size: 13px; color: #475569; margin-bottom: 6px; font-weight: bold;">${currentLang === 'hu' ? 'Részletes lista fájlonként:' : (currentLang === 'de' ? 'Detaillierte Liste nach Dateien:' : 'Detailed list per file:')}</div>
                 ${errHtml}
               </div>
             </details>
@@ -2167,14 +1945,14 @@
         overview.innerHTML = `
           <div class="alert-box success">
             <h3>${t.allOkMsg}</h3>
-            <p>${_0x192a.length} ${t.inFiles} ${t.allOkSub}</p>
+            <p>${loadedFiles.length} ${t.inFiles} ${t.allOkSub}</p>
           </div>
         `;
       }
 
       let cardsHtml = "";
-      _0x192a.forEach((f, idx) => {
-        const remainingErrors = f.validationErrors.filter(e => _0x9988(e.itemRef));
+      loadedFiles.forEach((f, idx) => {
+        const remainingErrors = f.validationErrors.filter(e => isStillError(e.itemRef));
         let statusBadge = "";
 
         if (f.validationErrors.length === 0) {
@@ -2192,7 +1970,7 @@
                 <strong>${f.name}</strong> &bull; <b style="color:#0284c7;">${f.headerData.bemerkung}</b>
                 ${statusBadge}
                 <div style="font-size:11px; color:#64748b; margin-top:2px;">
-                  ${_0x9812 === 'hu' ? 'Időpont' : 'Time'}: <b>${f.headerData.uhrzeit}</b> | K2415: <b>${f.headerData.k2415 || '-'}</b> | K1202: <b>${f.headerData.k1202 || '-'}</b>
+                  ${currentLang === 'hu' ? 'Időpont' : (currentLang === 'de' ? 'Uhrzeit' : 'Time')}: <b>${f.headerData.uhrzeit}</b> | K2415: <b>${f.headerData.k2415 || '-'}</b> | K1202: <b>${f.headerData.k1202 || '-'}</b>
                 </div>
               </div>
               <div class="btn-group">
@@ -2200,7 +1978,7 @@
                   <details style="display: inline-block; position: relative;">
                     <summary class="btn btn-warning" style="list-style: none;">⚡ ${t.fixBtn} (${remainingErrors.length}) ▾</summary>
                     <div style="position: absolute; right: 0; top: 100%; z-index: 100; background: #fff; border: 1px solid #fcd34d; border-radius: 6px; padding: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 220px; margin-top: 4px;">
-                      <div style="font-size: 11px; font-weight: bold; color: #78350f; margin-bottom: 6px;">${_0x9812 === 'hu' ? 'Válaszd ki a javítandókat:' : 'Select to correct:'}</div>
+                      <div style="font-size: 11px; font-weight: bold; color: #78350f; margin-bottom: 6px;">${currentLang === 'hu' ? 'Válaszd ki a javítandókat:' : (currentLang === 'de' ? 'Merkmale wählen:' : 'Select to correct:')}</div>
                       <div style="display: flex; flex-direction: column; gap: 4px; max-height: 160px; overflow-y: auto; margin-bottom: 8px;">
                         ${remainingErrors.map(e => `
                           <label class="checkbox-pill" style="border-radius: 4px; padding: 2px 6px;">
@@ -2209,15 +1987,15 @@
                           </label>
                         `).join('')}
                       </div>
-                      <button class="btn btn-warning" style="width: 100%; justify-content: center;" onclick="_0x2233(${idx})">${t.fixBtn}</button>
+                      <button class="btn btn-warning" style="width: 100%; justify-content: center;" onclick="applyFileMultiFix(${idx})">${t.fixBtn}</button>
                     </div>
                   </details>
                 ` : ''}
-                <button class="btn btn-primary" onclick="_0x9901(${idx})">${t.editBtn}</button>
-                <button class="btn btn-edit-hdr" onclick="_0x1102(${idx})">${t.headerBtn}</button>
-                <button class="btn btn-outline" onclick="_0x4405(${idx})">${t.previewBtn}</button>
-                <button class="btn btn-txt" onclick="_0x5509(${idx})">${t.txtBtn}</button>
-                <button class="btn btn-dfq" onclick="_0x6608(${idx})">${t.dfqBtn}</button>
+                <button class="btn btn-primary" onclick="openManualCorrectionModal(${idx})">${t.editBtn}</button>
+                <button class="btn btn-edit-hdr" onclick="openManualHeaderModal(${idx})">${t.headerBtn}</button>
+                <button class="btn btn-outline" onclick="toggleFilePreview(${idx})">${t.previewBtn}</button>
+                <button class="btn btn-txt" onclick="downloadSingleTxt(${idx})">${t.txtBtn}</button>
+                <button class="btn btn-dfq" onclick="requestDfqExport(${idx})">${t.dfqBtn}</button>
               </div>
             </div>
             <pre class="preview-code" id="previewBox_${idx}"></pre>
@@ -2227,24 +2005,25 @@
       list.innerHTML = cardsHtml;
     }
 
-    function _0x4405(idx) {
+    function toggleFilePreview(idx) {
       const box = document.getElementById(`previewBox_${idx}`);
       if (!box) return;
 
       if (box.style.display === 'block') {
         box.style.display = 'none';
       } else {
-        const file = _0x192a[idx];
+        const file = loadedFiles[idx];
         if (file) {
-          box.textContent = _0x7722(file.headerData) + _0x9900(file);
+          box.textContent = buildHeaderString(file.headerData) + buildFileBody(file);
         }
         box.style.display = 'block';
       }
     }
 
-    function _0x9901(idx) {
-      _0x4d2e = idx;
-      const f = _0x192a[idx];
+    function openManualCorrectionModal(idx) {
+      const t = i18n[currentLang];
+      editingFileIdx = idx;
+      const f = loadedFiles[idx];
       if (!f) return;
 
       document.getElementById('corrModalFileName').innerText = f.name;
@@ -2280,12 +2059,12 @@
 
     document.getElementById('btnCorrCancel').addEventListener('click', () => {
       document.getElementById('correctionModal').classList.remove('active');
-      _0x4d2e = null;
+      editingFileIdx = null;
     });
 
     document.getElementById('btnCorrApply').addEventListener('click', () => {
-      if (_0x4d2e === null) return;
-      const f = _0x192a[_0x4d2e];
+      if (editingFileIdx === null) return;
+      const f = loadedFiles[editingFileIdx];
 
       f.parsedItems.forEach((item, iIdx) => {
         const chk = document.getElementById(`item_en_${iIdx}`);
@@ -2300,58 +2079,54 @@
         }
       });
 
-      const hasAnyError = f.parsedItems.some(it => it.enabled !== false && _0x9988(it));
+      const hasAnyError = f.parsedItems.some(it => it.enabled !== false && isStillError(it));
       f.isFixed = !hasAnyError;
 
       document.getElementById('correctionModal').classList.remove('active');
 
-      _0x6641();
-      _0x8819();
-      _0x4422();
+      renderValidatorView();
+      renderMatrixViews();
+      renderProductionView();
 
-      const box = document.getElementById(`previewBox_${_0x4d2e}`);
+      const box = document.getElementById(`previewBox_${editingFileIdx}`);
       if (box && box.style.display === 'block') {
-        box.textContent = _0x7722(f.headerData) + _0x9900(f);
+        box.textContent = buildHeaderString(f.headerData) + buildFileBody(f);
       }
-      _0x4d2e = null;
+      editingFileIdx = null;
     });
 
-    function _0x3399(h) {
+    function isHeaderComplete(h) {
       return !!(h.teileNr && h.teileNr.trim() && 
                 h.bemerkung && h.bemerkung.trim() && 
                 h.teileBez && h.teileBez.trim() && 
                 h.rajzszam && h.rajzszam.trim() && 
                 h.megrendelo && h.megrendelo.trim() && 
-                h.maschine && h.maschine.trim() && 
-                h.k2415 && h.k2415.trim() && 
-                h.k1202 && h.k1202.trim() && 
-                h.k2406 && h.k2406.trim() && 
-                h.datum && h.datum.trim() && 
+                h.maschine && h.maschine.trim() &&
+                h.k2415 && h.k2415.trim() &&
+                h.k1202 && h.k1202.trim() &&
+                h.k2406 && h.k2406.trim() &&
+                h.datum && h.datum.trim() &&
                 h.uhrzeit && h.uhrzeit.trim());
     }
 
-    function _0x7c3d(pName) {
-      if (!pName) return;
+    function refreshPresetSelector() {
+      const sel = document.getElementById('presetSelector');
+      sel.innerHTML = `<option value="">${i18n[currentLang].optPresetDefault}</option>`;
       try {
         const presets = JSON.parse(localStorage.getItem('hp_presets') || '{}');
-        const p = presets[pName];
-        if (p) {
-          if (p.teileNr) document.getElementById('m_teileNr').value = p.teileNr;
-          if (p.teileBez) document.getElementById('m_teileBez').value = p.teileBez;
-          if (p.rajzszam) document.getElementById('m_rajzszam').value = p.rajzszam;
-          if (p.megrendelo) document.getElementById('m_megrendelo').value = p.megrendelo;
-          if (p.maschine) document.getElementById('m_maschine').value = p.maschine;
-          if (p.k2415) document.getElementById('m_k2415').value = p.k2415;
-          if (p.k1202) document.getElementById('m_k1202').value = p.k1202;
-          if (p.k2406) document.getElementById('m_k2406').value = p.k2406;
-        }
+        Object.keys(presets).sort().forEach(pName => {
+          const opt = document.createElement('option');
+          opt.value = pName;
+          opt.textContent = pName;
+          sel.appendChild(opt);
+        });
       } catch (e) {}
     }
 
-    function _0x8b4e() {
+    function saveCurrentAsPreset() {
       const teileNr = document.getElementById('m_teileNr').value.trim();
       if (!teileNr) {
-        alert(_0x9812 === 'hu' ? "Adj meg egy cikkszámot a profil mentéséhez / módosításához!" : "Please provide a part number to save/update profile!");
+        alert(currentLang === 'hu' ? "Adj meg egy cikkszámot a profil mentéséhez / módosításához!" : "Please provide a part number to save/update profile!");
         return;
       }
       const profile = {
@@ -2369,7 +2144,7 @@
         const isUpdate = !!presets[teileNr];
         presets[teileNr] = profile;
         localStorage.setItem('hp_presets', JSON.stringify(presets));
-        _0x4488();
+        refreshPresetSelector();
         document.getElementById('presetSelector').value = teileNr;
         alert(isUpdate ? `✅ "${teileNr}" profil frissítve!` : `✅ "${teileNr}" új profil elmentve!`);
       } catch (e) {
@@ -2377,11 +2152,11 @@
       }
     }
 
-    function _0x2f9a() {
+    function deleteSelectedPreset() {
       const sel = document.getElementById('presetSelector');
       const pName = sel.value;
       if (!pName) {
-        alert(_0x9812 === 'hu' ? "Kérlek válassz ki egy profilt a listából a törléshez!" : "Please select a profile from the list to delete!");
+        alert(currentLang === 'hu' ? "Kérlek válassz ki egy profilt a listából a törléshez!" : "Please select a profile from the list to delete!");
         return;
       }
       if (!confirm(`Biztosan törölni szeretnéd a(z) "${pName}" profilt?`)) return;
@@ -2390,55 +2165,59 @@
         const presets = JSON.parse(localStorage.getItem('hp_presets') || '{}');
         delete presets[pName];
         localStorage.setItem('hp_presets', JSON.stringify(presets));
-        _0x4488();
+        refreshPresetSelector();
         alert(`🗑️ "${pName}" profil törölve!`);
       } catch (e) {
         alert("Hiba a törléskor: " + e);
       }
     }
 
-    function _0x4488() {
-      const sel = document.getElementById('presetSelector');
-      sel.innerHTML = `<option value="">${i18n[_0x9812].optPresetDefault}</option>`;
+    function loadPreset(pName) {
+      if (!pName) return;
       try {
         const presets = JSON.parse(localStorage.getItem('hp_presets') || '{}');
-        Object.keys(presets).sort().forEach(pName => {
-          const opt = document.createElement('option');
-          opt.value = pName;
-          opt.textContent = pName;
-          sel.appendChild(opt);
-        });
+        const p = presets[pName];
+        if (p) {
+          if (p.teileNr) document.getElementById('m_teileNr').value = p.teileNr;
+          if (p.teileBez) document.getElementById('m_teileBez').value = p.teileBez;
+          if (p.rajzszam) document.getElementById('m_rajzszam').value = p.rajzszam;
+          if (p.megrendelo) document.getElementById('m_megrendelo').value = p.megrendelo;
+          if (p.maschine) document.getElementById('m_maschine').value = p.maschine;
+          if (p.k2415) document.getElementById('m_k2415').value = p.k2415;
+          if (p.k1202) document.getElementById('m_k1202').value = p.k1202;
+          if (p.k2406) document.getElementById('m_k2406').value = p.k2406;
+        }
       } catch (e) {}
     }
 
-    function _0x1102(idx) {
-      _0x3b81 = idx;
-      const file = _0x192a[idx];
+    function openManualHeaderModal(idx) {
+      pendingFileIdx = idx;
+      const file = loadedFiles[idx];
       if (!file) return;
 
-      document.getElementById('modalTitleText').innerText = i18n[_0x9812].hdrModalTitle;
+      document.getElementById('modalTitleText').innerText = i18n[currentLang].hdrModalTitle;
       document.getElementById('modalTitleText').style.color = "#0284c7";
-      _0x1103(file);
+      openHeaderModal(file);
     }
 
-    function _0x6608(idx) {
-      const file = _0x192a[idx];
+    function requestDfqExport(idx) {
+      const file = loadedFiles[idx];
       if (!file) return;
 
-      if (!_0x3399(file.headerData)) {
-        _0x3b81 = idx;
+      if (!isHeaderComplete(file.headerData)) {
+        pendingFileIdx = idx;
         document.getElementById('modalTitleText').innerText = "⚠️ Nem megfelelő fejléc kitöltés!";
         document.getElementById('modalTitleText').style.color = "#b45309";
-        _0x1103(file);
+        openHeaderModal(file);
       } else {
-        _0x2201(file);
+        triggerDfqDownload(file);
       }
     }
 
-    function _0x1103(file) {
+    function openHeaderModal(file) {
       const h = file.headerData;
       document.getElementById('modalFileName').innerText = file.name;
-      _0x4488();
+      refreshPresetSelector();
 
       document.getElementById('m_teileNr').value = h.teileNr || "";
       document.getElementById('m_bemerkung').value = h.bemerkung || "";
@@ -2452,16 +2231,26 @@
       document.getElementById('m_datum').value = h.datum || "09.09.2026";
       document.getElementById('m_uhrzeit').value = h.uhrzeit || "08:41:01";
 
+      document.getElementById('m_teileNr').classList.toggle('missing', !h.teileNr || !h.teileNr.trim());
+      document.getElementById('m_bemerkung').classList.toggle('missing', !h.bemerkung || !h.bemerkung.trim());
+      document.getElementById('m_teileBez').classList.toggle('missing', !h.teileBez || !h.teileBez.trim());
+      document.getElementById('m_rajzszam').classList.toggle('missing', !h.rajzszam || !h.rajzszam.trim());
+      document.getElementById('m_megrendelo').classList.toggle('missing', !h.megrendelo || !h.megrendelo.trim());
+      document.getElementById('m_maschine').classList.toggle('missing', !h.maschine || !h.maschine.trim());
+      document.getElementById('m_k2415').classList.toggle('missing', !h.k2415 || !h.k2415.trim());
+      document.getElementById('m_k1202').classList.toggle('missing', !h.k1202 || !h.k1202.trim());
+      document.getElementById('m_k2406').classList.toggle('missing', !h.k2406 || !h.k2406.trim());
+
       document.getElementById('headerModal').classList.add('active');
     }
 
     document.getElementById('btnModalCancel').addEventListener('click', () => {
       document.getElementById('headerModal').classList.remove('active');
-      _0x3b81 = null;
+      pendingFileIdx = null;
     });
 
-    function _0x8899() {
-      if (_0x3b81 === null) return false;
+    function saveHeaderFromModal() {
+      if (pendingFileIdx === null) return false;
 
       const teileNr = document.getElementById('m_teileNr').value.trim();
       const baseBemerkung = document.getElementById('m_bemerkung').value.trim();
@@ -2475,7 +2264,7 @@
       const datum = document.getElementById('m_datum').value.trim();
       const baseUhrzeit = document.getElementById('m_uhrzeit').value.trim();
 
-      _0x192a.forEach((file, index) => {
+      loadedFiles.forEach((file, index) => {
         file.headerData.teileNr = teileNr;
         file.headerData.teileBez = teileBez;
         file.headerData.rajzszam = rajzszam;
@@ -2486,26 +2275,26 @@
         file.headerData.k2406 = k2406;
         file.headerData.datum = datum;
 
-        const offset = index - _0x3b81;
-        file.headerData.bemerkung = (offset === 0) ? baseBemerkung : _0x3344(baseBemerkung, offset);
-        file.headerData.uhrzeit = _0x5566(baseUhrzeit, offset * _0x7788);
+        const offset = index - pendingFileIdx;
+        file.headerData.bemerkung = (offset === 0) ? baseBemerkung : incrementNestCode(baseBemerkung, offset);
+        file.headerData.uhrzeit = addSecondsToTime(baseUhrzeit, offset * TIME_OFFSET_SECONDS);
 
         const preEl = document.getElementById(`previewBox_${index}`);
         if (preEl && preEl.style.display === 'block') {
-          preEl.textContent = _0x7722(file.headerData) + _0x9900(file);
+          preEl.textContent = buildHeaderString(file.headerData) + buildFileBody(file);
         }
       });
 
-      _0x6641();
-      _0x8819();
-      _0x4422();
+      renderValidatorView();
+      renderMatrixViews();
+      renderProductionView();
       return true;
     }
 
     document.getElementById('btnModalSaveOnly').addEventListener('click', () => {
-      if (_0x8899()) {
+      if (saveHeaderFromModal()) {
         document.getElementById('headerModal').classList.remove('active');
-        _0x3b81 = null;
+        pendingFileIdx = null;
       }
     });
 
@@ -2521,19 +2310,19 @@
       const k2406 = document.getElementById('m_k2406').value.trim();
 
       if (!teileNr || !bemerkung || !teileBez || !rajzszam || !megrendelo || !maschine || !k2415 || !k1202 || !k2406) {
-        alert(_0x9812 === 'hu' ? "Kérlek töltsd ki az összes kötelező mezőt a DFQ generáláshoz!" : "Please fill in all mandatory fields for DFQ generation!");
+        alert(currentLang === 'hu' ? "Kérlek töltsd ki az összes kötelező mezőt a DFQ generáláshoz!" : "Please fill in all mandatory fields for DFQ generation!");
         return;
       }
 
-      const fileToDownload = _0x192a[_0x3b81];
-      if (_0x8899()) {
+      const fileToDownload = loadedFiles[pendingFileIdx];
+      if (saveHeaderFromModal()) {
         document.getElementById('headerModal').classList.remove('active');
-        _0x3b81 = null;
-        _0x2201(fileToDownload);
+        pendingFileIdx = null;
+        triggerDfqDownload(fileToDownload);
       }
     });
 
-    function _0x1199(file) {
+    function buildDfqString(file) {
       const h = file.headerData;
       
       let d = h.datum || "09.09.2026";
@@ -2632,8 +2421,31 @@
       return lines.join("\r\n") + "\r\n";
     }
 
-    function _0x2201(file) {
-      const dfqText = _0x1199(file);
+    function getStandardDfqFileName(file) {
+      const h = file.headerData;
+      const cleanPart = (h.teileNr || "106760").replace(/[^a-zA-Z0-9_-]/g, "");
+
+      let dateStr = "2026-9-9";
+      if (h.datum && h.datum.includes(".")) {
+        const parts = h.datum.split(".").map(p => parseInt(p, 10));
+        if (parts.length >= 3) {
+          dateStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+      }
+
+      let timeStr = "84100";
+      if (h.uhrzeit) {
+        const rawT = h.uhrzeit.replace(/[^0-9]/g, "");
+        if (rawT.length >= 5) {
+          timeStr = rawT.startsWith("0") ? String(parseInt(rawT.slice(0, 6), 10)) : rawT.slice(0, 6);
+        }
+      }
+
+      return `${cleanPart}_${dateStr}_${timeStr}.DFQ`;
+    }
+
+    function triggerDfqDownload(file) {
+      const dfqText = buildDfqString(file);
       const bytes = new Uint8Array(dfqText.length);
       for (let i = 0; i < dfqText.length; i++) {
         bytes[i] = dfqText.charCodeAt(i) & 0xFF;
@@ -2641,12 +2453,479 @@
       const blob = new Blob([bytes], { type: 'application/octet-stream' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = `${(file.headerData.teileNr || "106760").replace(/[^a-zA-Z0-9_-]/g, "")}_2026-9-9_84100.DFQ`;
+      a.download = getStandardDfqFileName(file);
       a.click();
     }
 
-    _0x32ab();
-    _0x55c1();
+    function downloadSingleTxt(idx) {
+      const file = loadedFiles[idx];
+      if (!file) return;
+
+      const fullTxt = buildHeaderString(file.headerData) + buildFileBody(file);
+      const blob = new Blob([fullTxt], { type: 'text/plain;charset=windows-1250' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `JAVITOTT_${file.name.replace(/\.(pdf|dfq)$/i, '.txt')}`;
+      a.click();
+    }
+
+    document.getElementById('btnDownloadAllTxt').addEventListener('click', async () => {
+      if (!loadedFiles.length) {
+        alert("Nincsenek betöltött fájlok!");
+        return;
+      }
+
+      const zip = new JSZip();
+      loadedFiles.forEach(file => {
+        const fullTxt = buildHeaderString(file.headerData) + buildFileBody(file);
+        zip.file(`JAVITOTT_${file.name.replace(/\.(pdf|dfq)$/i, '.txt')}`, fullTxt);
+      });
+
+      const content = await zip.generateAsync({ type: "blob" });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(content);
+      a.download = "JAVITOTT_TXT_Jegyzokonyvek.zip";
+      a.click();
+    });
+
+    document.getElementById('btnDownloadAllDfq').addEventListener('click', async () => {
+      const missingFiles = loadedFiles.filter(f => !isHeaderComplete(f.headerData));
+      if (missingFiles.length > 0) {
+        alert(`Figyelem! ${missingFiles.length} fájlnál hiányoznak a kötelező adatok. Kérlek pótold őket a sorok mellett lévő "DFQ Letöltése" gombbal!`);
+        return;
+      }
+
+      const zip = new JSZip();
+      loadedFiles.forEach(file => {
+        const dfqText = buildDfqString(file);
+        const bytes = new Uint8Array(dfqText.length);
+        for (let i = 0; i < dfqText.length; i++) {
+          bytes[i] = dfqText.charCodeAt(i) & 0xFF;
+        }
+        zip.file(getStandardDfqFileName(file), bytes);
+      });
+      const content = await zip.generateAsync({ type: "blob" });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(content);
+      a.download = "DFQ_Jegyzokonyvek_Csomag.zip";
+      a.click();
+    });
+
+    let excelHeadersGlobal = [];
+    let excelRowsGlobal = [];
+
+    function renderMatrixViews() {
+      const t = i18n[currentLang];
+      if (!loadedFiles.length) {
+        document.getElementById('matrixBarcodeWrapper').style.display = 'none';
+        document.getElementById('excelTableWrapper').style.display = 'none';
+        return;
+      }
+
+      const bHead = document.getElementById('matrixBarcodeHead');
+      const bBody = document.getElementById('matrixBarcodeBody');
+      const eHead = document.getElementById('excelTableHead');
+      const eBody = document.getElementById('excelTableBody');
+
+      const metaData = {};
+      const megnSet = new Set();
+
+      loadedFiles.forEach(file => {
+        file.parsedItems.forEach(item => {
+          if (item.enabled !== false) {
+            megnSet.add(item.megn);
+            if (!metaData[item.megn]) {
+              const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
+              const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
+              metaData[item.megn] = {
+                nevl: item.nevl.toFixed(4),
+                ftur: (item.ftur >= 0 ? "+" : "") + item.ftur.toFixed(4),
+                atur: (item.atur >= 0 ? "+" : "") + item.atur.toFixed(4),
+                minTol: minTol.toFixed(4),
+                maxTol: maxTol.toFixed(4)
+              };
+            }
+          }
+        });
+      });
+
+      const megnLista = Array.from(megnSet).sort((a, b) => naturalCompare(a, b));
+
+      let bHeadHtml = `<tr><th class="megn-col">${t.thItem}</th>`;
+      loadedFiles.forEach((file, i) => {
+        const label = file.headerData.bemerkung || `F${i + 1}`;
+        bHeadHtml += `<th>F${i + 1}<br><span style="font-size:10px; font-weight:normal; color:#475569;">${label}</span></th>`;
+      });
+      bHeadHtml += `</tr>`;
+      bHead.innerHTML = bHeadHtml;
+
+      let eHeadHtml = `<tr>
+        <th class="megn-col">${t.thItem}</th>
+        <th class="tol-col">${t.thNom}</th>
+        <th class="tol-col">${t.thTolPlus}</th>
+        <th class="tol-col">${t.thTolMinus}</th>
+        <th class="tol-col">${t.thMin}</th>
+        <th class="tol-col">${t.thMax}</th>`;
+      loadedFiles.forEach((file, i) => {
+        const label = file.headerData.bemerkung || `F${i + 1}`;
+        eHeadHtml += `<th>F${i + 1}<br><span style="font-size:10px; font-weight:normal; color:#475569;">${label}</span></th>`;
+      });
+      eHeadHtml += `</tr>`;
+      eHead.innerHTML = eHeadHtml;
+
+      excelHeadersGlobal = [t.thItem, t.thNom, t.thTolPlus, t.thTolMinus, t.thMin, t.thMax, ...loadedFiles.map((f, i) => f.headerData.bemerkung || `F${i + 1}`)];
+      excelRowsGlobal = [];
+
+      bBody.innerHTML = "";
+      eBody.innerHTML = "";
+
+      megnLista.forEach(megn => {
+        const m = metaData[megn] || { nevl: "-", ftur: "-", atur: "-", minTol: "-", maxTol: "-" };
+        const rowExport = [megn, m.nevl, m.ftur, m.atur, m.minTol, m.maxTol];
+
+        const bTr = document.createElement('tr');
+        const bTdMegn = document.createElement('td');
+        bTdMegn.className = 'megn-col';
+        bTdMegn.textContent = megn;
+        bTr.appendChild(bTdMegn);
+
+        const eTr = document.createElement('tr');
+        eTr.innerHTML = `
+          <td class="megn-col">${megn}</td>
+          <td class="tol-col">${m.nevl}</td>
+          <td class="tol-col">${m.ftur}</td>
+          <td class="tol-col">${m.atur}</td>
+          <td class="tol-col">${m.minTol}</td>
+          <td class="tol-col">${m.maxTol}</td>
+        `;
+
+        loadedFiles.forEach(file => {
+          const item = file.parsedItems.find(it => it.megn === megn && it.enabled !== false);
+          const val = item ? item.akt.toFixed(3) : null;
+          const isErr = item ? isStillError(item) : false;
+
+          const bTd = document.createElement('td');
+          if (val && val !== "-") {
+            const card = document.createElement('div');
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.className = 'barcode-svg';
+            card.appendChild(svg);
+
+            const meta = document.createElement('div');
+            meta.className = 'meta-text';
+            meta.innerHTML = `${megn} | <b style="${isErr ? 'color:var(--danger);' : ''}">${val}</b>`;
+            card.appendChild(meta);
+            bTd.appendChild(card);
+
+            try {
+              JsBarcode(svg, val, {
+                format: "CODE128",
+                width: 1.1,
+                height: 30,
+                displayValue: true,
+                fontSize: 10,
+                textMargin: 2,
+                margin: 2
+              });
+            } catch (err) {}
+          } else {
+            bTd.textContent = "-";
+          }
+          bTr.appendChild(bTd);
+
+          const eTd = document.createElement('td');
+          if (val && val !== "-") {
+            eTd.innerHTML = `<b style="${isErr ? 'color:var(--danger);' : ''}">${val}</b>`;
+            rowExport.push(parseFloat(val));
+          } else {
+            eTd.textContent = "-";
+            rowExport.push("");
+          }
+          eTr.appendChild(eTd);
+        });
+
+        bBody.appendChild(bTr);
+        eBody.appendChild(eTr);
+        excelRowsGlobal.push(rowExport);
+      });
+
+      document.getElementById('matrixBarcodeWrapper').style.display = 'block';
+      document.getElementById('excelTableWrapper').style.display = 'block';
+    }
+
+    document.getElementById('btnExportExcel').addEventListener('click', () => {
+      if (!excelRowsGlobal.length) {
+        alert(currentLang === 'hu' ? "Nincsenek adatok az exportáláshoz!" : "No data to export!");
+        return;
+      }
+
+      const wsData = [excelHeadersGlobal, ...excelRowsGlobal];
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+      ws['!cols'] = [
+        { wch: 14 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 12 },
+        { wch: 14 },
+        { wch: 14 },
+        ...excelHeadersGlobal.slice(6).map(() => ({ wch: 16 }))
+      ];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Mérési Mátrix");
+
+      const teileNr = loadedFiles[0]?.headerData?.teileNr || "Meresi_Adatok";
+      XLSX.writeFile(wb, `${teileNr}_Meresi_Matrix.xlsx`);
+    });
+
+    document.getElementById('btnCopyClipboard').addEventListener('click', () => {
+      if (!excelRowsGlobal.length) {
+        alert(currentLang === 'hu' ? "Nincsenek adatok a másoláshoz!" : "No data to copy!");
+        return;
+      }
+
+      let tsvText = excelHeadersGlobal.join("\t") + "\r\n";
+      excelRowsGlobal.forEach(row => {
+        tsvText += row.join("\t") + "\r\n";
+      });
+
+      navigator.clipboard.writeText(tsvText).then(() => {
+        alert(currentLang === 'hu' ? "✅ A mérési táblázat a vágólapra másolva! Egy üres Excel munkalapon azonnal beillesztheted (Ctrl + V)." : (currentLang === 'de' ? "✅ Daten in die Zwischenablage kopiert!" : "✅ Table copied to clipboard!"));
+      }).catch(err => {
+        alert("Hiba: " + err);
+      });
+    });
+
+    function filterHeatmap() {
+      const q = document.getElementById('heatmapSearch').value.toLowerCase().trim();
+      const nokOnly = document.getElementById('heatmapNokOnly').checked;
+
+      const rows = document.querySelectorAll('#prodHeatmapBody tr');
+      rows.forEach(r => {
+        const itemText = r.querySelector('.megn-col')?.textContent.toLowerCase() || "";
+        const hasErr = r.getAttribute('data-has-error') === 'true';
+
+        let show = true;
+        if (q && !itemText.includes(q)) show = false;
+        if (nokOnly && !hasErr) show = false;
+
+        r.style.display = show ? "" : "none";
+      });
+    }
+
+    function printSetterWorksheet() {
+      const t = i18n[currentLang];
+      if (!loadedFiles.length) {
+        alert(t.emptyMsg);
+        return;
+      }
+
+      const firstHdr = loadedFiles[0].headerData;
+      document.getElementById('printDate').textContent = `${firstHdr.datum || ''} ${firstHdr.uhrzeit || ''}`;
+      document.getElementById('printPartNr').textContent = `${firstHdr.teileNr || ''} (${firstHdr.teileBez || ''})`;
+
+      const deltaList = [];
+      loadedFiles.forEach((file, i) => {
+        const nestName = file.headerData.bemerkung || `F${i + 1}`;
+        file.parsedItems.forEach(item => {
+          if (item.enabled !== false && isStillError(item)) {
+            const delta = +(item.akt - item.nevl).toFixed(4);
+            const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
+            const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
+            const isOver = item.akt > maxTol;
+
+            deltaList.push({
+              nest: `F${i + 1} (${nestName})`,
+              megn: item.megn,
+              desc: item.desc,
+              akt: item.akt.toFixed(4),
+              nevl: item.nevl.toFixed(4),
+              delta: (delta >= 0 ? "+" : "") + delta.toFixed(4),
+              status: isOver ? t.statusOver : t.statusUnder,
+              diff: isOver ? `+${(item.akt - maxTol).toFixed(4)} mm ${t.overMax}` : `${(item.akt - minTol).toFixed(4)} mm ${t.underMin}`
+            });
+          }
+        });
+      });
+
+      const wrapper = document.getElementById('printDeltaTableWrapper');
+      if (deltaList.length === 0) {
+        wrapper.innerHTML = `<div style='padding:20px; font-weight:bold; color:green; border:2px solid green;'>${t.allOkMsg}</div>`;
+      } else {
+        let tHtml = `
+          <table style="width:100%; border-collapse:collapse; font-size:12px;">
+            <thead>
+              <tr style="background:#f1f5f9;">
+                <th style="border:1px solid #94a3b8; padding:8px;">${t.thNestPrint}</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${t.thItemPrint}</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${t.thDescPrint}</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${t.thValPrint}</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${t.thNomPrint}</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${t.thDeltaPrint}</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${t.thAdjPrint}</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        deltaList.forEach(d => {
+          tHtml += `
+            <tr>
+              <td style="border:1px solid #cbd5e1; padding:8px; font-weight:bold;">${d.nest}</td>
+              <td style="border:1px solid #cbd5e1; padding:8px; font-weight:bold; text-align:center;">${d.megn}</td>
+              <td style="border:1px solid #cbd5e1; padding:8px;">${d.desc}</td>
+              <td style="border:1px solid #cbd5e1; padding:8px; text-align:center; color:#b91c1c; font-weight:bold;">${d.akt}</td>
+              <td style="border:1px solid #cbd5e1; padding:8px; text-align:center;">${d.nevl}</td>
+              <td style="border:1px solid #cbd5e1; padding:8px; text-align:center; font-weight:bold;">${d.delta} mm</td>
+              <td style="border:1px solid #cbd5e1; padding:8px; font-weight:bold; color:#b91c1c;">${d.diff}</td>
+            </tr>
+          `;
+        });
+        tHtml += `</tbody></table>`;
+        wrapper.innerHTML = tHtml;
+      }
+
+      window.print();
+    }
+
+    function renderProductionView() {
+      const t = i18n[currentLang];
+      const nestCardsContainer = document.getElementById('prodNestCards');
+      const titleProdNest = document.getElementById('titleProdNest');
+      const accProdDelta = document.getElementById('accProdDelta');
+      const titleProdDelta = document.getElementById('titleProdDelta');
+      const deltaCardsContainer = document.getElementById('prodDeltaCards');
+      const heatmapWrapper = document.getElementById('prodHeatmapWrapper');
+      const heatmapHead = document.getElementById('prodHeatmapHead');
+      const heatmapBody = document.getElementById('prodHeatmapBody');
+
+      if (!loadedFiles.length) {
+        nestCardsContainer.innerHTML = `<div class='alert-box warning' style='grid-column: 1/-1;'>${t.emptyMsg}</div>`;
+        accProdDelta.style.display = "none";
+        heatmapWrapper.style.display = "none";
+        return;
+      }
+
+      let nestCardsHtml = "";
+      const deltaList = [];
+      let okCount = 0;
+      let nokCount = 0;
+
+      loadedFiles.forEach((file, i) => {
+        const errors = file.parsedItems.filter(it => it.enabled !== false && isStillError(it));
+        const isOk = errors.length === 0;
+        if (isOk) okCount++; else nokCount++;
+        const nestName = file.headerData.bemerkung || `F${i + 1}`;
+
+        nestCardsHtml += `
+          <div class="nest-card ${isOk ? 'ok' : 'nok'}">
+            <div class="nest-card-title">F${i + 1}</div>
+            <div style="font-size:11px; color:#64748b; font-weight:bold; margin-top:2px;">${nestName}</div>
+            <div class="nest-card-badge">${isOk ? t.statusOk : `${t.statusNok} (${errors.length})`}</div>
+          </div>
+        `;
+
+        errors.forEach(item => {
+          const delta = +(item.akt - item.nevl).toFixed(4);
+          const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
+          const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
+          const isOver = item.akt > maxTol;
+
+          deltaList.push({
+            nest: `F${i + 1} (${nestName})`,
+            megn: item.megn,
+            desc: item.desc,
+            akt: item.akt.toFixed(4),
+            nevl: item.nevl.toFixed(4),
+            delta: (delta >= 0 ? "+" : "") + delta.toFixed(4),
+            status: isOver ? t.statusOver : t.statusUnder,
+            diff: isOver ? `+${(item.akt - maxTol).toFixed(4)} mm ${t.overMax}` : `${(item.akt - minTol).toFixed(4)} mm ${t.underMin}`
+          });
+        });
+      });
+      nestCardsContainer.innerHTML = nestCardsHtml;
+      titleProdNest.innerHTML = `📦 3. ${currentLang === 'hu' ? 'Fészek Státuszok' : (currentLang === 'de' ? 'Nest-Status' : 'Cavity Status')} (${loadedFiles.length} &bull; <b style="color:var(--danger)">${nokCount} NOK</b>, <b style="color:var(--success)">${okCount} OK</b>)`;
+
+      if (deltaList.length > 0) {
+        let deltaHtml = "";
+        deltaList.forEach(d => {
+          deltaHtml += `
+            <div class="delta-card">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <strong style="font-size:14px; color:#0f172a;">${d.nest} &bull; ${t.thItem}: ${d.megn}</strong>
+                <span style="font-size:11px; font-weight:bold; color:#ef4444; background:#fee2e2; padding:2px 6px; border-radius:4px;">${d.status}</span>
+              </div>
+              <div style="font-size:12px; color:#475569;">
+                ${t.thOrig}: <b>${d.akt}</b> | ${t.thNom}: <b>${d.nevl}</b> &rarr; &Delta;: <b style="color:#b91c1c;">${d.delta} mm</b>
+              </div>
+              <div style="font-size:12px; font-weight:bold; color:#b91c1c; margin-top:3px;">
+                ${d.diff}
+              </div>
+            </div>
+          `;
+        });
+        deltaCardsContainer.innerHTML = deltaHtml;
+        titleProdDelta.innerHTML = `⚠️ 2. ${currentLang === 'hu' ? 'Tűrésen Kívüli Méretek & Eltérések' : (currentLang === 'de' ? 'Maßabweichungen (&Delta;)' : 'Out-of-Tolerance Deltas (&Delta;)')} &bull; <b>${deltaList.length} ${t.errorsWord}</b>`;
+        accProdDelta.style.display = "block";
+      } else {
+        accProdDelta.style.display = "none";
+      }
+
+      const megnSet = new Set();
+      loadedFiles.forEach(f => f.parsedItems.forEach(it => { if (it.enabled !== false) megnSet.add(it.megn); }));
+      const megnLista = Array.from(megnSet).sort((a, b) => naturalCompare(a, b));
+
+      let hHeadHtml = `<tr><th class="megn-col">${t.thItem}</th>`;
+      loadedFiles.forEach((f, i) => {
+        hHeadHtml += `<th>F${i + 1}</th>`;
+      });
+      hHeadHtml += `</tr>`;
+      heatmapHead.innerHTML = hHeadHtml;
+
+      heatmapBody.innerHTML = "";
+      megnLista.forEach(megn => {
+        const tr = document.createElement('tr');
+        let rowHasError = false;
+
+        let rowCells = `<td class="megn-col">${megn}</td>`;
+
+        loadedFiles.forEach(file => {
+          const item = file.parsedItems.find(it => it.megn === megn && it.enabled !== false);
+          if (item) {
+            const isErr = isStillError(item);
+            const isNear = isNearToleranceBorder(item);
+            if (isErr) rowHasError = true;
+
+            let bgColor = "#dcfce7";
+            let textColor = "#166534";
+            let titleTip = "OK";
+
+            if (isErr) {
+              bgColor = "#fecaca";
+              textColor = "#991b1b";
+              titleTip = "Tűrésen kívül!";
+            } else if (isNear) {
+              bgColor = "#fef08a";
+              textColor = "#854d0e";
+              titleTip = "Figyelem: Tűréshatár peremén!";
+            }
+
+            rowCells += `<td style="background-color:${bgColor}; color:${textColor}; font-weight:bold;" title="${titleTip}">${item.akt.toFixed(3)}</td>`;
+          } else {
+            rowCells += `<td>-</td>`;
+          }
+        });
+
+        tr.innerHTML = rowCells;
+        tr.setAttribute('data-has-error', rowHasError ? 'true' : 'false');
+        heatmapBody.appendChild(tr);
+      });
+      heatmapWrapper.style.display = "block";
+
+      filterHeatmap();
+    }
+
+    applyLanguage();
   </script>
 </body>
 </html>
