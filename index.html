@@ -60,6 +60,78 @@
 
     .container { max-width: 1450px; margin: 0 auto; }
 
+    /* BELÉPŐ PANEL (LOGIN MODAL) */
+    #loginLockOverlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: #0f172a;
+      z-index: 99999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .login-box {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 32px 28px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+      border: 1px solid var(--border);
+      position: relative;
+    }
+    .login-box-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 12px;
+    }
+    .login-box h2 { font-size: 19px; color: #0f172a; margin-bottom: 4px; text-align: left; }
+    .login-box p { font-size: 12px; color: var(--text-muted); text-align: left; }
+    
+    .login-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      text-align: left;
+      margin-bottom: 14px;
+    }
+    .login-form-group label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #334155;
+    }
+    .login-input {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 14px;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 6px;
+      outline: none;
+      transition: 0.2s;
+    }
+    .login-input:focus { border-color: var(--primary); }
+    .login-input.error { border-color: var(--danger); background: #fef2f2; }
+    
+    .login-btn {
+      width: 100%;
+      padding: 11px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+      margin-top: 5px;
+    }
+    .login-btn:hover { background: var(--primary-hover); }
+
     header {
       background: var(--surface);
       border-radius: var(--radius);
@@ -440,20 +512,44 @@
 </head>
 <body oncontextmenu="return false;">
 
-  <!-- DOMAIN ÉS LICENCZÁR TÁROLÓ -->
-  <div id="licenseBlockOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#0f172a; color:#f8fafc; z-index:999999; justify-content:center; align-items:center; flex-direction:column; padding:25px; text-align:center;">
-    <div style="max-width:550px; background:#1e293b; padding:35px; border-radius:12px; border:2px solid #ef4444; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
-      <h2 style="color:#ef4444; margin-bottom:12px; font-size:22px;">⚠️ Nem engedélyezett futtatási környezet!</h2>
-      <p style="font-size:14px; line-height:1.6; color:#cbd5e1; margin-bottom:15px;">
-        A <strong>HP Metrology Suite</strong> védett forráskódú szoftver. A program helyi másolása, pendrive-ról történő indítása vagy jogosulatlan szerveren való futtatása szerzői jogi korlátozás alá esik.
-      </p>
-      <div style="font-size:12px; color:#94a3b8; border-top:1px solid #334155; padding-top:12px;">
-        Kapcsolat: <strong>Horváth Péter</strong> (Fejlesztő & Szellemi tulajdonos)
+  <!-- FELHASZNÁLÓNÉV + JELSZÓ BELÉPŐ ABLAK -->
+  <div id="loginLockOverlay">
+    <div class="login-box">
+      <div class="login-box-header">
+        <div>
+          <h2>🔐 HP Suite</h2>
+          <p id="lblLoginSub">Mérési innováció &bull; Belépés</p>
+        </div>
+        <div class="lang-switcher">
+          <button class="lang-btn active" id="login-lang-hu" onclick="changeLanguage('hu')">HU</button>
+          <button class="lang-btn" id="login-lang-de" onclick="changeLanguage('de')">DE</button>
+          <button class="lang-btn" id="login-lang-en" onclick="changeLanguage('en')">EN</button>
+        </div>
+      </div>
+
+      <div class="login-form-group">
+        <label id="lblUsername">Felhasználónév:</label>
+        <input type="text" id="appUsernameInput" class="login-input" placeholder="Admin" autofocus>
+      </div>
+
+      <div class="login-form-group">
+        <label id="lblPassword">Jelszó:</label>
+        <input type="password" id="appPasswordInput" class="login-input" placeholder="••••">
+      </div>
+
+      <button class="login-btn" id="btnLoginSubmit" onclick="verifyCredentials()">Belépés</button>
+
+      <div id="loginErrorMsg" style="color:var(--danger); font-size:12px; font-weight:bold; margin-top:12px; display:none;">
+        Hibás felhasználónév vagy jelszó!
+      </div>
+
+      <div style="font-size:11px; color:#94a3b8; margin-top:18px; border-top:1px solid #f1f5f9; padding-top:10px;">
+        Fejlesztő: <strong>Horváth Péter &copy; 2026</strong>
       </div>
     </div>
   </div>
 
-  <div class="container" id="appMainContainer">
+  <div class="container" id="appMainContainer" style="display: none;">
     
     <header class="no-print">
       <div class="app-title">
@@ -647,7 +743,6 @@
           </p>
         </div>
         
-        <!-- Cikkszám Profilkezelő -->
         <div style="display: flex; gap: 6px; align-items: center; background: #f1f5f9; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); flex-wrap: wrap;">
           <span style="font-size: 11px; font-weight: bold; color: #334155;" id="lblPresetText">Mentett profil:</span>
           <select id="presetSelector" onchange="loadPreset(this.value)" style="padding: 4px 8px; font-size: 12px;">
@@ -733,53 +828,65 @@
   </div>
 
   <script>
-    // --- 1. & 2. & 3. VÉDELMI MODUL (DOMAIN-ZÁR, BILLENTYŰ- ÉS MÁSOLÁSVÉDELEM) ---
-    (function enforceSecurityProtection() {
-      // 3. Domain-zár ellenőrzése
-      const allowedHosts = ["peti0126.github.io", "localhost", "127.0.0.1"];
-      const currentHost = window.location.hostname.toLowerCase();
-      const isProtocolAllowed = window.location.protocol === "http:" || window.location.protocol === "https:";
+    // --- FELHASZNÁLÓNÉV + JELSZÓ ELLENŐRZŐ ---
+    const AUTH_USER = "Admin";
+    const AUTH_PASS = "Admin";
 
-      if (!isProtocolAllowed || (!allowedHosts.includes(currentHost) && !currentHost.endsWith("github.io"))) {
-        document.addEventListener("DOMContentLoaded", () => {
-          document.getElementById("appMainContainer").style.display = "none";
-          const overlay = document.getElementById("licenseBlockOverlay");
-          if (overlay) overlay.style.display = "flex";
-        });
-        window.stop();
-        return;
+    function checkSessionAuth() {
+      if (sessionStorage.getItem("hp_auth_ok") === "true") {
+        document.getElementById("loginLockOverlay").style.display = "none";
+        document.getElementById("appMainContainer").style.display = "block";
+      } else {
+        document.getElementById("loginLockOverlay").style.display = "flex";
+        document.getElementById("appMainContainer").style.display = "none";
       }
+    }
 
-      // 1. & 2. Billentyűkombinációk és vizsgálati eszközök blokkolása
-      document.addEventListener("keydown", (e) => {
-        // F12 letiltása
-        if (e.key === "F12" || e.keyCode === 123) {
-          e.preventDefault();
-          return false;
-        }
-        // Ctrl+U (forrás megtekintés), Ctrl+S (mentés), Ctrl+Shift+I / J / C (fejlesztői konzol)
-        if (e.ctrlKey && (e.key === "u" || e.key === "U" || e.key === "s" || e.key === "S")) {
-          e.preventDefault();
-          return false;
-        }
-        if (e.ctrlKey && e.shiftKey && (e.key === "i" || e.key === "I" || e.key === "j" || e.key === "J" || e.key === "c" || e.key === "C")) {
-          e.preventDefault();
-          return false;
-        }
-      }, false);
+    function verifyCredentials() {
+      const uInp = document.getElementById("appUsernameInput");
+      const pInp = document.getElementById("appPasswordInput");
+      const err = document.getElementById("loginErrorMsg");
 
-      // Jobb egérgomb tiltása a felületen
-      document.addEventListener("contextmenu", (e) => {
-        e.preventDefault();
-        return false;
-      }, false);
-    })();
+      if (uInp.value.trim() === AUTH_USER && pInp.value === AUTH_PASS) {
+        sessionStorage.setItem("hp_auth_ok", "true");
+        document.getElementById("loginLockOverlay").style.display = "none";
+        document.getElementById("appMainContainer").style.display = "block";
+        err.style.display = "none";
+      } else {
+        uInp.classList.add("error");
+        pInp.classList.add("error");
+        err.style.display = "block";
+        pInp.value = "";
+        pInp.focus();
+      }
+    }
+
+    document.getElementById("appPasswordInput").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") verifyCredentials();
+    });
+    document.getElementById("appUsernameInput").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") document.getElementById("appPasswordInput").focus();
+    });
+
+    checkSessionAuth();
+
+    // Billentyűkombinációk blokkolása (F12, Ctrl+U, Ctrl+S)
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "F12" || e.keyCode === 123) { e.preventDefault(); return false; }
+      if (e.ctrlKey && (e.key === "u" || e.key === "U" || e.key === "s" || e.key === "S")) { e.preventDefault(); return false; }
+      if (e.ctrlKey && e.shiftKey && (e.key === "i" || e.key === "I" || e.key === "j" || e.key === "J" || e.key === "c" || e.key === "C")) { e.preventDefault(); return false; }
+    }, false);
 
     const TIME_OFFSET_SECONDS = 5;
 
     // --- TELJES TÖBBNYELVŰ SZÓTÁR ---
     const i18n = {
       hu: {
+        loginSub: "Mérési innováció &bull; Belépés",
+        lblUsername: "Felhasználónév:",
+        lblPassword: "Jelszó:",
+        btnLoginSubmit: "Belépés",
+        loginErrorMsg: "Hibás felhasználónév vagy jelszó!",
         appSubtitle: "1. Ellenőrzés &bull; 2. Gyártói Gyorsnézet &bull; 3. Excel &bull; 4. Vonalkód Mátrix",
         dropTitle: "Kattints ide vagy húzd be a mérési TXT, Zeiss CALYPSO PDF vagy kész DFQ fájlokat",
         dropSub: "Hardver-azonosított DFQ generálás, 5 mp-es időeltolás, közvetlen DFQ és PDF feldolgozás",
@@ -874,6 +981,11 @@
         footerText: "© 2026 Horváth Péter. Saját fejlesztésű mérési innováció. A szellemi tulajdon és forráskód védett."
       },
       de: {
+        loginSub: "Messinnovation &bull; Anmeldung",
+        lblUsername: "Benutzername:",
+        lblPassword: "Passwort:",
+        btnLoginSubmit: "Anmelden",
+        loginErrorMsg: "Falscher Benutzername oder Passwort!",
         appSubtitle: "1. Prüfung &bull; 2. Fertigungs-Schnellansicht &bull; 3. Excel &bull; 4. Barcode-Matrix",
         dropTitle: "Hier klicken oder TXT-, Zeiss CALYPSO PDF- oder DFQ-Dateien ablegen",
         dropSub: "Hardware-identifizierte DFQ-Generierung, 5s-Zeitverschiebung, direkte DFQ- & PDF-Verarbeitung",
@@ -968,6 +1080,11 @@
         footerText: "© 2026 Horváth Péter. Eigenentwickelte Messinnovation. Geistiges Eigentum und Quellcode geschützt."
       },
       en: {
+        loginSub: "Metrology Innovation &bull; Sign in",
+        lblUsername: "Username:",
+        lblPassword: "Password:",
+        btnLoginSubmit: "Login",
+        loginErrorMsg: "Invalid username or password!",
         appSubtitle: "1. Inspection &bull; 2. Production View &bull; 3. Excel &bull; 4. Barcode Matrix",
         dropTitle: "Click here or drop measurement TXT, Zeiss CALYPSO PDF or DFQ files",
         dropSub: "Hardware-identified DFQ export, 5s timestamp stepping, native DFQ & PDF parsing",
@@ -1073,6 +1190,8 @@
       document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
       const activeBtn = document.getElementById(`lang-${lang}`);
       if (activeBtn) activeBtn.classList.add('active');
+      const activeLoginBtn = document.getElementById(`login-lang-${lang}`);
+      if (activeLoginBtn) activeLoginBtn.classList.add('active');
 
       applyLanguage();
       renderValidatorView();
@@ -1083,6 +1202,14 @@
     function applyLanguage() {
       const t = i18n[currentLang];
       
+      // Belépő ablak fordításai
+      document.getElementById('lblLoginSub').innerHTML = t.loginSub;
+      document.getElementById('lblUsername').textContent = t.lblUsername;
+      document.getElementById('lblPassword').textContent = t.lblPassword;
+      document.getElementById('btnLoginSubmit').textContent = t.btnLoginSubmit;
+      document.getElementById('loginErrorMsg').textContent = t.loginErrorMsg;
+
+      // Főoldal & fülek
       document.getElementById('appSubtitle').innerHTML = t.appSubtitle;
       document.getElementById('txtDropTitle').textContent = t.dropTitle;
       document.getElementById('txtDropSub').textContent = t.dropSub;
@@ -1091,15 +1218,18 @@
       document.getElementById('btnTabExcel').textContent = t.tabExcel;
       document.getElementById('btnTabMatrix').textContent = t.tabMatrix;
 
+      // 4. Vonalkód fül
       document.getElementById('matrixCardTitle').textContent = t.barcodeTitle;
       document.getElementById('matrixCardSub').textContent = t.barcodeSub;
       document.getElementById('btnPrintBarcode').textContent = t.btnPrint;
 
+      // 3. Excel fül
       document.getElementById('excelCardTitle').textContent = t.excelTitle;
       document.getElementById('excelCardSub').textContent = t.excelSub;
       document.getElementById('btnExportExcel').textContent = t.btnExportXlsx;
       document.getElementById('btnCopyClipboard').textContent = t.btnCopyClip;
 
+      // 2. Gyártói nézet
       document.getElementById('prodHeaderTitle').textContent = t.prodTitle;
       document.getElementById('prodHeaderSub').textContent = t.prodSub;
       document.getElementById('btnPrintSetterSheet').textContent = t.btnSetterPrint;
@@ -1107,9 +1237,11 @@
       document.getElementById('lblHeatmapNokOnly').textContent = t.lblHeatmapNokOnly;
       document.getElementById('lblYellowTip').textContent = t.lblYellowTip;
 
+      // 1. Ellenőrző fül gombok
       document.getElementById('btnDownloadAllDfq').textContent = t.btnDfqAll;
       document.getElementById('btnDownloadAllTxt').textContent = t.btnTxtAll;
 
+      // Korrekció modal gombok
       document.getElementById('btnCorrCancel').textContent = t.btnCancel;
       document.getElementById('btnCorrApply').textContent = t.btnApply;
       document.getElementById('th_k2002').textContent = `${t.thItem} (K2002)`;
@@ -1119,6 +1251,7 @@
       document.getElementById('th_orig').textContent = t.thOrig;
       document.getElementById('th_valid').textContent = t.thValid;
 
+      // Fejléc Modal címkék & gombok
       document.getElementById('modalTitleText').textContent = t.hdrModalTitle;
       document.getElementById('lblPresetText').textContent = t.lblPresetText;
       document.getElementById('optPresetDefault').textContent = t.optPresetDefault;
@@ -1140,11 +1273,13 @@
       document.getElementById('btnModalSaveOnly').textContent = t.btnModalSaveOnly;
       document.getElementById('btnModalSaveAndDownload').textContent = t.btnModalSaveAndDownload;
 
+      // Munkalap nyomtatás elemek
       document.getElementById('printSheetTitle').textContent = t.printSheetTitle;
       document.getElementById('printSheetSub').textContent = t.printSheetSub;
       document.getElementById('printDateLbl').textContent = t.printDateLbl;
       document.getElementById('printPartNrLbl').textContent = t.printPartNrLbl;
 
+      // Lábléc szöveg
       document.getElementById('footerText').textContent = t.footerText;
 
       document.querySelectorAll('.lblClickToggle').forEach(el => el.textContent = t.lblClickToggle);
@@ -2163,11 +2298,11 @@
                 h.teileBez && h.teileBez.trim() && 
                 h.rajzszam && h.rajzszam.trim() && 
                 h.megrendelo && h.megrendelo.trim() && 
-                h.maschine && h.maschine.trim() &&
-                h.k2415 && h.k2415.trim() &&
-                h.k1202 && h.k1202.trim() &&
-                h.k2406 && h.k2406.trim() &&
-                h.datum && h.datum.trim() &&
+                h.maschine && h.maschine.trim() && 
+                h.k2415 && h.k2415.trim() && 
+                h.k1202 && h.k1202.trim() && 
+                h.k2406 && h.k2406.trim() && 
+                h.datum && h.datum.trim() && 
                 h.uhrzeit && h.uhrzeit.trim());
     }
 
