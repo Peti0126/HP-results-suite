@@ -131,7 +131,7 @@
     .tab-btn.active { background: var(--primary); color: #ffffff; }
 
     .tab-pane { display: none; }
-    .tab-pane.active { display: block; }
+    .tab-pane.active { display: block !important; }
 
     .btn {
       padding: 7px 12px;
@@ -208,7 +208,6 @@
 
     .prod-accordion-content { padding: 16px; }
 
-    /* GYÁRTÓI NÉZET ELEMEK */
     .nest-cards-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -672,10 +671,8 @@
   </div>
 
   <script>
-    // BIZTONSÁGOS 5 MÁSODPERCES ELTOLÁS A FÁJLNÉV- ÉS SZERVERÜTKÖZÉSEK ELLEN
     const TIME_OFFSET_SECONDS = 5;
 
-    // --- TÖBBNYELVŰ NYELVI SZÓTÁR (HU / DE / EN) ---
     const i18n = {
       hu: {
         appSubtitle: "1. Ellenőrzés &bull; 2. Zeiss Calypso DFQ Export &bull; 3. Vonalkód &bull; 4. Excel &bull; 5. Gyártói Gyorsnézet",
@@ -916,6 +913,42 @@
       if (e.target.files.length) handleIncomingFiles(Array.from(e.target.files));
     });
 
+    // --- BIZTOS ÉS MEGBÍZHATÓ FÜLVÁLTÓ FÜGGVÉNY ---
+    function activateTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(pane => {
+        pane.classList.remove('active');
+        pane.style.display = 'none';
+      });
+
+      if (tabId === 'validator') {
+        document.getElementById('btnTabValidator').classList.add('active');
+        const p = document.getElementById('tab-validator');
+        p.classList.add('active');
+        p.style.display = 'block';
+      } else if (tabId === 'matrix') {
+        document.getElementById('btnTabMatrix').classList.add('active');
+        const p = document.getElementById('tab-matrix');
+        p.classList.add('active');
+        p.style.display = 'block';
+      } else if (tabId === 'excel') {
+        document.getElementById('btnTabExcel').classList.add('active');
+        const p = document.getElementById('tab-excel');
+        p.classList.add('active');
+        p.style.display = 'block';
+      } else if (tabId === 'production') {
+        document.getElementById('btnTabProduction').classList.add('active');
+        const p = document.getElementById('tab-production');
+        p.classList.add('active');
+        p.style.display = 'block';
+      }
+    }
+
+    document.getElementById('btnTabValidator').addEventListener('click', () => activateTab('validator'));
+    document.getElementById('btnTabMatrix').addEventListener('click', () => activateTab('matrix'));
+    document.getElementById('btnTabExcel').addEventListener('click', () => activateTab('excel'));
+    document.getElementById('btnTabProduction').addEventListener('click', () => activateTab('production'));
+
     function naturalCompare(a, b) {
       return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
     }
@@ -1020,7 +1053,6 @@
       renderProductionView();
     }
 
-    // --- PONTOS ÉS MEGBÍZHATÓ .DFQ FÁJLOK BEOLVASÓ MODULJA ---
     function parseDfqFile(fileName, rawText, fileOrderIndex) {
       const lines = rawText.split(/\r?\n/);
       const tagMap = {};
@@ -1168,7 +1200,6 @@
       };
     }
 
-    // --- CALYPSO PDF FELDOLGOZÓ (5 MP-ES ELTOLÁSSAL) ---
     async function parseCalypsoPdf(fileName, arrayBuffer, fileOrderIndex) {
       try {
         const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -1361,7 +1392,6 @@
       }
     }
 
-    // --- TXT FELDOLGOZÓ (5 MP-ES ELTOLÁSSAL) ---
     function parseAndValidateTxt(fileName, rawText, fileOrderIndex) {
       const getVal = (regex) => {
         const m = rawText.match(regex);
@@ -1548,7 +1578,6 @@
       return item.akt > maxTol || item.akt < minTol;
     }
 
-    // --- SZELEKTÍV JAVÍTÁS (CHECKBOXOK ALAPJÁN) ---
     function setGlobalCheckboxes(state) {
       document.querySelectorAll('.chk-global-item').forEach(chk => {
         chk.checked = state;
@@ -2000,7 +2029,6 @@
       }
     });
 
-    // PONTOS BINÁRIS DFQ GENERÁLÁS
     function buildDfqString(file) {
       const h = file.headerData;
       
@@ -2190,7 +2218,6 @@
       a.click();
     });
 
-    // --- MÁTRIX ÉS EXCEL ADATOK ÉPÍTÉSE (FÁJLINDEX-ALAPÚ BIZTOS ILLESZTÉSSEL) ---
     let excelHeadersGlobal = [];
     let excelRowsGlobal = [];
 
@@ -2231,7 +2258,6 @@
 
       const megnLista = Array.from(megnSet).sort((a, b) => naturalCompare(a, b));
 
-      // 1. FEJLÉC: VONALKÓD MÁTRIX
       let bHeadHtml = `<tr><th class="megn-col">${t.thItem}</th>`;
       loadedFiles.forEach((file, i) => {
         const label = file.headerData.bemerkung || `F${i + 1}`;
@@ -2240,7 +2266,6 @@
       bHeadHtml += `</tr>`;
       bHead.innerHTML = bHeadHtml;
 
-      // 2. FEJLÉC: EXCEL TÁBLÁZAT
       let eHeadHtml = `<tr>
         <th class="megn-col">${t.thItem}</th>
         <th class="tol-col">${t.thNom}</th>
@@ -2286,7 +2311,6 @@
           const val = item ? item.akt.toFixed(3) : null;
           const isErr = item ? isStillError(item) : false;
 
-          // Vonalkód fül
           const bTd = document.createElement('td');
           if (val && val !== "-") {
             const card = document.createElement('div');
@@ -2316,7 +2340,6 @@
           }
           bTr.appendChild(bTd);
 
-          // Excel fül
           const eTd = document.createElement('td');
           if (val && val !== "-") {
             eTd.innerHTML = `<b style="${isErr ? 'color:var(--danger);' : ''}">${val}</b>`;
@@ -2337,7 +2360,6 @@
       document.getElementById('excelTableWrapper').style.display = 'block';
     }
 
-    // EXCEL (.XLSX) FÁJL GENERÁLÁSA
     document.getElementById('btnExportExcel').addEventListener('click', () => {
       if (!excelRowsGlobal.length) {
         alert(currentLang === 'hu' ? "Nincsenek adatok az exportáláshoz!" : "No data to export!");
@@ -2364,7 +2386,6 @@
       XLSX.writeFile(wb, `${teileNr}_Meresi_Matrix.xlsx`);
     });
 
-    // VÁGÓLAPRA MÁSOLÁS
     document.getElementById('btnCopyClipboard').addEventListener('click', () => {
       if (!excelRowsGlobal.length) {
         alert(currentLang === 'hu' ? "Nincsenek adatok a másoláshoz!" : "No data to copy!");
@@ -2415,7 +2436,6 @@
         const fillScope = document.querySelector('input[name="fillScope"]:checked').value;
         const wb = XLSX.read(uploadedCompanyTemplateBuffer, { type: 'array', cellFormula: true, cellStyles: true });
 
-        // Keressük a 'measurement table' vagy a legelső munkalapot
         let targetSheetName = wb.SheetNames.find(n => n.toLowerCase().includes('measurement table')) || wb.SheetNames[0];
         const ws = wb.Sheets[targetSheetName];
 
@@ -2424,63 +2444,50 @@
           return;
         }
 
-        // Fészkek oszlopainak felderítése (pl. cavitity 1, 1_1 a 11-12. sorban)
-        // 1. Fészek: Q (16 index), 2. Fészek: AC (28 index), 3. Fészek: AN (39 index), 4. Fészek: AY (50 index)
         const cavityColMap = [16, 28, 39, 50, 61, 72, 83, 94]; // Q, AC, AN, AY... oszlopok
 
-        // Fejléc adatok beírása, ha full kitöltés van
         const firstHdr = loadedFiles[0]?.headerData;
         if (fillScope === 'full' && firstHdr) {
-          // B4: Alkatrész megnevezése, B5: Cikkszám, B9: Rajzszám, B10: Dátum
           if (firstHdr.teileBez) ws['B4'] = { t: 's', v: firstHdr.teileBez };
           if (firstHdr.teileNr) ws['B5'] = { t: 's', v: firstHdr.teileNr };
           if (firstHdr.rajzszam) ws['B9'] = { t: 's', v: firstHdr.rajzszam };
           if (firstHdr.datum) ws['B10'] = { t: 's', v: firstHdr.datum };
         }
 
-        // Sorok kitöltése a C oszlopban (measurment/tételszám) lévő számok alapján (13. sortól 150-ig)
         for (let r = 13; r <= 150; r++) {
           const posCell = ws[XLSX.utils.encode_cell({ r: r - 1, c: 2 })]; // C oszlop (index 2)
           if (!posCell || posCell.v === undefined || posCell.v === null || posCell.v === "") continue;
 
           const itemCode = String(posCell.v).trim();
 
-          // Kikeressük az adott tételhez tartozó metaadatokat és méréseket
           let itemMeta = null;
           loadedFiles.forEach(f => {
             const found = f.parsedItems.find(it => it.megn === itemCode);
             if (found && !itemMeta) itemMeta = found;
           });
 
-          // Ha 'full' mód és van metaadatunk, kitöltjük a névlegest és tűréseket (G, H, I oszlop)
           if (fillScope === 'full' && itemMeta) {
-            // G oszlop (index 6): Névleges (Soll)
             ws[XLSX.utils.encode_cell({ r: r - 1, c: 6 })] = { t: 'n', v: itemMeta.nevl };
             
-            // H oszlop (index 7): Alsó tűrés (megőrizve a negatív előjelet, pl. -0.2)
             const aturVal = itemMeta.atur !== undefined ? itemMeta.atur : (itemMeta.minTolAbs - itemMeta.nevl);
             ws[XLSX.utils.encode_cell({ r: r - 1, c: 7 })] = { t: 'n', v: aturVal };
 
-            // I oszlop (index 8): Felső tűrés (pl. +0.2)
             const fturVal = itemMeta.ftur !== undefined ? itemMeta.ftur : (itemMeta.maxTolAbs - itemMeta.nevl);
             ws[XLSX.utils.encode_cell({ r: r - 1, c: 8 })] = { t: 'n', v: fturVal };
           }
 
-          // Mért értékek beírása a fészkek megfelelő oszlopába
           loadedFiles.forEach((file, fileIdx) => {
             if (fileIdx < cavityColMap.length) {
               const targetCol = cavityColMap[fileIdx];
               const mItem = file.parsedItems.find(it => it.megn === itemCode);
 
               if (mItem) {
-                // Valódi számértékként írjuk be, megőrizve az esetleges negatív előjelet!
                 ws[XLSX.utils.encode_cell({ r: r - 1, c: targetCol })] = { t: 'n', v: mItem.akt };
               }
             }
           });
         }
 
-        // Fájl mentése és letöltése
         const outName = `KITOLTOTT_${uploadedCompanyTemplateName}`;
         XLSX.writeFile(wb, outName);
 
@@ -2489,7 +2496,6 @@
       }
     });
 
-    // --- 4. TAB: GYÁRTÓI GYORSNÉZET MOTOR (ÖSSZECSUKHATÓ PANELEKKEL) ---
     function renderProductionView() {
       const t = i18n[currentLang];
       const nestCardsContainer = document.getElementById('prodNestCards');
