@@ -587,7 +587,7 @@
 
     <!-- LÁBLÉC -->
     <footer class="no-print" style="text-align: center; margin-top: 35px; padding-top: 15px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 11px;">
-      <span id="footerText">&copy; 2026 Horváth Péter. Saját fejlesztésű mérési innováció. A szellemi tulajdon és forráskód védett.</span>
+      <span id="footerText">&copy; 2026 Horváth Péter. Saját fejlesztés. A szellemi tulajdon és a forráskód védett.</span>
     </footer>
 
   </div>
@@ -834,7 +834,7 @@
         thValPrint: "Mért érték",
         thDeltaPrint: "Eltérés (Δ)",
         thAdjPrint: "Szükséges beállítás",
-        footerText: "© 2026 Horváth Péter. Saját fejlesztésű mérési innováció. A szellemi tulajdon és forráskód védett."
+        footerText: "© 2026 Horváth Péter. Saját fejlesztés. A szellemi tulajdon és a forráskód védett."
       },
       de: {
         appSubtitle: "1. Prüfung &bull; 2. Fertigungs-Schnellansicht &bull; 3. Excel &bull; 4. Barcode-Matrix",
@@ -926,7 +926,7 @@
         thValPrint: "Messwert",
         thDeltaPrint: "Abweichung (Δ)",
         thAdjPrint: "Erforderliche Korrektur",
-        footerText: "© 2026 Horváth Péter. Eigenentwickelte Messinnovation. Geistiges Eigentum und Quellcode geschützt."
+        footerText: "© 2026 Horváth Péter. Eigene Entwicklung. Geistiges Eigentum und Quellcode geschützt."
       },
       en: {
         appSubtitle: "1. Inspection &bull; 2. Production View &bull; 3. Excel &bull; 4. Barcode Matrix",
@@ -1018,7 +1018,7 @@
         thValPrint: "Actual",
         thDeltaPrint: "Offset (Δ)",
         thAdjPrint: "Required Adjustment",
-        footerText: "© 2026 Horváth Péter. Proprietary metrology innovation. Intellectual property and source code protected."
+        footerText: "© 2026 Horváth Péter. In-house development. Intellectual property and source code protected."
       }
     };
 
@@ -1256,7 +1256,6 @@
       renderProductionView();
     }
 
-    // --- PONTOSÍTOTT DFQ OLVASÓ: NÉVLEGES = 0.0000 ÉS TŰRÉS = 0.6000 POZÍCIÓTŰRÉSNÉL ---
     function parseDfqFile(fileName, rawText, fileOrderIndex) {
       const lines = rawText.split(/\r?\n/);
       const tagMap = {};
@@ -1332,8 +1331,6 @@
         const k2009 = tagMap[`K2009/${i}`] || "200";
         const k2120 = tagMap[`K2120/${i}`] || "1";
 
-        // Méréstechnikai korrekció pozíció/polár alaktűrésre:
-        // Ha a DFQ alaktűrés (K2009 = 109, vagy polár helyzet), akkor a névleges mindig 0.0000!
         const isPolarOrPosition = (k2009 === "109" || /polár|polar|pos/i.test(desc) || (minTol === 0 && maxTol > 0 && nevl > 0));
         if (isPolarOrPosition) {
           nevl = 0.0000;
