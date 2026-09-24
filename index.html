@@ -568,6 +568,11 @@
       </div>
     </div>
 
+    <!-- LÁBLÉC -->
+    <footer class="no-print" style="text-align: center; margin-top: 35px; padding-top: 15px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 11px;">
+      <span>&copy; 2026 Horváth Péter. Saját fejlesztésű mérési innováció. A szellemi tulajdon és forráskód védett.</span>
+    </footer>
+
   </div>
 
   <!-- MODAL: KORREKCIÓK & TÉTELEK -->
@@ -1370,8 +1375,8 @@
 
         const validationErrors = [];
         parsedItems.forEach(item => {
-          const maxTol = +(item.nevl + item.ftur).toFixed(4);
-          const minTol = +(item.nevl + item.atur).toFixed(4);
+          const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
+          const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
           const tolBand = Math.abs(maxTol - minTol);
           let hasErr = false;
           let diff = 0;
@@ -1524,8 +1529,8 @@
 
       const validationErrors = [];
       parsedItems.forEach(item => {
-        const maxTol = +(item.nevl + item.ftur).toFixed(4);
-        const minTol = +(item.nevl + item.atur).toFixed(4);
+        const maxTol = item.maxTolAbs !== undefined ? item.maxTolAbs : +(item.nevl + item.ftur).toFixed(4);
+        const minTol = item.minTolAbs !== undefined ? item.minTolAbs : +(item.nevl + item.atur).toFixed(4);
         const tolBand = Math.abs(maxTol - minTol);
         let hasErr = false;
         let diff = 0;
