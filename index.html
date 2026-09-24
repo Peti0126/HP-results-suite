@@ -493,9 +493,9 @@
           <div class="filter-bar no-print">
             <input type="text" id="heatmapSearch" placeholder="🔍 Keresés tételre (pl. 31, 35)..." oninput="filterHeatmap()">
             <label class="checkbox-pill">
-              <input type="checkbox" id="heatmapNokOnly" onchange="filterHeatmap()"> Csak hibás (NOK) tételek mutatása
+              <input type="checkbox" id="heatmapNokOnly" onchange="filterHeatmap()"> <span id="lblHeatmapNokOnly">Csak hibás (NOK) tételek mutatása</span>
             </label>
-            <span style="font-size: 11px; color: var(--text-muted); margin-left: auto;">Sárga cella: a felső tűréshatár szélső 15%-ában van!</span>
+            <span style="font-size: 11px; color: var(--text-muted); margin-left: auto;" id="lblYellowTip">Sárga cella: a felső tűréshatár szélső 15%-ában van!</span>
           </div>
 
           <div class="table-container" id="prodHeatmapWrapper" style="display: none; margin-top:0;">
@@ -726,6 +726,9 @@
         excelSub: "Mért értékek eredeti vagy jóváhagyott állapotban fészkenként.",
         prodTitle: "🏭 Gyártásközi Állapot & Gépbeállítói Gyorslista",
         prodSub: "Azonnali fészek-státusz (OK/NOK), beállítói delta korrekciók és gyártási hőtérkép.",
+        titleHeatmap: "📊 1. Gyártási Hőtérkép: ",
+        titleDelta: "⚠️ 2. Tűrésen Kívüli Méretek & Szükséges Gépbeállítási Eltérések (Δ)",
+        titleNest: "📦 3. Fészek Státuszok (OK / NOK Blokkok)",
         lblClickToggle: "Kattintásra nyílik / csukódik",
         btnCancel: "Mégsem",
         btnApply: "💾 Módosítások Mentése",
@@ -783,6 +786,9 @@
         excelSub: "Messwerte im Original- oder korrigierten Zustand nach Nestern.",
         prodTitle: "🏭 Fertigungsstatus & Einrichter-Deltaliste",
         prodSub: "Sofortiger Neststatus (OK/NOK), Einstellkorrekturen und Fertigungs-Heatmap.",
+        titleHeatmap: "📊 1. Fertigungs-Heatmap: ",
+        titleDelta: "⚠️ 2. Maßabweichungen & erforderliche Korrekturen (Δ)",
+        titleNest: "📦 3. Nest-Status (OK / NOK Blöcke)",
         lblClickToggle: "Zum Öffnen / Schließen klicken",
         btnCancel: "Abbrechen",
         btnApply: "💾 Änderungen speichern",
@@ -840,6 +846,9 @@
         excelSub: "Values in original or approved state per cavity.",
         prodTitle: "🏭 In-Process Status & Setter Delta Quicklist",
         prodSub: "Real-time cavity status (OK/NOK), machine delta offsets, and heatmap.",
+        titleHeatmap: "📊 1. Production Heatmap: ",
+        titleDelta: "⚠️ 2. Out-of-Tolerance Deltas & Offsets (Δ)",
+        titleNest: "📦 3. Cavity Status (OK / NOK Blocks)",
         lblClickToggle: "Click to expand / collapse",
         btnCancel: "Cancel",
         btnApply: "💾 Save Changes",
@@ -2597,7 +2606,7 @@
           <table style="width:100%; border-collapse:collapse; font-size:12px;">
             <thead>
               <tr style="background:#f1f5f9;">
-                <th style="border:1px solid #94a3b8; padding:8px;">${t.thItem}</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${currentLang === 'hu' ? 'Fészek' : (currentLang === 'de' ? 'Kavität' : 'Cavity')}</th>
                 <th style="border:1px solid #94a3b8; padding:8px;">${t.thItem}</th>
                 <th style="border:1px solid #94a3b8; padding:8px;">${t.thDesc}</th>
                 <th style="border:1px solid #94a3b8; padding:8px;">${currentLang === 'hu' ? 'Mért érték' : (currentLang === 'de' ? 'Messwert' : 'Actual')}</th>
@@ -2638,6 +2647,11 @@
       const heatmapWrapper = document.getElementById('prodHeatmapWrapper');
       const heatmapHead = document.getElementById('prodHeatmapHead');
       const heatmapBody = document.getElementById('prodHeatmapBody');
+
+      // Frissítjük a panel címeket is nyelv szerint
+      document.getElementById('titleProdHeatmap').innerHTML = `${t.titleHeatmap} <span style="color:var(--success)">■ ${currentLang === 'hu' ? 'Tűrésen belül' : (currentLang === 'de' ? 'In Toleranz' : 'Within tolerance')}</span> | <span style="color:var(--warning)">■ ${currentLang === 'hu' ? 'Határon táncol' : (currentLang === 'de' ? 'Grenzbereich' : 'Borderline')}</span> | <span style="color:var(--danger)">■ ${currentLang === 'hu' ? 'Tűrésen kívül' : (currentLang === 'de' ? 'Außerhalb' : 'Out of tol')}</span>`;
+      document.getElementById('titleProdDelta').innerHTML = t.titleDelta;
+      document.getElementById('titleProdNest').innerHTML = t.titleNest;
 
       if (!loadedFiles.length) {
         nestCardsContainer.innerHTML = `<div class='alert-box warning' style='grid-column: 1/-1;'>${t.emptyMsg}</div>`;
@@ -2684,7 +2698,6 @@
         });
       });
       nestCardsContainer.innerHTML = nestCardsHtml;
-      titleProdNest.innerHTML = `📦 3. ${currentLang === 'hu' ? 'Fészek Státuszok' : (currentLang === 'de' ? 'Nest-Status' : 'Cavity Status')} (${loadedFiles.length} &bull; <b style="color:var(--danger)">${nokCount} NOK</b>, <b style="color:var(--success)">${okCount} OK</b>)`;
 
       if (deltaList.length > 0) {
         let deltaHtml = "";
@@ -2705,7 +2718,6 @@
           `;
         });
         deltaCardsContainer.innerHTML = deltaHtml;
-        titleProdDelta.innerHTML = `⚠️ 2. ${currentLang === 'hu' ? 'Tűrésen Kívüli Méretek & Eltérések' : (currentLang === 'de' ? 'Maßabweichungen (&Delta;)' : 'Out-of-Tolerance Deltas (&Delta;)')} &bull; <b>${deltaList.length} ${t.errorsWord}</b>`;
         accProdDelta.style.display = "block";
       } else {
         accProdDelta.style.display = "none";
@@ -2743,11 +2755,11 @@
             if (isErr) {
               bgColor = "#fecaca";
               textColor = "#991b1b";
-              titleTip = "Tűrésen kívül!";
+              titleTip = currentLang === 'hu' ? "Tűrésen kívül!" : (currentLang === 'de' ? "Außerhalb der Toleranz!" : "Out of tolerance!");
             } else if (isNear) {
-              bgColor = "#fef08a"; // Sárga figyelmeztetés a valós peremre
+              bgColor = "#fef08a";
               textColor = "#854d0e";
-              titleTip = "Figyelem: Tűréshatár peremén!";
+              titleTip = currentLang === 'hu' ? "Figyelem: Tűréshatár peremén!" : (currentLang === 'de' ? "Achtung: An der Toleranzgrenze!" : "Warning: Near tolerance limit!");
             }
 
             rowCells += `<td style="background-color:${bgColor}; color:${textColor}; font-weight:bold;" title="${titleTip}">${item.akt.toFixed(3)}</td>`;
