@@ -8,7 +8,9 @@
   <!-- PDF.js motor Calypso PDF jegyzőkönyvekhez -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    try {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    } catch(e) {}
   </script>
 
   <!-- SheetJS az Excel (.xlsx) exportáláshoz -->
@@ -103,6 +105,7 @@
       cursor: pointer;
       margin-bottom: 20px;
       transition: 0.2s ease;
+      position: relative;
     }
     .upload-box:hover { background: #dbeafe; border-color: var(--primary); }
     .upload-box h3 { font-size: 16px; color: var(--primary); margin-bottom: 5px; }
@@ -422,7 +425,7 @@
     }
   </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
   <div class="container">
     
@@ -433,9 +436,9 @@
       </div>
       <div class="header-right">
         <div class="lang-switcher">
-          <button class="lang-btn active" id="lang-hu" onclick="changeLanguage('hu')">HU 🇭🇺</button>
-          <button class="lang-btn" id="lang-de" onclick="changeLanguage('de')">DE 🇩🇪</button>
-          <button class="lang-btn" id="lang-en" onclick="changeLanguage('en')">EN 🇬🇧</button>
+          <button class="lang-btn active" id="lang-hu" onclick="_0x9a2b('hu')">HU 🇭🇺</button>
+          <button class="lang-btn" id="lang-de" onclick="_0x9a2b('de')">DE 🇩🇪</button>
+          <button class="lang-btn" id="lang-en" onclick="_0x9a2b('en')">EN 🇬🇧</button>
         </div>
         <div style="font-size: 12px; color: var(--text-muted); text-align: right;">
           <strong>Fejlesztő:</strong> Horváth Péter &copy; 2026
@@ -444,7 +447,7 @@
     </header>
 
     <div class="upload-box no-print" id="uploadDropZone">
-      <input type="file" id="fileSelector" multiple accept=".txt,.pdf,.dfq" style="display: none;">
+      <input type="file" id="fileSelector" multiple accept=".txt,.pdf,.dfq" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 5;">
       <h3 id="txtDropTitle">Kattints ide vagy húzd be a mérési TXT, Zeiss CALYPSO PDF vagy kész DFQ fájlokat</h3>
       <p id="txtDropSub">Hardver-azonosított DFQ generálás, 5 mp-es időeltolás, közvetlen DFQ és PDF feldolgozás</p>
     </div>
@@ -478,12 +481,12 @@
           <h3 style="font-size: 16px; color: #78350f;" id="prodHeaderTitle">🏭 Gyártásközi Állapot & Gépbeállítói Gyorslista</h3>
           <p style="font-size: 13px; color: var(--text-muted);" id="prodHeaderSub">Azonnali hőtérkép, beállítói delta korrekciók és fészek-státusz gyorsnézet.</p>
         </div>
-        <button class="btn btn-warning" onclick="printSetterWorksheet()" type="button" id="btnPrintSetterSheet" style="font-size: 13px; padding: 8px 14px;">
+        <button class="btn btn-warning" onclick="_0x5e2f()" type="button" id="btnPrintSetterSheet" style="font-size: 13px; padding: 8px 14px;">
           🖨️ Gépbeállítói Munkalap Nyomtatása
         </button>
       </div>
 
-      <!-- 1. PANEL: GYÁRTÁSI HŐTÉRKÉP (LEGELÖL) -->
+      <!-- 1. PANEL: GYÁRTÁSI HŐTÉRKÉP -->
       <details class="prod-accordion" id="accProdHeatmap" open>
         <summary>
           <span id="titleProdHeatmap">📊 1. Gyártási Hőtérkép: <span style="color:var(--success)">■ Tűrésen belül</span> | <span style="color:var(--warning)">■ Határon táncol (Cpk figy.)</span> | <span style="color:var(--danger)">■ Tűrésen kívül</span></span>
@@ -491,11 +494,11 @@
         </summary>
         <div class="prod-accordion-content" style="padding-top: 6px;">
           <div class="filter-bar no-print">
-            <input type="text" id="heatmapSearch" placeholder="🔍 Keresés tételre (pl. 31, 35)..." oninput="filterHeatmap()">
+            <input type="text" id="heatmapSearch" placeholder="🔍 Keresés tételre (pl. 31, 35)..." oninput="_0x1a8c()">
             <label class="checkbox-pill">
-              <input type="checkbox" id="heatmapNokOnly" onchange="filterHeatmap()"> Csak hibás (NOK) tételek mutatása
+              <input type="checkbox" id="heatmapNokOnly" onchange="_0x1a8c()"> <span id="lblHeatmapNokOnly">Csak hibás (NOK) tételek mutatása</span>
             </label>
-            <span style="font-size: 11px; color: var(--text-muted); margin-left: auto;">Sárga cella: a felső tűréshatár szélső 15%-ában van!</span>
+            <span style="font-size: 11px; color: var(--text-muted); margin-left: auto;" id="lblYellowTip">Sárga cella: a felső tűréshatár szélső 15%-ában van!</span>
           </div>
 
           <div class="table-container" id="prodHeatmapWrapper" style="display: none; margin-top:0;">
@@ -568,9 +571,9 @@
       </div>
     </div>
 
-    <!-- LÁBLÉC A KÉRT SZÖVEGGEL -->
+    <!-- LÁBLÉC -->
     <footer class="no-print" style="text-align: center; margin-top: 35px; padding-top: 15px; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 11px;">
-      <span>&copy; 2026 Horváth Péter. Saját fejlesztésű mérési innováció. A szellemi tulajdon és forráskód védett.</span>
+      <span id="footerText">&copy; 2026 Horváth Péter. Saját fejlesztésű mérési innováció. A szellemi tulajdon és forráskód védett.</span>
     </footer>
 
   </div>
@@ -607,7 +610,7 @@
     </div>
   </div>
 
-  <!-- MODAL: ZEISS PARAMÉTERBEVITEL + MENTÉS / MÓDOSÍTÁS / TÖRLÉS -->
+  <!-- MODAL: ZEISS PARAMÉTERBEVITEL -->
   <div class="modal-backdrop" id="headerModal">
     <div class="modal-window">
       <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
@@ -619,12 +622,12 @@
         </div>
         
         <div style="display: flex; gap: 6px; align-items: center; background: #f1f5f9; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); flex-wrap: wrap;">
-          <span style="font-size: 11px; font-weight: bold; color: #334155;">Mentett profil:</span>
-          <select id="presetSelector" onchange="loadPreset(this.value)" style="padding: 4px 8px; font-size: 12px;">
-            <option value="">-- Válassz profilt --</option>
+          <span style="font-size: 11px; font-weight: bold; color: #334155;" id="lblPresetText">Mentett profil:</span>
+          <select id="presetSelector" onchange="_0x7c3d(this.value)" style="padding: 4px 8px; font-size: 12px;">
+            <option value="" id="optPresetDefault">-- Válassz profilt --</option>
           </select>
-          <button class="btn btn-primary" style="padding: 4px 8px; font-size: 11px;" onclick="saveCurrentAsPreset()" type="button" title="Aktuális adatok mentése vagy frissítése ehhez a cikkszámhoz">💾 Mentés / Módosítás</button>
-          <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteSelectedPreset()" type="button" title="Kijelölt profil végleges törlése">🗑️ Törlés</button>
+          <button class="btn btn-primary" style="padding: 4px 8px; font-size: 11px;" onclick="_0x8b4e()" type="button" id="btnSavePreset">💾 Mentés / Módosítás</button>
+          <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="_0x2f9a()" type="button" id="btnDeletePreset">🗑️ Törlés</button>
         </div>
       </div>
       
@@ -691,19 +694,19 @@
   <div id="printableSetterSheet" style="display: none; padding: 25px; font-family: sans-serif;">
     <div style="border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: flex-end;">
       <div>
-        <h2 style="font-size: 20px; font-weight: bold; margin: 0;">GÉPBEÁLLÍTÓI KORREKCIÓS MUNKALAP</h2>
+        <h2 style="font-size: 20px; font-weight: bold; margin: 0;" id="printSheetTitle">GÉPBEÁLLÍTÓI KORREKCIÓS MUNKALAP</h2>
         <div style="font-size: 12px; color: #475569; margin-top: 4px;" id="printSheetSub">Mérési jegyzőkönyv alapján generált beállítási adatok</div>
       </div>
       <div style="text-align: right; font-size: 12px;">
-        <div><strong>Dátum:</strong> <span id="printDate"></span></div>
-        <div><strong>Cikkszám:</strong> <span id="printPartNr"></span></div>
+        <div><strong id="printDateLbl">Dátum:</strong> <span id="printDate"></span></div>
+        <div><strong id="printPartNrLbl">Cikkszám:</strong> <span id="printPartNr"></span></div>
       </div>
     </div>
     <div id="printDeltaTableWrapper"></div>
   </div>
 
   <script>
-    // --- GYORSBILLENTYŰK ÉS MENTÉSEK LETILTÁSA ---
+    // --- GYORSBILLENTYŰK ÉS FEJLESZTŐI ESZKÖZÖK TELJES LETILTÁSA ---
     document.addEventListener("keydown", (e) => {
       if (e.key === "F12" || e.keyCode === 123) {
         e.preventDefault();
@@ -724,7 +727,13 @@
       return false;
     }, false);
 
-    const TIME_OFFSET_SECONDS = 5;
+    if (window.pdfjsLib) {
+      try {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      } catch(e) {}
+    }
+
+    const _0x7788 = 5;
 
     const i18n = {
       hu: {
@@ -781,7 +790,38 @@
         allOkMsg: "✅ Minden méret megfelelő!",
         allOkSub: "minden mért érték eredetileg is a tűrésmezőn belül volt.",
         allFixedMsg: "✅ Minden hiba sikeresen jóváhagyva / javítva!",
-        allFixedSub: "A mérési jegyzőkönyvek és az export a jóváhagyott értékeket tartalmazzák."
+        allFixedSub: "A mérési jegyzőkönyvek és az export a jóváhagyott értékeket tartalmazzák.",
+        hdrModalTitle: "⚙️ Paraméterbevitel (Zeiss Calypso / CAQ)",
+        lblPresetText: "Mentett profil:",
+        optPresetDefault: "-- Válassz profilt --",
+        btnSavePreset: "💾 Mentés / Módosítás",
+        btnDeletePreset: "🗑️ Törlés",
+        lbl_m_teileNr: "Cikkszám (K1001) *:",
+        lbl_m_bemerkung: "Megjegyzés / Fészek kód (K1002) *:",
+        lbl_m_teileBez: "Munkadarab neve (K1003) *:",
+        lbl_m_rajzszam: "Rajzszám (K1041) *:",
+        lbl_m_megrendelo: "Megrendelő (K1053) *:",
+        lbl_m_maschine: "Gép száma (K1081) *:",
+        lbl_m_k2415: "Gép gyári száma (K2415 / K1201) *:",
+        lbl_m_k1202: "Mérőeszköz típusa / leírása (K1202 / K2402) *:",
+        lbl_m_k2406: "Mérőgép gyártója (K2406) *:",
+        lbl_m_datum: "Mérés Dátuma (DD.MM.YYYY) *:",
+        lbl_m_uhrzeit: "Mérés Kezdő Időpontja (HH:MM:SS) *:",
+        lblModalInfoBox: "ℹ️ <strong>Több jegyzőkönyv esetén:</strong> Mentéskor az adatok átöröklődnek, a fészekszám növekszik, és minden darab mérése <strong>5 másodperccel későbbi</strong> időbélyeget kap.",
+        btnModalSaveOnly: "💾 Mentés & Másolás a többi fájlra (+5 mp/db)",
+        btnModalSaveAndDownload: "💾 Mentés & DFQ Letöltése",
+        printSheetTitle: "GÉPBEÁLLÍTÓI KORREKCIÓS MUNKALAP",
+        printSheetSub: "Mérési jegyzőkönyv alapján generált beállítási adatok",
+        printDateLbl: "Dátum:",
+        printPartNrLbl: "Cikkszám:",
+        thNestPrint: "Fészek",
+        thItemPrint: "Tétel",
+        thDescPrint: "Megnevezés",
+        thValPrint: "Mért érték",
+        thNomPrint: "Névleges",
+        thDeltaPrint: "Eltérés (Δ)",
+        thAdjPrint: "Szükséges beállítás",
+        footerText: "© 2026 Horváth Péter. Saját fejlesztésű mérési innováció. A szellemi tulajdon és forráskód védett."
       },
       de: {
         appSubtitle: "1. Prüfung &bull; 2. Fertigungs-Schnellansicht &bull; 3. Excel &bull; 4. Barcode-Matrix",
@@ -897,25 +937,25 @@
       }
     };
 
-    let currentLang = localStorage.getItem('hp_metrology_lang') || 'hu';
+    let _0x9812 = localStorage.getItem('hp_metrology_lang') || 'hu';
 
-    function changeLanguage(lang) {
+    function _0x9a2b(lang) {
       if (!i18n[lang]) return;
-      currentLang = lang;
+      _0x9812 = lang;
       localStorage.setItem('hp_metrology_lang', lang);
 
       document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
       const activeBtn = document.getElementById(`lang-${lang}`);
       if (activeBtn) activeBtn.classList.add('active');
 
-      applyLanguage();
+      _0x32ab();
       renderValidatorView();
       renderMatrixViews();
       renderProductionView();
     }
 
-    function applyLanguage() {
-      const t = i18n[currentLang];
+    function _0x32ab() {
+      const t = i18n[_0x9812];
       document.getElementById('appSubtitle').innerHTML = t.appSubtitle;
       document.getElementById('txtDropTitle').textContent = t.dropTitle;
       document.getElementById('txtDropSub').textContent = t.dropSub;
