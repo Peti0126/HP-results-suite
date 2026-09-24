@@ -653,7 +653,7 @@
           <label id="lbl_m_maschine">Gép száma (K1081) *:</label>
           <input type="text" id="m_maschine" placeholder="pl. KS062 vagy KS004 vagy 9578">
         </div>
-          <div class="form-group">
+        <div class="form-group">
           <label id="lbl_m_k2415">Gép gyári száma (K2415 / K1201) *:</label>
           <input type="text" id="m_k2415" placeholder="pl. 143122070061 vagy 15-00027">
         </div>
@@ -761,37 +761,7 @@
         allOkSub: "minden mért érték eredetileg is a tűrésmezőn belül volt.",
         allFixedMsg: "✅ Minden hiba sikeresen jóváhagyva / javítva!",
         allFixedSub: "A mérési jegyzőkönyvek és az export a jóváhagyott értékeket tartalmazzák.",
-        hdrModalTitle: "⚙️ Paraméterbevitel (Zeiss Calypso / CAQ)",
-        lblPresetText: "Mentett profil:",
-        optPresetDefault: "-- Válassz profilt --",
-        btnSavePreset: "💾 Mentés / Módosítás",
-        btnDeletePreset: "🗑️ Törlés",
-        lbl_m_teileNr: "Cikkszám (K1001) *:",
-        lbl_m_bemerkung: "Megjegyzés / Fészek kód (K1002) *:",
-        lbl_m_teileBez: "Munkadarab neve (K1003) *:",
-        lbl_m_rajzszam: "Rajzszám (K1041) *:",
-        lbl_m_megrendelo: "Megrendelő (K1053) *:",
-        lbl_m_maschine: "Gép száma (K1081) *:",
-        lbl_m_k2415: "Gép gyári száma (K2415 / K1201) *:",
-        lbl_m_k1202: "Mérőeszköz típusa / leírása (K1202 / K2402) *:",
-        lbl_m_k2406: "Mérőgép gyártója (K2406) *:",
-        lbl_m_datum: "Mérés Dátuma (DD.MM.YYYY) *:",
-        lbl_m_uhrzeit: "Mérés Kezdő Időpontja (HH:MM:SS) *:",
-        lblModalInfoBox: "ℹ️ <strong>Több jegyzőkönyv esetén:</strong> Mentéskor az adatok átöröklődnek, a fészekszám növekszik, és minden darab mérése <strong>5 másodperccel későbbi</strong> időbélyeget kap.",
-        btnModalSaveOnly: "💾 Mentés & Másolás a többi fájlra (+5 mp/db)",
-        btnModalSaveAndDownload: "💾 Mentés & DFQ Letöltése",
-        printSheetTitle: "GÉPBEÁLLÍTÓI KORREKCIÓS MUNKALAP",
-        printSheetSub: "Mérési jegyzőkönyv alapján generált beállítási adatok",
-        printDateLbl: "Dátum:",
-        printPartNrLbl: "Cikkszám:",
-        thNestPrint: "Fészek",
-        thItemPrint: "Tétel",
-        thDescPrint: "Megnevezés",
-        thValPrint: "Mért érték",
-        thNomPrint: "Névleges",
-        thDeltaPrint: "Eltérés (Δ)",
-        thAdjPrint: "Szükséges beállítás",
-        footerText: "© 2026 Horváth Péter. Saját fejlesztésű mérési innováció. A szellemi tulajdon és forráskód védett."
+        printOkMsg: "✅ MINDEN MÉRET MEGFELELŐ! Nincs szükség gépkorrekcióra."
       },
       de: {
         appSubtitle: "1. Prüfung &bull; 2. Fertigungs-Schnellansicht &bull; 3. Excel &bull; 4. Barcode-Matrix",
@@ -847,7 +817,8 @@
         allOkMsg: "✅ Alle Maße liegen innerhalb der Toleranz!",
         allOkSub: "alle Messwerte lagen ursprünglich im Toleranzbereich.",
         allFixedMsg: "✅ Alle Merkmale erfolgreich genehmigt / korrigiert!",
-        allFixedSub: "Die Messprotokolle und Exporte enthalten die korrigierten Werte."
+        allFixedSub: "Die Messprotokolle und Exporte enthalten die korrigierten Werte.",
+        printOkMsg: "✅ ALLE MASSE IN ORDNUNG! Keine Maschinenkorrektur erforderlich."
       },
       en: {
         appSubtitle: "1. Inspection &bull; 2. Production View &bull; 3. Excel &bull; 4. Barcode Matrix",
@@ -903,7 +874,8 @@
         allOkMsg: "✅ All measurements are within tolerance!",
         allOkSub: "all characteristics were originally within limits.",
         allFixedMsg: "✅ All errors successfully approved / corrected!",
-        allFixedSub: "Inspection reports and exports now contain approved data."
+        allFixedSub: "Inspection reports and exports now contain approved data.",
+        printOkMsg: "✅ ALL MEASUREMENTS WITHIN TOLERANCE! No machine correction needed."
       }
     };
 
@@ -2588,6 +2560,7 @@
         return;
       }
 
+      const t = i18n[currentLang];
       const firstHdr = loadedFiles[0].headerData;
       document.getElementById('printDate').textContent = `${firstHdr.datum || ''} ${firstHdr.uhrzeit || ''}`;
       document.getElementById('printPartNr').textContent = `${firstHdr.teileNr || ''} (${firstHdr.teileBez || ''})`;
@@ -2609,8 +2582,8 @@
               akt: item.akt.toFixed(4),
               nevl: item.nevl.toFixed(4),
               delta: (delta >= 0 ? "+" : "") + delta.toFixed(4),
-              status: isOver ? "TÚLMÉRET" : "ALULMÉRET",
-              diff: isOver ? `+${(item.akt - maxTol).toFixed(4)} mm a max felett` : `${(item.akt - minTol).toFixed(4)} mm a min alatt`
+              status: isOver ? t.statusOver : t.statusUnder,
+              diff: isOver ? `+${(item.akt - maxTol).toFixed(4)} mm ${t.overMax}` : `${(item.akt - minTol).toFixed(4)} mm ${t.underMin}`
             });
           }
         });
@@ -2618,19 +2591,19 @@
 
       const wrapper = document.getElementById('printDeltaTableWrapper');
       if (deltaList.length === 0) {
-        wrapper.innerHTML = "<div style='padding:20px; font-weight:bold; color:green; border:2px solid green;'>✅ MINDEN MÉRET MEGFELELŐ! Nincs szükség gépkorrekcióra.</div>";
+        wrapper.innerHTML = `<div style='padding:20px; font-weight:bold; color:green; border:2px solid green;'>${t.printOkMsg}</div>`;
       } else {
         let tHtml = `
           <table style="width:100%; border-collapse:collapse; font-size:12px;">
             <thead>
               <tr style="background:#f1f5f9;">
-                <th style="border:1px solid #94a3b8; padding:8px;">Fészek</th>
-                <th style="border:1px solid #94a3b8; padding:8px;">Tétel</th>
-                <th style="border:1px solid #94a3b8; padding:8px;">Megnevezés</th>
-                <th style="border:1px solid #94a3b8; padding:8px;">Mért érték</th>
-                <th style="border:1px solid #94a3b8; padding:8px;">Névleges</th>
-                <th style="border:1px solid #94a3b8; padding:8px;">Eltérés (&Delta;)</th>
-                <th style="border:1px solid #94a3b8; padding:8px;">Szükséges beállítás</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${t.thItem}</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${t.thItem}</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${t.thDesc}</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${currentLang === 'hu' ? 'Mért érték' : (currentLang === 'de' ? 'Messwert' : 'Actual')}</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${t.thNom}</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${currentLang === 'hu' ? 'Eltérés (Δ)' : (currentLang === 'de' ? 'Abweichung (Δ)' : 'Offset (Δ)')}</th>
+                <th style="border:1px solid #94a3b8; padding:8px;">${currentLang === 'hu' ? 'Szükséges beállítás' : (currentLang === 'de' ? 'Erforderliche Korrektur' : 'Required Adjustment')}</th>
               </tr>
             </thead>
             <tbody>
